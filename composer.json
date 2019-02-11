@@ -1,0 +1,40 @@
+{
+    "name": "ebsp/resting",
+    "require": {
+        "laravel/framework": "^5.5"
+    },
+    "authors": [
+        {
+            "name": "Emil Büchler Seier Petersen",
+            "email": "emil@ebsp.dk"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Seier\\Resting\\": "src/"
+        },
+        "files": [
+            "src/Support/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Seier\\Resting\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Seier\\Resting\\Support\\RestingServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "phpunit/phpunit": "^7.4"
+    },
+    "scripts": {
+    	"coverage": "phpunit --coverage-html ./docs/coverage"
+    }
+}
