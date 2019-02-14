@@ -153,13 +153,15 @@ abstract class Resource implements
         return $this;
     }
 
-    public function validation(Request $request)
+    public function validation(Request $request, $overwriteRequirements = true)
     {
         return $this->fields()->filter(function ($field) {
             return $field instanceof FieldAbstract;
-        })->map(function (FieldAbstract $field) use ($request) {
+        })->map(function (FieldAbstract $field) use ($request, $overwriteRequirements) {
             return $field->required(
-                $field->isRequired() && $this->requiredFieldsExpected($request)
+                $overwriteRequirements
+                    ? $field->isRequired() && $this->requiredFieldsExpected($request)
+                    : $field->isRequired()
             )->validation();
         })->toArray();
     }

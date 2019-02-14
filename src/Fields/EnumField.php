@@ -24,7 +24,7 @@ class EnumField extends StringField
     protected function setMutator($value)
     {
         if (! $this->isValid($value)) {
-            throw new InvalidEnumException('Enum value \''. $value .'\' not valid');
+            $this->error(new InvalidEnumException('Enum value \''. $value .'\' not valid'));
         }
 
         return $value;

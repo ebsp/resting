@@ -72,6 +72,14 @@ class ResourceArrayField extends FieldAbstract
         return $this;
     }
 
+    public function throwErrors($should = true)
+    {
+        parent::throwErrors($should);
+        $this->resource->throwErrors($should);
+
+        return $this;
+    }
+
     public function type() : array
     {
         return [

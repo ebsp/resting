@@ -14,14 +14,13 @@ class ResourceRule implements Rule
 
     public function __construct(
         Resource $resource,
-        $required = false
+        $overwriteRequirements = false
     ) {
         $this->resource = $resource;
-        $this->required = $required;
         $this->validation = Validator::make(
             $this->resource->toArray(),
             $this->resource->validation(
-                request()
+                request(), $overwriteRequirements
             )
         );
     }

@@ -91,6 +91,14 @@ class ResourceField extends FieldAbstract
         return $this;
     }
 
+    public function throwErrors($should = true)
+    {
+        parent::throwErrors($should);
+        $this->value->throwErrors($should);
+
+        return $this;
+    }
+
     public function type() : array
     {
         return [
