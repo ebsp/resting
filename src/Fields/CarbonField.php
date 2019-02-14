@@ -6,19 +6,19 @@ use Illuminate\Support\Carbon;
 
 class CarbonField extends FieldAbstract
 {
-    protected function getMutator($value)
+    protected function getMutator($value) : Carbon
     {
         return $value;
     }
 
-    protected function setMutator($value)
+    protected function setMutator($value) : Carbon
     {
         if (! $value instanceof Carbon) {
             $value = Carbon::parse($value);
         }
 
         /** @var $value Carbon */
-        return $value->toIso8601ZuluString();
+        return $value;
     }
 
     protected function fieldValidation() : array

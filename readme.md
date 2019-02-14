@@ -3,6 +3,9 @@ Simple REST library for Laravel
 
 This is a pendant to Laravel’s built in resources. It’s aimed to be more type aware, strict and to enforce a layer between models and API interfaces.
 
+## Please note
+This project is developed for use in personal projects. It's currently not advised to use in production projects, as breaking changes will happen.
+
 ## Resources
 Resources are classes representing the data you want to send and receive in your API. Resources are made to separate your data layer from your API interface, making it more flexible. A resource is made up of fields (properties), each having a type. The field type is aware of the fields data type and validation criteria.
 
@@ -50,3 +53,4 @@ class UserResource extends \Seier\Resting\Resource
 
 - [ ] Achieve 100% test coverage
 - [ ] Clean up and finalize OAPI specs
+- [ ] Add more documentation
