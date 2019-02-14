@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Support;
 
+use Seier\Resting\Resource;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
@@ -10,37 +11,38 @@ class ResourceRequest extends FormRequest
 {
     protected $redirect = null;
 
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize()
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
-        $request = request();
-
-        return array_merge(
-            optional($this->route()->_query)->validation($request) ?? [],
-            optional($this->route()->_resource)->validation($request) ?? []
-        );
+        return request()->_validation ?? [];
     }
 
     protected function validationData()
     {
-        $resourceData = optional($this->route()->_resource)->toArray() ?? [];
-        $queryData = optional($this->route()->_query)->toArray() ?? [];
+        $data = [];
 
-        return array_merge($resourceData, $queryData);
+        foreach ($this->route()->parameters() as $parameter) {
+            if ($parameter instanceof Resource) {
+                $data = array_merge($data, $parameter->toArray());
+            }
+        }
+
+        return $this->cleanData($data) ?? [];
+    }
+
+    protected function cleanData(array $data)
+    {
+        return array_filter($data, function ($value) {
+            if (is_array($value)) {
+                $value = $this->cleanData($value);
+            }
+
+            return ! is_null($value);
+        }) ?: null;
     }
 
     protected function failedValidation(Validator $validator)

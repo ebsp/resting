@@ -18,14 +18,12 @@ class RestingServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        \Illuminate\Routing\Route::macro('expects', function ($resourceClass) {
-            $this->middleware(BuildResourceMiddleware::class . ':' . $resourceClass);
-
-            return $this;
+        \Illuminate\Support\Facades\Validator::resolver(function($translator, $data, $rules, $messages) {
+            return new RestValidator($translator, $data, $rules, $messages);
         });
 
-        \Illuminate\Routing\Route::macro('query', function ($resourceClass) {
-            $this->middleware(BuildQueryMiddleware::class . ':' . $resourceClass);
+        \Illuminate\Routing\Route::macro('rest', function () {
+            $this->middleware(RestMiddleware::class);
 
             return $this;
         });
@@ -36,8 +34,8 @@ class RestingServiceProvider extends ServiceProvider
             return $this;
         });
 
-        \Illuminate\Routing\Route::macro('lists', function ($resource) {
-            $this->returnsListOfResources = $resource;
+        \Illuminate\Routing\Route::macro('lists', function () {
+            $this->_lists = true;
 
             return $this;
         });

@@ -49,6 +49,11 @@ abstract class Resource implements
         return (new static)->throwErrors($shouldThrowErrors)->setPropertiesFromCollection($values);
     }
 
+    public static function fromRequest(Request $request)
+    {
+        return static::fromArray($request->all(), false);
+    }
+
     public function setPropertiesFromCollection(Collection $collection)
     {
         foreach ($this->fields() as $field => $value) {
@@ -77,11 +82,7 @@ abstract class Resource implements
     {
         return $this->fields()
             ->filter(function ($field) {
-                if ($field instanceof FieldAbstract && $field->isHidden()) {
-                    return false;
-                }
-
-                return true;
+                return ! ($field instanceof FieldAbstract && $field->isHidden());
             })
             ->map(function ($field) {
                 if ($field instanceof ResourceField && ! $field->filled()) {
@@ -99,8 +100,7 @@ abstract class Resource implements
                 }
 
                 return $field;
-            })
-            ->toArray();
+            })->toArray();
     }
 
     public function toArray()

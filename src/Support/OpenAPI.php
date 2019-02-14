@@ -2,9 +2,14 @@
 
 namespace Seier\Resting\Support;
 
-use Illuminate\Routing\Route;
+use ReflectionClass;
+use ReflectionFunction;
+use ReflectionParameter;
+use Seier\Resting\Params;
+use Seier\Resting\Query;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\RouteCollection;
 use Seier\Resting\Fields\FieldAbstract;
@@ -45,7 +50,7 @@ class OpenAPI implements Arrayable, Responsable
 
     protected function processParameters()
     {
-        foreach ($this->parameters as $query => $_) {
+        foreach ($this->parameters as $query => $where) {
             /** @var Resource $query */
             $query = new $query;
 
@@ -53,11 +58,11 @@ class OpenAPI implements Arrayable, Responsable
                 return $field instanceof FieldAbstract;
             });
 
-            $fields->each(function (FieldAbstract $abstract, $key) use ($query) {
+            $fields->each(function (FieldAbstract $abstract, $key) use ($query, $where) {
                 $this->document['components']['parameters'][
                     $this->parametersRefName(get_class($query), $key)
                 ] = [
-                    'in' => 'query',
+                    'in' => $where,
                     'name' => $key,
                     'required' => $abstract->isRequired(),
                     'schema' => $abstract->type(),
@@ -136,35 +141,59 @@ class OpenAPI implements Arrayable, Responsable
             ],
         ];
 
-        $expectsResource = array_first($route->gatherMiddleware(), function ($value) {
-            return str_contains($value, BuildResourceMiddleware::class);
-        }, false);
+        $resourceClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (! $type = $parameter->getType()) {
+                return false;
+            }
 
-        if (in_array($method, ['POST', 'PATCH', 'PUT']) && $expectsResource) {
-            $resource = array_last(explode(':', $expectsResource));
-            $this->addResource($resource);
+            $reflectionClass = new ReflectionClass($type->getName());
+
+            if ($reflectionClass->isInstantiable()) {
+                if ($reflectionClass->isSubclassOf(Resource::class) && ! $reflectionClass->isSubclassOf(Query::class) && ! $reflectionClass->isSubclassOf(Params::class)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (in_array($method, ['POST', 'PATCH', 'PUT']) && $resourceClass) {
+            /** @var ReflectionParameter $resourceClass */
+            $this->addResource($resourceClass->getType()->getName());
 
             $endpoint['requestBody'] = [
                 'required' => true,
                 'content' => [
                     'application/json' => [
                         'schema' => [
-                            '$ref' => '#/components/schemas/' . $this->resourceRefName($resource),
+                            '$ref' => '#/components/schemas/' . $this->resourceRefName($resourceClass->getType()->getName()),
                         ],
                     ],
                 ],
             ];
         }
 
-        $expectsQuery = array_first($route->gatherMiddleware(), function ($value) {
-            return str_contains($value, BuildQueryMiddleware::class);
-        }, false);
+        $queryClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (! $type = $parameter->getType()) {
+                return false;
+            }
 
-        if ($expectsQuery) {
-            $query = array_last(explode(':', $expectsQuery));
-            $this->addParameter($query);
-            /** @var Resource $query */
-            $query = new $query;
+            $reflectionClass = new ReflectionClass($type->getName());
+
+            if ($reflectionClass->isInstantiable()) {
+                if ($reflectionClass->isSubclassOf(Query::class)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if ($queryClass) {
+            /** @var ReflectionParameter $queryClass */
+            $this->addParameter($queryClass = $queryClass->getType()->getName());
+            /** @var Query $query */
+            $query = new $queryClass;
 
             $fields = $query->fields()->filter(function ($field) {
                 return $field instanceof FieldAbstract;
@@ -177,6 +206,39 @@ class OpenAPI implements Arrayable, Responsable
             $endpoint['parameters'] = $fields->toArray();
         }
 
+        $paramClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (! $type = $parameter->getType()) {
+                return false;
+            }
+
+            $reflectionClass = new ReflectionClass($type->getName());
+
+            if ($reflectionClass->isInstantiable()) {
+                if ($reflectionClass->isSubclassOf(Params::class)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if ($paramClass) {
+            /** @var ReflectionParameter $queryClass */
+            $this->addParameter($paramClass = $paramClass->getType()->getName(), 'path');
+            /** @var Params $query */
+            $query = new $paramClass;
+
+            $fields = $query->fields()->filter(function ($field) {
+                return $field instanceof FieldAbstract;
+            })->map(function (FieldAbstract $fieldAbstract, $key) use ($query) {
+                return [
+                    '$ref' => '#/components/parameters/' . $this->parametersRefName(get_class($query), $key)
+                ];
+            })->values();
+
+            $endpoint['parameters'] = array_merge($endpoint['parameters'] ?? [], $fields->toArray());
+        }
+
         return $endpoint;
     }
 
@@ -184,25 +246,32 @@ class OpenAPI implements Arrayable, Responsable
     {
         $response = [];
 
-        if ($route->returnsSingleResource) {
-            $this->addResource($route->returnsSingleResource);
+        $type = null;
+        if ($type = $route->action['controller'] ?? null) {
+            list($_class, $_method) = explode('@', $type);
 
-            $response = [
-                'schema' => [
-                    '$ref' => '#/components/schemas/' . $this->resourceRefName($route->returnsSingleResource),
-                ],
-            ];
-        } elseif ($route->returnsListOfResources) {
-            $this->addResource($route->returnsListOfResources);
+            $reflectionClass = new ReflectionClass($_class);
+            $type = $reflectionClass->getMethod($_method)->getReturnType();
 
-            $response = [
-                'schema' => [
-                    'type' => 'array',
-                    'items' => [
-                        '$ref' => '#/components/schemas/' . $this->resourceRefName($route->returnsListOfResources),
-                    ],
-                ],
-            ];
+            if ($type) {
+                $lists = $route->_lists;
+
+                $this->addResource($type->getName());
+                $refName = $this->resourceRefName($type->getName());
+
+                $response = [
+                    'schema' => $lists ? ([
+                        'type' => 'array',
+                        'items' => [
+                            '$ref' => '#/components/schemas/' . $refName,
+                        ],
+                    ]) : ([
+                        'schema' => [
+                            '$ref' => '#/components/schemas/' . $refName,
+                        ],
+                    ]),
+                ];
+            }
         }
 
         return $response;
@@ -213,9 +282,9 @@ class OpenAPI implements Arrayable, Responsable
         $this->resources[$resourceClass] = [];
     }
 
-    protected function addParameter($queryClass)
+    protected function addParameter($queryClass, $where = 'query')
     {
-        $this->parameters[$queryClass] = [];
+        $this->parameters[$queryClass] = $where;
     }
 
     protected function resourceRefName($resourceClass)

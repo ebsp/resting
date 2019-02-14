@@ -17,6 +17,7 @@ class ResourceRule implements Rule
         $overwriteRequirements = false
     ) {
         $this->resource = $resource;
+
         $this->validation = Validator::make(
             $this->resource->toArray(),
             $this->resource->validation(
