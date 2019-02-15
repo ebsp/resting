@@ -4,6 +4,7 @@ namespace Seier\Resting\Support;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Support\Responsable;
+use Seier\Resting\Resource;
 
 class Response implements Responsable
 {
@@ -12,6 +13,13 @@ class Response implements Responsable
     public function __construct(array $data)
     {
         $this->data = $data;
+    }
+
+    public static function fromResources(array $resources)
+    {
+        return new static(array_map(function (Resource $resource) {
+            return $resource->toArray();
+        }, $resources));
     }
 
     /**

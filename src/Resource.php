@@ -90,12 +90,16 @@ abstract class Resource implements
                 }
 
                 if ($field instanceof FieldAbstract) {
-                    return $field->get();
+                    return $field->formatted();
                 }
 
                 if (is_array($field)) {
-                    return array_map(function (Resource $resource) {
-                        return $resource->toArray();
+                    return array_map(function ($element) {
+                        if ($element instanceof Resource) {
+                            return $element->toArray();
+                        } else {
+                            return $element;
+                        }
                     }, $field);
                 }
 

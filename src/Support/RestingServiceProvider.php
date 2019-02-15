@@ -28,14 +28,8 @@ class RestingServiceProvider extends ServiceProvider
             return $this;
         });
 
-        \Illuminate\Routing\Route::macro('returns', function ($resource) {
-            $this->returnsSingleResource = $resource;
-
-            return $this;
-        });
-
-        \Illuminate\Routing\Route::macro('lists', function () {
-            $this->_lists = true;
+        \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
+            $this->_lists = $resource;
 
             return $this;
         });

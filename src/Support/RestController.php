@@ -13,6 +13,12 @@ trait RestController
     {
         $this->request = app(ResourceRequest::class);
 
-        return parent::callAction($method, $parameters);
+        $result = parent::callAction($method, $parameters);
+
+        if (is_array($result)) {
+            $result = Response::fromResources($result);
+        }
+
+        return $result;
     }
 }

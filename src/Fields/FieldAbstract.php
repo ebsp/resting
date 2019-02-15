@@ -21,6 +21,11 @@ abstract class FieldAbstract
         return is_null($this->value) ? null : $this->getMutator($this->value);
     }
 
+    public function formatted()
+    {
+        return $this->get();
+    }
+
     public function nullable(bool $is)
     {
         $this->nullable = $is;

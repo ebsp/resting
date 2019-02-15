@@ -5,6 +5,7 @@ namespace Seier\Resting\Support;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
+use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Params;
 use Seier\Resting\Query;
 use Seier\Resting\Resource;
@@ -75,37 +76,47 @@ class OpenAPI implements Arrayable, Responsable
     {
         foreach ($this->resources as $resource => $_) {
             $resource = new $resource;
-
-            $fields = $resource->fields()->filter(function ($attr) {
-                return $attr instanceof FieldAbstract;
-            });
-
-            $requiredFields = $fields->filter(function (FieldAbstract $field) {
-                return $field->isRequired();
-            });
-
-            $this->document['components']['schemas'][
-                $this->resourceRefName(get_class($resource))
-            ] = [
-                'type' => 'object',
-                'required' => $requiredFields->map(function (FieldAbstract $field, $key) {
-                    return $key;
-                })->values()->toArray(),
-                'properties' => $fields->map(function (FieldAbstract $field) {
-                    $type = $field->type();
-
-                    foreach ($field->nestedRefs() as $type => $ref) {
-                        if ('schema' === $type) {
-                            $this->addResource($ref);
-                        } elseif ('parameters' === $type) {
-                            $this->addParameter($ref);
-                        }
-                    }
-
-                    return $type;
-                })->toArray(),
-            ];
+            $this->describeResource($resource);
         }
+    }
+
+    protected function describeResource(Resource $resource)
+    {
+        $fields = $resource->fields()->filter(function ($attr) {
+            $field = $attr instanceof FieldAbstract;
+
+            if ($attr instanceof ResourceField) {
+                $this->describeResource($attr->get()->original());
+            }
+
+            return $field;
+        });
+
+        $requiredFields = $fields->filter(function (FieldAbstract $field) {
+            return $field->isRequired();
+        });
+
+        $this->document['components']['schemas'][
+            $this->resourceRefName(get_class($resource))
+        ] = [
+            'type' => 'object',
+            'required' => $requiredFields->map(function (FieldAbstract $field, $key) {
+                return $key;
+            })->values()->toArray(),
+            'properties' => $fields->map(function (FieldAbstract $field) {
+                $type = $field->type();
+
+                foreach ($field->nestedRefs() as $type => $ref) {
+                    if ('schema' === $type) {
+                        $this->addResource($ref);
+                    } elseif ('parameters' === $type) {
+                        $this->addParameter($ref);
+                    }
+                }
+
+                return $type;
+            })->toArray(),
+        ];
     }
 
     protected function processPaths()
@@ -253,11 +264,19 @@ class OpenAPI implements Arrayable, Responsable
             $reflectionClass = new ReflectionClass($_class);
             $type = $reflectionClass->getMethod($_method)->getReturnType();
 
-            if ($type) {
-                $lists = $route->_lists;
+            $lists = false;
+            $className = null;
 
-                $this->addResource($type->getName());
-                $refName = $this->resourceRefName($type->getName());
+            if ($route->_lists) {
+                $lists = true;
+                $className = $route->_lists;
+            } elseif ($type) {
+                $className = $type->getName();
+            }
+
+            if ($className) {
+                $this->addResource($className);
+                $refName = $this->resourceRefName($className);
 
                 $response = [
                     'schema' => $lists ? ([
@@ -266,9 +285,7 @@ class OpenAPI implements Arrayable, Responsable
                             '$ref' => '#/components/schemas/' . $refName,
                         ],
                     ]) : ([
-                        'schema' => [
-                            '$ref' => '#/components/schemas/' . $refName,
-                        ],
+                        '$ref' => '#/components/schemas/' . $refName,
                     ]),
                 ];
             }

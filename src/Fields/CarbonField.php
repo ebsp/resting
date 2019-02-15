@@ -21,6 +21,11 @@ class CarbonField extends FieldAbstract
         return $value;
     }
 
+    public function formatted()
+    {
+        return optional($this->get())->toIso8601String();
+    }
+
     protected function fieldValidation() : array
     {
         return ['date'];
