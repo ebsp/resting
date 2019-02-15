@@ -18,6 +18,14 @@ class RestingServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->mergeConfigFrom(
+            $configPath = __DIR__.'/../config/resting.php', 'resting'
+        );
+
+        $this->publishes([
+            $configPath => config_path('resting.php')
+        ], 'config');
+
         \Illuminate\Support\Facades\Validator::resolver(function($translator, $data, $rules, $messages) {
             return new RestValidator($translator, $data, $rules, $messages);
         });

@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 trait RestController
 {
@@ -14,6 +15,10 @@ trait RestController
         $this->request = app(ResourceRequest::class);
 
         $result = parent::callAction($method, $parameters);
+
+        if ($result instanceof Collection) {
+            $result = $result->all();
+        }
 
         if (is_array($result)) {
             $result = Response::fromResources($result);

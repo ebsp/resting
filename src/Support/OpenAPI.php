@@ -43,10 +43,15 @@ class OpenAPI implements Arrayable, Responsable
     protected function processInfo()
     {
         $this->document['openapi'] = '3.0.0';
+
         $this->document['info'] = [
-            'version' => '1.0.0',
-            'title' => 'Subit API',
+            'version' => config('resting.version'),
+            'title' => config('resting.api_name'),
         ];
+
+        if ($servers = config('resting.documentation.servers')) {
+            $this->document['servers'] = $servers;
+        }
     }
 
     protected function processParameters()

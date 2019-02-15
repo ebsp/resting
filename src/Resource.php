@@ -21,6 +21,7 @@ abstract class Resource implements
     protected $_responseCode = 200;
     protected $_trimNullValues = true;
     protected $_original;
+    protected $request;
 
     use SilenceErrorsTrait;
 
@@ -51,7 +52,14 @@ abstract class Resource implements
 
     public static function fromRequest(Request $request)
     {
-        return static::fromArray($request->all(), false);
+        return static::fromArray($request->all(), false)->setRequest($request);
+    }
+
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+
+        return $this;
     }
 
     public function setPropertiesFromCollection(Collection $collection)

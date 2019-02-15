@@ -44,7 +44,6 @@ class RestMiddleware
             $resource = $_className::fromRequest($this->request);
             $resource->prepare();
 
-
             $this->request->_validation = array_merge(
                 $this->request->_validation ?? [],
                 $resource->validation($this->request)
