@@ -60,7 +60,7 @@ class ResourceTest extends TestCase
         $resource = $this->resourceWithValues()->flatten();
         $this->assertTrue($resource->_bool);
         $this->assertEquals(['item'], $resource->_array);
-        $this->assertTrue(is_string($resource->_carbon));
+        $this->assertInstanceOf(Carbon::class, $resource->_carbon);
         $this->assertEquals("2018-01-01", $resource->_date);
         $this->assertEquals(10, $resource->_int);
         $this->assertEquals('a string', $resource->_string);

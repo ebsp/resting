@@ -79,6 +79,15 @@ abstract class Resource implements
         return $this;
     }
 
+    public function only(...$values)
+    {
+        $this->fields()->intersectByKeys($values)->each(function ($_, $property) {
+            unset($this->{$property});
+        });
+
+        return $this;
+    }
+
     public function fields() : Collection
     {
         return collect(
