@@ -48,6 +48,12 @@ class RestingServiceProvider extends ServiceProvider
             return $this;
         });
 
+        \Illuminate\Routing\Route::macro('pushParameter', function ($value) {
+            $this->parameters[] = $value;
+
+            return $this;
+        });
+
         $_self = $this;
 
         Collection::macro('toResources', function () use ($_self) {

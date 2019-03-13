@@ -177,13 +177,27 @@ class OpenAPI implements Arrayable, Responsable
             /** @var ReflectionParameter $resourceClass */
             $this->addResource($resourceClass->getType()->getName());
 
+            $schema = $ref = [
+                '$ref' => '#/components/schemas/' . $this->resourceRefName($resourceClass->getType()->getName()),
+            ];
+
+            if ($resourceClass->isVariadic()) {
+                $schema = [
+                    'type' => 'object',
+                    'properties' => [
+                        'data' => [
+                            'type' => 'array',
+                            'items' => $ref,
+                        ]
+                    ]
+                ];
+            }
+
             $endpoint['requestBody'] = [
                 'required' => true,
                 'content' => [
                     'application/json' => [
-                        'schema' => [
-                            '$ref' => '#/components/schemas/' . $this->resourceRefName($resourceClass->getType()->getName()),
-                        ],
+                        'schema' => $schema,
                     ],
                 ],
             ];

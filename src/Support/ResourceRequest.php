@@ -2,6 +2,8 @@
 
 namespace Seier\Resting\Support;
 
+use Seier\Resting\Params;
+use Seier\Resting\Query;
 use Seier\Resting\Resource;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -26,8 +28,18 @@ class ResourceRequest extends FormRequest
         $data = [];
 
         foreach ($this->route()->parameters() as $parameter) {
-            if ($parameter instanceof Resource) {
+            if ($parameter instanceof Query || $parameter instanceof Params) {
                 $data = array_merge($data, $parameter->toArray());
+            }
+            elseif ($parameter instanceof Resource) {
+                if (request()->_envelopedResource) {
+                    $data['data'][] = array_merge(
+                        isset($data['data']) ? $data['data'] : [],
+                        $parameter->toArray()
+                    );
+                } else {
+                    $data = array_merge($data, $parameter->toArray());
+                }
             }
         }
 

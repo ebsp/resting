@@ -21,6 +21,7 @@ abstract class Resource implements
     protected $_responseCode = 200;
     protected $_trimNullValues = true;
     protected $_original;
+    protected $_always_expect_required = false;
     protected $request;
 
     use SilenceErrorsTrait;
@@ -114,9 +115,9 @@ abstract class Resource implements
                     return array_map(function ($element) {
                         if ($element instanceof Resource) {
                             return $element->toArray();
-                        } else {
-                            return $element;
                         }
+
+                        return $element;
                     }, $field);
                 }
 
@@ -214,7 +215,14 @@ abstract class Resource implements
 
     public function requiredFieldsExpected(Request $request)
     {
-        return in_array($request->method(), ['POST', 'PUT']);
+        return in_array($request->method(), ['POST', 'PUT']) || $this->_always_expect_required;
+    }
+
+    public function alwaysExpectRequired($should = true)
+    {
+        $this->_always_expect_required = $should;
+
+        return $this;
     }
 
     public function responseCode($code) : self
