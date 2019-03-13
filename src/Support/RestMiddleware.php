@@ -4,10 +4,10 @@ namespace Seier\Resting\Support;
 
 use Closure;
 use ReflectionClass;
+use Seier\Resting\Query;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
-use App\Api\Resources\Query\Query;
 
 class RestMiddleware
 {
