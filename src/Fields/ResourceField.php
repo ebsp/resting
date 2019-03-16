@@ -77,6 +77,11 @@ class ResourceField extends FieldAbstract
         ];
     }
 
+    public function defaultBuildValue()
+    {
+        return $this->value;
+    }
+
     public function requiredFields(...$fields)
     {
         $this->required();

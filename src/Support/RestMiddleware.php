@@ -65,7 +65,7 @@ class RestMiddleware
         $value = [];
 
         if ($isVariadic) {
-            foreach ($this->request->json('data', []) as $values) {
+            foreach ($this->request->json('data', $this->request->json()) as $values) {
                 $value[] = $this->resolveResource($_class->getName(), $values, true);
             }
         } else {
@@ -102,7 +102,9 @@ class RestMiddleware
             $this->request->_envelopedResource = true;
 
             foreach ($resource->validation($this->request) as $key => $rule) {
-                $this->request->_validation['data.*.' . $key] = $rule;
+                $this->request->_validation = array_merge($this->request->_validation ?: [], [
+                    'data.*.' . $key => $rule
+                ]);
             }
         } else {
             $this->request->_validation = array_merge(

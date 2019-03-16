@@ -33,11 +33,16 @@ abstract class FieldAbstract
         return $this;
     }
 
+    public function defaultBuildValue()
+    {
+        return null;
+    }
+
     final public function set($value, $condition = true)
     {
         if ($condition) {
             $this->value = is_null($value) && $this->nullable
-                ? null
+                ? $this->defaultBuildValue()
                 : $this->setMutator($value);
         }
 
