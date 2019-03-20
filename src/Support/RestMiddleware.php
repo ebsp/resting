@@ -94,7 +94,7 @@ class RestMiddleware
     protected function resolveResource($_class, $values, $multiple = false)
     {
         return $this->finalizeInstance(
-            $_class::fromArrayInvalidJsonException($values, false)->setRequest($this->request), $multiple
+            $_class::fromArray($values, false)->setRequest($this->request), $multiple
         );
     }
 
