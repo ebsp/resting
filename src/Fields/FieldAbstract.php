@@ -11,8 +11,9 @@ abstract class FieldAbstract
     protected $required = false;
     protected $hidden = false;
     protected $nullable = true;
-    protected $valueSet = false;
+    protected $filled = false;
     protected $additionalRules = [];
+    protected $isNull = false;
 
     use SilenceErrorsTrait;
 
@@ -41,12 +42,12 @@ abstract class FieldAbstract
     final public function set($value, $condition = true)
     {
         if ($condition) {
-            $this->value = is_null($value) && $this->nullable
+            $this->value = /*is_null($value) && $this->nullable
                 ? $this->defaultBuildValue()
-                : $this->setMutator($value);
+                :*/ $this->setMutator($value);
         }
 
-        $this->valueSet = true;
+        $this->filled = true;
 
         return $this;
     }
@@ -65,7 +66,7 @@ abstract class FieldAbstract
 
     protected function getMutator($value)
     {
-        if ($this->nullable && ! $this->valueSet) {
+        if ($this->nullable && ! $this->filled) {
             return null;
         }
 
@@ -141,6 +142,25 @@ abstract class FieldAbstract
 
     public function filled()
     {
-        return (bool) $this->valueSet;
+        return (bool) $this->filled;
+    }
+
+    public function isNull()
+    {
+        return $this->isNull;
+    }
+
+    public function setNull()
+    {
+        $this->isNull = true;
+
+        return $this;
+    }
+
+    public function touch()
+    {
+        $this->filled = true;
+
+        return $this;
     }
 }

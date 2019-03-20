@@ -8,14 +8,18 @@ use Seier\Resting\Query;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
+use Seier\Resting\Exceptions\InvalidJsonException;
 
 class RestMiddleware
 {
+    /** @var Request */
     protected $request;
 
     public function handle(Request $request, Closure $next)
     {
         $this->request = $request;
+
+        $this->validateJsonBody();
 
         foreach ($request->route()->signatureParameters() as $parameter) {
             /** @var \ReflectionParameter $parameter */
@@ -43,7 +47,7 @@ class RestMiddleware
                 }
             }
         }
-//dd($this->request->_validation);
+
         return $next($request);
     }
 
@@ -90,7 +94,7 @@ class RestMiddleware
     protected function resolveResource($_class, $values, $multiple = false)
     {
         return $this->finalizeInstance(
-            $_class::fromArray($values)->setRequest($this->request), $multiple
+            $_class::fromArrayInvalidJsonException($values, false)->setRequest($this->request), $multiple
         );
     }
 
@@ -114,5 +118,21 @@ class RestMiddleware
         }
 
         return $resource->flatten();
+    }
+
+    protected function validateJsonBody()
+    {
+        $body = $this->request->getContent();
+
+        if (! $this->request->expectsJson() || empty($body)) {
+            return true;
+        }
+
+        @json_decode($body);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidJsonException('Invalid json');
+        }
+
+        return true;
     }
 }

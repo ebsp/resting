@@ -50,7 +50,9 @@ class ResourceField extends FieldAbstract
         }
 
         if (is_null($value)) {
-            return $this->value;
+            $this->setNull();
+
+            return $this->value->setNull();
         }
 
         $this->error(
@@ -72,8 +74,8 @@ class ResourceField extends FieldAbstract
 
     protected function fieldValidation() : array
     {
-        return [
-            new ResourceRule($this->value)
+        return $this->isNull() && $this->nullable ? [] : [
+            new ResourceRule($this->value, false)
         ];
     }
 

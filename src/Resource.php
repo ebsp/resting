@@ -22,6 +22,9 @@ abstract class Resource implements
     protected $_trimNullValues = true;
     protected $_original;
     protected $_always_expect_required = false;
+    protected $_is_null = false;
+    protected $_filled = false;
+
     protected $request;
 
     use SilenceErrorsTrait;
@@ -66,6 +69,8 @@ abstract class Resource implements
     public function setPropertiesFromCollection(Collection $collection)
     {
         foreach ($this->fields() as $field => $value) {
+            $this->touch();
+
             $property = $this->{$field};
 
             if ($property instanceof FieldAbstract && $collection->has($field)) {
@@ -249,5 +254,29 @@ abstract class Resource implements
     public function prepare()
     {
         //
+    }
+
+    public function filled()
+    {
+        return $this->_is_null || $this->_filled;
+    }
+
+    public function touch()
+    {
+        $this->_filled = true;
+
+        return $this;
+    }
+
+    public function isNull()
+    {
+        return $this->_is_null;
+    }
+
+    public function setNull()
+    {
+        $this->_is_null = true;
+
+        return $this;
     }
 }
