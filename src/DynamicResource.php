@@ -16,7 +16,9 @@ class DynamicResource extends Resource
 
     public function fields() : Collection
     {
-        return $this->fields;
+        return $this->fields->map(function (FieldAbstract $fieldAbstract) {
+            return $fieldAbstract->touch();
+        });
     }
 
     public function addField($key, FieldAbstract $field)
