@@ -15,6 +15,13 @@ class ResourceArrayField extends FieldAbstract
         $this->resource = $resource;
     }
 
+    public function push($value)
+    {
+        $this->set(array_merge($this->get() ?? [], [$value]));
+
+        return $this;
+    }
+
     public function getMutator($value)
     {
         return array_map(function ($_value) {

@@ -10,6 +10,13 @@ class ArrayField extends FieldAbstract
 {
     protected $value = [];
 
+    public function push($value)
+    {
+        $this->value[] = $value;
+
+        return $this;
+    }
+
     protected function setMutator($value)
     {
         if (Arr::accessible($value)) {
