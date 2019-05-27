@@ -87,7 +87,7 @@ abstract class Resource implements
 
     public function only(...$values)
     {
-        $this->fields()->intersectByKeys($values)->each(function ($_, $property) {
+        $this->fields()->diffKeys(array_combine($values, $values))->each(function ($_, $property) {
             unset($this->{$property});
         });
 
@@ -128,6 +128,11 @@ abstract class Resource implements
 
                 return $field;
             })->toArray();
+    }
+
+    public function __get($name)
+    {
+        return optional();
     }
 
     public function toArray()

@@ -79,6 +79,13 @@ class ResourceArrayField extends FieldAbstract
         return $this;
     }
 
+    public function formatted()
+    {
+        return array_map(function ($resource) {
+            return $resource->toResponseArray();
+        }, $this->value);
+    }
+
     public function throwErrors($should = true)
     {
         parent::throwErrors($should);

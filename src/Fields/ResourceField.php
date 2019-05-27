@@ -98,6 +98,11 @@ class ResourceField extends FieldAbstract
         return $this;
     }
 
+    public function formatted()
+    {
+        return $this->value;
+    }
+
     public function throwErrors($should = true)
     {
         parent::throwErrors($should);
