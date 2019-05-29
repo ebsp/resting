@@ -11,6 +11,11 @@ class StringField extends FieldAbstract
         return (string) $value;
     }
 
+    public function formatted()
+    {
+        return ($this->nullable && ! $this->filled() && ! strlen($this->value)) ? null : $this->value;
+    }
+
     protected function fieldValidation() : array
     {
         return ['string'];

@@ -45,9 +45,9 @@ abstract class FieldAbstract
             $this->value = /*is_null($value) && $this->nullable
                 ? $this->defaultBuildValue()
                 :*/ $this->setMutator($value);
-        }
 
-        $this->filled = true;
+            $this->filled = true;
+        }
 
         return $this;
     }
