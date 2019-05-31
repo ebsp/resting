@@ -65,7 +65,6 @@ class RestMiddleware
             return $this->resolveParam($_class->getName(), $this->request);
         }
 
-        $input = $this->request->all();
         $value = [];
 
         if ($isVariadic) {

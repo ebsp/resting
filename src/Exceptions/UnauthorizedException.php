@@ -2,7 +2,7 @@
 
 namespace Seier\Resting\Exceptions;
 
-class AuthenticationErrorException extends Exception
+class UnauthorizedException extends Exception
 {
     public function getStatus()
     {
