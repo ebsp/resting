@@ -24,6 +24,7 @@ abstract class Resource implements
     protected $_always_expect_required = false;
     protected $_is_null = false;
     protected $_filled = false;
+    protected $_raw = null;
 
     protected $request;
 
@@ -57,6 +58,18 @@ abstract class Resource implements
     public static function fromRequest(Request $request)
     {
         return static::fromArray($request->all(), false)->setRequest($request);
+    }
+
+    public static function fromRaw(array $data)
+    {
+        return (new static)->setRaw($data);
+    }
+
+    protected function setRaw(array $data)
+    {
+        $this->_raw = $data;
+
+        return $this;
     }
 
     public function setRequest(Request $request)
@@ -103,6 +116,10 @@ abstract class Resource implements
 
     public function values()
     {
+        if (is_array($this->_raw)) {
+            return $this->_raw;
+        }
+
         return $this->fields()
             ->filter(function ($field) {
                 return ! ($field instanceof FieldAbstract && $field->isHidden());
