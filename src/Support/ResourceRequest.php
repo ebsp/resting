@@ -32,7 +32,6 @@ class ResourceRequest extends FormRequest
                 $data = array_merge($data, $parameter->toArray());
             }
             elseif ($parameter instanceof Resource) {
-
                 if (request()->_envelopedResource) {
                     $data['data'][] = array_merge(
                         isset($data['data']) ? $data['data'] : [],
@@ -43,15 +42,16 @@ class ResourceRequest extends FormRequest
                 }
             }
         }
-
+        
         return $this->cleanData($data);
     }
 
     protected function cleanData(array $data)
     {
-        foreach ($data as &$value) {
+        foreach ($data as $key => &$value) {
             if (is_array($value)) {
-                $value = $this->cleanData($value);
+                $cleanedArray = $this->cleanData($value);
+                $value = ! count($cleanedArray) ? null : $cleanedArray;
             }
         }
 
