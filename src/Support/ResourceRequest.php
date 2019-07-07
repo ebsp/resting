@@ -5,7 +5,6 @@ namespace Seier\Resting\Support;
 use Seier\Resting\Query;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 
 class ResourceRequest extends FormRequest

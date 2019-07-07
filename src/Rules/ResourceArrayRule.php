@@ -27,6 +27,11 @@ class ResourceArrayRule implements Rule
         $i = 0;
 
         foreach ($values as $value) {
+            if (is_array($value)) {
+                // TODO: fix so this is not needed
+                $value = $this->resource->copy()->setPropertiesFromCollection(collect($value));
+            }
+
             $resourceValidator = $this->getValidator()->make(
                 $value->toArray(),
                 $value->validation(

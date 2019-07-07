@@ -3,15 +3,14 @@
 namespace Seier\Resting\Support;
 
 use ReflectionClass;
-use ReflectionFunction;
 use ReflectionParameter;
-use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Params;
 use Seier\Resting\Query;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\Fields\ResourceField;
 use Illuminate\Routing\RouteCollection;
 use Seier\Resting\Fields\FieldAbstract;
 use Illuminate\Contracts\Support\Arrayable;

@@ -2,8 +2,12 @@
 
 namespace Seier\Resting\Support;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Seier\Resting\Resource;
+use PHPUnit\Framework\Assert;
 use Illuminate\Support\Collection;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -33,6 +37,48 @@ class RestingServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Validator::resolver(function($translator, $data, $rules, $messages) {
             return new RestValidator($translator, $data, $rules, $messages);
         });
+
+        $this->app->resolving(FormRequest::class, function ($request, $app) {
+            $request = FormRequest::createFrom($app['request'], $request);
+            $request->setContainer($app)->setRedirector($app->make(Redirector::class));
+        });
+
+        if (class_exists('\Illuminate\Foundation\Testing\TestResponse')) {
+            \Illuminate\Foundation\Testing\TestResponse::macro('assertNestedJsonValidationErrors', function ($errors, $group = 'body') {
+                $errors = Arr::wrap($errors);
+
+                Assert::assertNotEmpty($errors, 'No validation errors were provided.');
+
+                $jsonErrors = $this->json()['errors'][$group] ?? [];
+
+                $errorMessage = $jsonErrors
+                    ? 'Response has the following JSON validation errors:'.
+                    PHP_EOL.PHP_EOL.json_encode($jsonErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
+                    : 'Response does not have JSON validation errors.';
+
+                foreach ($errors as $key => $value) {
+                    Assert::assertArrayHasKey(
+                        (is_int($key)) ? $value : $key,
+                        $jsonErrors,
+                        "Failed to find a validation error in the response for key: '{$value}'".PHP_EOL.PHP_EOL.$errorMessage
+                    );
+
+                    if (! is_int($key)) {
+                        foreach (Arr::wrap($jsonErrors[$key]) as $jsonErrorMessage) {
+                            if (Str::contains($jsonErrorMessage, $value)) {
+                                return $this;
+                            }
+                        }
+
+                        Assert::fail(
+                            "Failed to find a validation error in the response for key and message: '$key' => '$value'".PHP_EOL.PHP_EOL.$errorMessage
+                        );
+                    }
+                }
+
+                return $this;
+            });
+        }
 
         \Illuminate\Routing\Route::macro('rest', function () {
             $this->middleware(RestMiddleware::class);
@@ -66,8 +112,10 @@ class RestingServiceProvider extends ServiceProvider
             );
         });
 
-        $paginatableMacro = function ($limit = 15) use ($_self) {
-            $limit = function_exists('request') ? request()->query('limit', $limit) : $limit;
+        $request = $this->app->get('request');
+
+        $paginatableMacro = function ($limit = 15) use ($request, $_self) {
+            $limit = optional($request)->query('limit', $limit) ?? $limit;
 
             return $_self->mapPagination(
                 $this->paginate($limit)
