@@ -6,12 +6,12 @@ use Illuminate\Support\Carbon;
 
 class CarbonField extends FieldAbstract
 {
-    protected function getMutator($value) : Carbon
+    public function getMutator($value) : Carbon
     {
         return $value;
     }
 
-    protected function setMutator($value) : Carbon
+    public function setMutator($value) : Carbon
     {
         if (! $value instanceof Carbon) {
             $value = Carbon::parse($value);

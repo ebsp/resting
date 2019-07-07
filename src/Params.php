@@ -12,14 +12,14 @@ abstract class Params extends Resource {
         return true;
     }
 
-    public static function fromRequest(Request $request)
+    public static function fromRequest(Request $request, bool $suppressErrors = false)
     {
-        $params = static::fromArray($request->route()->originalParameters(), false);
+        $params = static::fromArray($request->route()->originalParameters(), $suppressErrors);
 
         $params->fields()->each(function (FieldAbstract $field, $name) use ($request) {
             $request->route()->forgetParameter($name);
         });
 
-        return static::fromArray($request->route()->originalParameters(), false);
+        return static::fromArray($request->route()->originalParameters(), $suppressErrors);
     }
 }

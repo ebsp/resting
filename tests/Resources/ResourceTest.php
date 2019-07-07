@@ -4,7 +4,7 @@ namespace Seier\Resting\Tests\Resources;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use PHPUnit\Framework\TestCase;
+use Seier\Resting\Tests\TestCase;
 use Illuminate\Http\JsonResponse;
 use Seier\Resting\Fields\BoolField;
 use Seier\Resting\Fields\DateField;

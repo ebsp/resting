@@ -3,7 +3,7 @@
 namespace Seier\Resting\Tests\Resources;
 
 use Illuminate\Http\Request;
-use PHPUnit\Framework\TestCase;
+use Seier\Resting\Tests\TestCase;
 use Seier\Resting\DynamicResource;
 use Seier\Resting\Fields\StringField;
 

@@ -4,12 +4,12 @@ namespace Seier\Resting\Fields;
 
 class BoolField extends FieldAbstract
 {
-    protected function getMutator($value)
+    public function getMutator($value)
     {
         return (bool) $value;
     }
 
-    protected function setMutator($value)
+    public function setMutator($value)
     {
         return (bool) $value;
     }

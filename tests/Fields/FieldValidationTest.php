@@ -2,10 +2,10 @@
 
 namespace Seier\Resting\Tests\Fields;
 
-use PHPUnit\Framework\TestCase;
+use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\StringField;
 
-class ValidationTest extends TestCase
+class FieldValidationTest extends TestCase
 {
     public function testAdditionalValidation()
     {

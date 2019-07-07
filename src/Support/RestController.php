@@ -2,8 +2,6 @@
 
 namespace Seier\Resting\Support;
 
-use Exception;
-use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -14,7 +12,7 @@ trait RestController
 
     public function callAction($method, $parameters)
     {
-        $this->request = app(ResourceRequest::class);
+        $this->request = app($this->formRequestClass());
 
         $result = parent::callAction($method, $parameters);
 
@@ -29,5 +27,10 @@ trait RestController
         }
 
         return $result;
+    }
+
+    private function formRequestClass()
+    {
+        return config('resting.form_request');
     }
 }

@@ -26,6 +26,10 @@ class RestingServiceProvider extends ServiceProvider
             $configPath => config_path('resting.php')
         ], 'config');
 
+        $this->app->bind('restingValidator', function () {
+            return $this->app->get('validator');
+        });
+
         \Illuminate\Support\Facades\Validator::resolver(function($translator, $data, $rules, $messages) {
             return new RestValidator($translator, $data, $rules, $messages);
         });

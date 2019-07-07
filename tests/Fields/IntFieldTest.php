@@ -2,10 +2,10 @@
 
 namespace Seier\Resting\Tests\Fields;
 
-use PHPUnit\Framework\TestCase;
+use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\IntField;
 
-class IntTest extends TestCase
+class IntFieldTest extends TestCase
 {
     public function testValidation()
     {

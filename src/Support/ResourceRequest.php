@@ -2,16 +2,21 @@
 
 namespace Seier\Resting\Support;
 
-use Seier\Resting\Params;
 use Seier\Resting\Query;
+use Seier\Resting\Params;
 use Seier\Resting\Resource;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
 
 class ResourceRequest extends FormRequest
 {
     protected $redirect = null;
+
+    protected $data = [
+        'query' => [],
+        'param' => [],
+        'body' => [],
+    ];
 
     public function authorize()
     {
@@ -20,30 +25,40 @@ class ResourceRequest extends FormRequest
 
     public function rules()
     {
-        return request()->_validation ?? [];
+        return $this->formatData($this->getRequest()->_validation);
     }
 
     protected function validationData()
     {
-        $data = [];
-
         foreach ($this->route()->parameters() as $parameter) {
-            if ($parameter instanceof Query || $parameter instanceof Params) {
-                $data = array_merge($data, $parameter->toArray());
-            }
-            elseif ($parameter instanceof Resource) {
-                if (request()->_envelopedResource) {
-                    $data['data'][] = array_merge(
-                        isset($data['data']) ? $data['data'] : [],
-                        $parameter->toArray()
-                    );
-                } else {
-                    $data = array_merge($data, $parameter->toArray());
+            $group = null;
+
+            if ($parameter instanceof Query) {
+                $data = $parameter->toArray();
+                $group = 'query';
+            } elseif ($parameter instanceof Params) {
+                $data = $parameter->toArray();
+                $group = 'param';
+            } elseif ($parameter instanceof Resource) {
+                $data = $parameter->toArray();
+                $group = 'body';
+
+                if ($this->getRequest()->_arrayBody) {
+                    $data = [$data];
                 }
+            } else {
+                continue;
             }
+
+            $this->mergeData($data, $group);
         }
-        
-        return $this->cleanData($data);
+
+        return $this->cleanData($this->data);
+    }
+
+    protected function mergeData(array $data, string $group)
+    {
+        $this->data[$group] = array_merge($this->data[$group] ?? [], $data);
     }
 
     protected function cleanData(array $data)
@@ -60,9 +75,35 @@ class ResourceRequest extends FormRequest
         });
     }
 
+    protected function formatData($array, $prepend = '', $depth = 0, $level = 0)
+    {
+        $results = [];
+
+        foreach ($array ?? [] as $key => $value) {
+            if (is_array($value) && ! empty($value) && $depth >= $level) {
+                $results = array_merge($results, $this->formatData($value, $prepend.$key.'.', $depth, $level+1));
+            } else {
+                $results[$prepend.$key] = $value;
+            }
+        }
+
+        return $results;
+    }
+
     protected function failedValidation(Validator $validator)
     {
-        throw (new ValidationException($validator))
-            ->errorBag($this->errorBag);
+        $exception = $this->getValidationException();
+
+        throw (new $exception($validator))->errorBag($this->errorBag);
+    }
+
+    protected function getValidationException()
+    {
+        return config('resting.validation_exception');
+    }
+
+    protected function getRequest()
+    {
+        return app('request');
     }
 }

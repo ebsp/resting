@@ -6,12 +6,12 @@ use Illuminate\Support\Carbon;
 
 class DateField extends FieldAbstract
 {
-    protected function getMutator($value)
+    public function getMutator($value)
     {
         return $value;
     }
 
-    protected function setMutator($value)
+    public function setMutator($value)
     {
         $value = $value ? Carbon::parse($value) : null;
 
