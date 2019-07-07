@@ -69,6 +69,7 @@ class RestMiddleware
 
         if ($isVariadic) {
             foreach ($this->request->json('data', $this->request->json()) as $values) {
+                $this->request->_arrayBody = true;
                 $value[] = $this->resolveResource($_class->getName(), $values, true);
             }
         } else {
@@ -80,41 +81,51 @@ class RestMiddleware
 
     protected function resolveParam($_class, $values)
     {
-        return $this->resolveQuery($_class, $values);
+        $values = is_array($values) ? $values : [];
+
+        return $this->finalizeInstance(
+            $_class::fromRequest($values, true), false, 'param'
+        );
     }
 
     protected function resolveQuery($_class, $values)
     {
+        $values = is_array($values) ? $values : [];
+
         return $this->finalizeInstance(
-            $_class::fromRequest($values)
+            $_class::fromRequest($values, true), false, 'query'
         );
     }
 
     protected function resolveResource($_class, $values, $multiple = false)
     {
+        $values = is_array($values) ? $values : [];
+
         return $this->finalizeInstance(
-            $_class::fromArray($values, false)->setRequest($this->request), $multiple
+            $_class::fromArray($values, true)->setRequest($this->request), $multiple, 'body'
         );
     }
 
-    public function finalizeInstance(Resource $resource, $multiple = false)
+    public function finalizeInstance(Resource $resource, $multiple = false, string $group)
     {
         $resource->prepare();
+        $validation = $resource->validation($this->request);
 
-        if ($multiple) {
-            $this->request->_envelopedResource = true;
-
-            foreach ($resource->validation($this->request) as $key => $rule) {
-                $this->request->_validation = array_merge($this->request->_validation ?: [], [
-                    'data.*.' . $key => $rule
-                ]);
-            }
-        } else {
-            $this->request->_validation = array_merge(
-                $this->request->_validation ?? [],
-                $resource->validation($this->request)
-            );
+        if ($multiple && 'body' === $group) {
+            $this->request->_arrayBody = true;
+            $group .= '.*';
         }
+
+        $validation = array_merge(
+            $this->request->_validation[$group] ?? [],
+            $validation
+        );
+
+        if (! $this->request->_validation) {
+            $this->request->_validation = [];
+        }
+
+        $this->request->_validation[$group] = $validation;
 
         return $resource->flatten();
     }
@@ -128,6 +139,7 @@ class RestMiddleware
         }
 
         @json_decode($body);
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidJsonException('Invalid json');
         }

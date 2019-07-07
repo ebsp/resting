@@ -103,10 +103,11 @@ class ResourceField extends FieldAbstract
         return $this->value;
     }
 
-    public function throwErrors($should = true)
+    public function suppressErrors($should = false)
     {
-        parent::throwErrors($should);
-        $this->value->throwErrors($should);
+        parent::suppressErrors($should);
+
+        $this->value->suppressErrors($should);
 
         return $this;
     }

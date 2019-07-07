@@ -2,13 +2,27 @@
 
 namespace Seier\Resting\Tests\Fields;
 
-use PHPUnit\Framework\TestCase;
+use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Exceptions\InvalidEnumException;
 use Seier\Resting\Exceptions\InvalidEnumOptionsException;
 
-class EnumTest extends TestCase
+class EnumFieldTest extends TestCase
 {
+    public function testValuesCanBeSetFromArray()
+    {
+        $field = new EnumField(['john', 'doe']);
+        $this->assertTrue(in_array('john', $field->options()));
+        $this->assertTrue(in_array('doe', $field->options()));
+    }
+
+    public function testValuesCanBeSetFromMultipleArguments()
+    {
+        $field = new EnumField('john', 'doe');
+        $this->assertTrue(in_array('john', $field->options()));
+        $this->assertTrue(in_array('doe', $field->options()));
+    }
+
     public function testValueIsValidatedWhenSet()
     {
         $field = new EnumField('john', 'doe');

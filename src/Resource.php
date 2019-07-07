@@ -5,13 +5,15 @@ namespace Seier\Resting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Support\Response;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Fields\FieldAbstract;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Responsable;
-use Seier\Resting\Support\SilenceErrorsTrait;
+use Seier\Resting\Support\SuppressErrorsTrait;
 
 abstract class Resource implements
     Arrayable,
@@ -28,7 +30,7 @@ abstract class Resource implements
 
     protected $request;
 
-    use SilenceErrorsTrait;
+    use SuppressErrorsTrait;
 
     public static function create()
     {
@@ -37,27 +39,27 @@ abstract class Resource implements
 
     /**
      * @param array $values
-     * @param bool $shouldThrowErrors
+     * @param bool $suppressErrors
      * @return static
      */
-    public static function fromArray(array $values, bool $shouldThrowErrors = true) : self
+    public static function fromArray(array $values, bool $suppressErrors = false) : self
     {
-        return static::fromCollection(collect($values), $shouldThrowErrors);
+        return static::fromCollection(collect($values), $suppressErrors);
     }
 
     /**
      * @param Collection $values
-     * @param bool $shouldThrowErrors
+     * @param bool $suppressErrors
      * @return static
      */
-    public static function fromCollection(Collection $values, bool $shouldThrowErrors = true) : self
+    public static function fromCollection(Collection $values, bool $suppressErrors = false) : self
     {
-        return (new static)->throwErrors($shouldThrowErrors)->setPropertiesFromCollection($values);
+        return (new static)->suppressErrors($suppressErrors)->setPropertiesFromCollection($values);
     }
 
-    public static function fromRequest(Request $request)
+    public static function fromRequest(Request $request, bool $suppressErrors = false)
     {
-        return static::fromArray($request->all(), false)->setRequest($request);
+        return static::fromArray($request->all(), $suppressErrors)->setRequest($request);
     }
 
     public static function fromRaw(array $data)
@@ -87,9 +89,7 @@ abstract class Resource implements
             $property = $this->{$field};
 
             if ($property instanceof FieldAbstract && $collection->has($field)) {
-                $property->throwErrors($this->shouldThrowErrors);
-
-                $property->set(
+                $property->suppressErrors($this->suppressErrors)->set(
                     $collection->get($field)
                 );
             };
@@ -155,11 +155,6 @@ abstract class Resource implements
     public function toArray()
     {
         return $this->values();
-    }
-
-    public function toObject()
-    {
-        return json_decode($this->toJson());
     }
 
     public function toJson($options = 0)

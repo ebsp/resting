@@ -2,6 +2,9 @@
 
 namespace Seier\Resting\Fields;
 
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Arr;
+use Seier\Resting\Exceptions\NotArrayException;
 use Seier\Resting\Resource;
 use Illuminate\Support\Collection;
 use Seier\Resting\Rules\ResourceArrayRule;
@@ -28,11 +31,15 @@ class ResourceArrayField extends FieldAbstract
             return (new ResourceField(
                 $this->resource->copy()
             ))->set($_value)->get();
-        }, $value);
+        }, $value ?? []);
     }
 
     public function setMutator($value)
     {
+        if (! Arr::accessible($value)) {
+            throw new NotArrayException('Field value is not an array');
+        }
+
         if ($value instanceof Collection) {
             $value = $value->all();
         }
@@ -83,13 +90,14 @@ class ResourceArrayField extends FieldAbstract
     {
         return array_map(function ($resource) {
             return $resource->toResponseArray();
-        }, $this->value);
+        }, $this->value ?? []);
     }
 
-    public function throwErrors($should = true)
+    public function suppressErrors($should = false)
     {
-        parent::throwErrors($should);
-        $this->resource->throwErrors($should);
+        parent::suppressErrors($should);
+
+        $this->resource->suppressErrors($should);
 
         return $this;
     }

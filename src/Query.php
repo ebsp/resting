@@ -13,9 +13,9 @@ abstract class Query extends Resource
         return true;
     }
 
-    public static function fromRequest(Request $request)
+    public static function fromRequest(Request $request, bool $suppressErrors = false)
     {
-        return static::fromArray($request->query(), false)->setRequest($request);
+        return static::fromArray($request->query(), $suppressErrors)->setRequest($request);
     }
 
     public function setRequest(Request $request)

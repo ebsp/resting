@@ -3,7 +3,7 @@
 namespace Seier\Resting\Fields;
 
 use Exception;
-use Seier\Resting\Support\SilenceErrorsTrait;
+use Seier\Resting\Support\SuppressErrorsTrait;
 
 abstract class FieldAbstract
 {
@@ -15,11 +15,11 @@ abstract class FieldAbstract
     protected $additionalRules = [];
     protected $isNull = false;
 
-    use SilenceErrorsTrait;
+    use SuppressErrorsTrait;
 
     final public function get()
     {
-        return is_null($this->value) ? null : $this->getMutator($this->value);
+        return is_null($this->value) && $this->nullable ? null : $this->getMutator($this->value);
     }
 
     public function formatted()
@@ -32,6 +32,11 @@ abstract class FieldAbstract
         $this->nullable = $is;
 
         return $this;
+    }
+
+    public function isNullable()
+    {
+        return $this->nullable;
     }
 
     public function defaultBuildValue()
@@ -64,7 +69,7 @@ abstract class FieldAbstract
         return $this->set($value);
     }
 
-    protected function getMutator($value)
+    public function getMutator($value)
     {
         if ($this->nullable && ! $this->filled) {
             return null;
@@ -124,20 +129,6 @@ abstract class FieldAbstract
         $this->hidden = $hidden;
 
         return $this;
-    }
-
-    public function throwErrors($should = true)
-    {
-        $this->shouldThrowErrors = $should;
-
-        return $this;
-    }
-
-    protected function error(Exception $exception)
-    {
-        if ($this->shouldThrowErrors) {
-            throw $exception;
-        }
     }
 
     public function filled()

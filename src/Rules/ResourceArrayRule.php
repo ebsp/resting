@@ -2,8 +2,9 @@
 
 namespace Seier\Resting\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
 use Seier\Resting\Resource;
+use Illuminate\Validation\Factory;
+use Illuminate\Contracts\Validation\Rule;
 
 class ResourceArrayRule implements Rule
 {
@@ -12,36 +13,29 @@ class ResourceArrayRule implements Rule
     protected $required;
     protected $messages = [];
 
-    public function __construct(
-        Resource $resource,
-        $required = false
-    ) {
+    public function __construct(Resource $resource)
+    {
         $this->resource = $resource;
-        $this->required = $required;
     }
 
     public function passes($attribute, $values)
     {
-        $this->resources = $values ?? 0;
-
         if (! is_array($values)) {
             return false;
         }
 
-        $i=0;
+        $i = 0;
 
         foreach ($values as $value) {
-            $class = get_class($this->resource);
-            $resource = $class::fromArray($value);
-
-            $resourceValidator = validator([
-                'resource' => $value
-            ], [
-                'resource' => new ResourceRule($resource, true)
-            ]);
+            $resourceValidator = $this->getValidator()->make(
+                $value->toArray(),
+                $value->validation(
+                    $this->getRequest()
+                )
+            );
 
             if ($resourceValidator->fails()) {
-                $this->messages["_" . $i] = $resourceValidator->errors()->toArray()['resource'][0];
+                $this->messages["_" . $i] = $resourceValidator->errors()->toArray();
             }
 
             $i++;
@@ -53,5 +47,23 @@ class ResourceArrayRule implements Rule
     public function message()
     {
         return $this->messages;
+    }
+
+    public function resource()
+    {
+        return $this->resource;
+    }
+
+    /**
+     * @return Factory
+     */
+    protected function getValidator()
+    {
+        return app('restingValidator');
+    }
+
+    protected function getRequest()
+    {
+        return app('request');
     }
 }
