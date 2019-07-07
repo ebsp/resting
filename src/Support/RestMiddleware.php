@@ -81,8 +81,6 @@ class RestMiddleware
 
     protected function resolveParam($_class, $values)
     {
-        $values = is_array($values) ? $values : [];
-
         return $this->finalizeInstance(
             $_class::fromRequest($values, true), false, 'param'
         );
@@ -90,8 +88,6 @@ class RestMiddleware
 
     protected function resolveQuery($_class, $values)
     {
-        $values = is_array($values) ? $values : [];
-
         return $this->finalizeInstance(
             $_class::fromRequest($values, true), false, 'query'
         );

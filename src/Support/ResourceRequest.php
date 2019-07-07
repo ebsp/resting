@@ -32,18 +32,22 @@ class ResourceRequest extends FormRequest
     {
         foreach ($this->route()->parameters() as $parameter) {
             $group = null;
-            $data = $parameter->toArray();
 
             if ($parameter instanceof Query) {
+                $data = $parameter->toArray();
                 $group = 'query';
             } elseif ($parameter instanceof Params) {
+                $data = $parameter->toArray();
                 $group = 'param';
             } elseif ($parameter instanceof Resource) {
+                $data = $parameter->toArray();
                 $group = 'body';
 
                 if ($this->getRequest()->_arrayBody) {
                     $data = [$data];
                 }
+            } else {
+                continue;
             }
 
             $this->mergeData($data, $group);
@@ -75,7 +79,7 @@ class ResourceRequest extends FormRequest
     {
         $results = [];
 
-        foreach ($array as $key => $value) {
+        foreach ($array ?? [] as $key => $value) {
             if (is_array($value) && ! empty($value) && $depth >= $level) {
                 $results = array_merge($results, $this->formatData($value, $prepend.$key.'.', $depth, $level+1));
             } else {
