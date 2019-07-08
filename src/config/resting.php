@@ -3,7 +3,7 @@
 return [
     'api_name' => 'Rest API',
 
-    'version' => 0.1,
+    'version' => '1',
 
     'validation_exception' => \Seier\Resting\Exceptions\ValidationException::class,
 

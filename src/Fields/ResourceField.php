@@ -5,6 +5,7 @@ namespace Seier\Resting\Fields;
 use Exception;
 use Seier\Resting\Resource;
 use Illuminate\Support\Collection;
+use Seier\Resting\Support\OpenAPI;
 use Seier\Resting\Rules\ResourceRule;
 use Seier\Resting\Support\Resourcable;
 
@@ -115,7 +116,9 @@ class ResourceField extends FieldAbstract
     public function type() : array
     {
         return [
-            '$ref' => get_class($this->value),
+            '$ref' => OpenAPI::componentPath(
+                OpenAPI::resourceRefName(get_class($this->value))
+            ),
         ];
     }
 

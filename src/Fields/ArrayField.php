@@ -35,6 +35,7 @@ class ArrayField extends FieldAbstract
     {
         return [
             'type' => 'array',
+            'items' => [],
         ];
     }
 }

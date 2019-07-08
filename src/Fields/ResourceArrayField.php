@@ -2,12 +2,12 @@
 
 namespace Seier\Resting\Fields;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
-use Seier\Resting\Exceptions\NotArrayException;
 use Seier\Resting\Resource;
+use Seier\Resting\Support\OpenAPI;
 use Illuminate\Support\Collection;
 use Seier\Resting\Rules\ResourceArrayRule;
+use Seier\Resting\Exceptions\NotArrayException;
 
 class ResourceArrayField extends FieldAbstract
 {
@@ -102,12 +102,19 @@ class ResourceArrayField extends FieldAbstract
         return $this;
     }
 
+    public function resources()
+    {
+        return $this->resource;
+    }
+
     public function type() : array
     {
         return [
             'type' => 'array',
             'items' => [
-                '$ref' => get_class($this->resource),
+                '$ref' => OpenAPI::componentPath(
+                    OpenAPI::resourceRefName(get_class($this->resource))
+                ),
             ]
         ];
     }

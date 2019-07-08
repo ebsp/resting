@@ -4,16 +4,18 @@ namespace Seier\Resting\Support;
 
 use ReflectionClass;
 use ReflectionParameter;
-use Seier\Resting\Params;
 use Seier\Resting\Query;
+use Seier\Resting\Params;
+use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\Fields\FieldAbstract;
 use Seier\Resting\Fields\ResourceField;
 use Illuminate\Routing\RouteCollection;
-use Seier\Resting\Fields\FieldAbstract;
 use Illuminate\Contracts\Support\Arrayable;
+use Seier\Resting\Fields\ResourceArrayField;
 use Illuminate\Contracts\Support\Responsable;
 
 class OpenAPI implements Arrayable, Responsable
@@ -44,7 +46,7 @@ class OpenAPI implements Arrayable, Responsable
         $this->document['openapi'] = '3.0.0';
 
         $this->document['info'] = [
-            'version' => config('resting.version'),
+            'version' => (string) config('resting.version'),
             'title' => config('resting.api_name'),
         ];
 
@@ -64,8 +66,7 @@ class OpenAPI implements Arrayable, Responsable
             });
 
             $fields->each(function (FieldAbstract $abstract, $key) use ($query, $where) {
-                $this->document['components']['parameters'][
-                    $this->parametersRefName(get_class($query), $key)
+                $this->document['components']['parameters'][static::parametersRefName(get_class($query), $key)
                 ] = [
                     'in' => $where,
                     'name' => $key,
@@ -91,6 +92,9 @@ class OpenAPI implements Arrayable, Responsable
 
             if ($attr instanceof ResourceField) {
                 $this->describeResource($attr->get()->original());
+            } elseif ($attr instanceof ResourceArrayField) {
+                //dd($attr->resources());
+                $this->describeResource($attr->resources());
             }
 
             return $field;
@@ -100,16 +104,13 @@ class OpenAPI implements Arrayable, Responsable
             return $field->isRequired();
         });
 
-        $this->document['components']['schemas'][
-            $this->resourceRefName(get_class($resource))
+        $this->document['components']['schemas'][static::resourceRefName(get_class($resource))
         ] = [
             'type' => 'object',
             'required' => $requiredFields->map(function (FieldAbstract $field, $key) {
                 return $key;
             })->values()->toArray(),
             'properties' => $fields->map(function (FieldAbstract $field) {
-                $type = $field->type();
-
                 foreach ($field->nestedRefs() as $type => $ref) {
                     if ('schema' === $type) {
                         $this->addResource($ref);
@@ -118,7 +119,7 @@ class OpenAPI implements Arrayable, Responsable
                     }
                 }
 
-                return $type;
+                return $field->type();
             })->toArray(),
         ];
     }
@@ -129,7 +130,7 @@ class OpenAPI implements Arrayable, Responsable
 
         foreach ($this->routes->getRoutes() as $route) {
             /** @var $route Route */
-            $method = array_first(array_filter($route->methods(), function ($method) {
+            $method = Arr::first(array_filter($route->methods(), function ($method) {
                 return ! in_array($method, ['OPTIONS', 'HEAD']);
             }));
 
@@ -177,7 +178,9 @@ class OpenAPI implements Arrayable, Responsable
             $this->addResource($resourceClass->getType()->getName());
 
             $schema = $ref = [
-                '$ref' => '#/components/schemas/' . $this->resourceRefName($resourceClass->getType()->getName()),
+                '$ref' => static::componentPath(
+                    static::resourceRefName($resourceClass->getType()->getName())
+                ),
             ];
 
             if ($resourceClass->isVariadic()) {
@@ -228,7 +231,9 @@ class OpenAPI implements Arrayable, Responsable
                 return $field instanceof FieldAbstract;
             })->map(function (FieldAbstract $fieldAbstract, $key) use ($query) {
                 return [
-                    '$ref' => '#/components/parameters/' . $this->parametersRefName(get_class($query), $key)
+                    '$ref' => static::componentPath(
+                        static::parametersRefName(get_class($query), $key), 'parameters'
+                    ),
                 ];
             })->values();
 
@@ -261,7 +266,9 @@ class OpenAPI implements Arrayable, Responsable
                 return $field instanceof FieldAbstract;
             })->map(function (FieldAbstract $fieldAbstract, $key) use ($query) {
                 return [
-                    '$ref' => '#/components/parameters/' . $this->parametersRefName(get_class($query), $key)
+                    '$ref' => static::componentPath(
+                        static::parametersRefName(get_class($query), $key), 'parameters'
+                    )
                 ];
             })->values();
 
@@ -294,16 +301,16 @@ class OpenAPI implements Arrayable, Responsable
 
             if ($className) {
                 $this->addResource($className);
-                $refName = $this->resourceRefName($className);
+                $refName = static::resourceRefName($className);
 
                 $response = [
                     'schema' => $lists ? ([
                         'type' => 'array',
                         'items' => [
-                            '$ref' => '#/components/schemas/' . $refName,
+                            '$ref' => static::componentPath($refName),
                         ],
                     ]) : ([
-                        '$ref' => '#/components/schemas/' . $refName,
+                        '$ref' => static::componentPath($refName),
                     ]),
                 ];
             }
@@ -317,17 +324,22 @@ class OpenAPI implements Arrayable, Responsable
         $this->resources[$resourceClass] = [];
     }
 
-    protected function addParameter($queryClass, $where = 'query')
+    public function addParameter($queryClass, $where = 'query')
     {
         $this->parameters[$queryClass] = $where;
     }
 
-    protected function resourceRefName($resourceClass)
+    public static function componentPath($component, $type = 'schemas')
+    {
+        return "#/components/{$type}/{$component}";
+    }
+
+    public static function resourceRefName($resourceClass)
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $resourceClass);
     }
 
-    protected function parametersRefName($queryClass, $propertyName)
+    protected static function parametersRefName($queryClass, $propertyName)
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $queryClass) . '_' . $propertyName;
     }
