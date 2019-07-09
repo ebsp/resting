@@ -19,7 +19,7 @@ abstract class FieldAbstract
 
     final public function get()
     {
-        return is_null($this->value) && $this->nullable ? null : $this->getMutator($this->value);
+        return is_null($this->value) && $this->isNullable() ? null : $this->getMutator($this->value);
     }
 
     public function formatted()
