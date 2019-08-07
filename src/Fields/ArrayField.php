@@ -21,6 +21,8 @@ class ArrayField extends FieldAbstract
     {
         if (Arr::accessible($value)) {
             return ($value instanceof Arrayable) ? $value->toArray() : $value;
+        } elseif (is_null($value) && $this->isNullable()) {
+            return $value;
         } else {
             throw new NotArrayException('Field value is not an array');
         }

@@ -23,7 +23,14 @@ class EnumField extends StringField
 
     protected function setMutator($value)
     {
-        if (! $this->isValid($value)) {
+        if (is_null($value) && $this->isNullable()){
+            return $value;
+        } elseif (! is_string($value) && ! is_int($value)) {
+            $this->error(
+                new InvalidEnumException('Enum value must be a string')
+            );
+        }
+        elseif (! $this->isValid($value)) {
             $this->error(
                 new InvalidEnumException('Enum value \''. $value .'\' not valid')
             );

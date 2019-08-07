@@ -27,7 +27,7 @@ abstract class FieldAbstract
         return $this->get();
     }
 
-    public function nullable(bool $is)
+    public function nullable(bool $is = true)
     {
         $this->nullable = $is;
 

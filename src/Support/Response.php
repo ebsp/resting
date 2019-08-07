@@ -2,9 +2,9 @@
 
 namespace Seier\Resting\Support;
 
+use Seier\Resting\Resource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Support\Responsable;
-use Seier\Resting\Resource;
 
 class Response implements Responsable
 {
