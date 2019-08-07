@@ -27,6 +27,7 @@ abstract class Resource implements
     protected $_is_null = false;
     protected $_filled = false;
     protected $_raw = null;
+    protected $_is_flattened = false;
 
     protected $request;
 
@@ -181,7 +182,8 @@ abstract class Resource implements
         }
 
         $copy->setOriginal($this);
-        
+        $this->_is_flattened = true;
+
         return $copy;
     }
 
@@ -283,6 +285,11 @@ abstract class Resource implements
         $this->_filled = true;
 
         return $this;
+    }
+
+    public function isFlattened()
+    {
+        return $this->_is_flattened;
     }
 
     public function isNull()

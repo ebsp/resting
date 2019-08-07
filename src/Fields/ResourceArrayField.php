@@ -36,6 +36,10 @@ class ResourceArrayField extends FieldAbstract
 
     public function setMutator($value)
     {
+        if (is_null($value) && $this->isNullable()) {
+            return $value;
+        }
+
         if (! Arr::accessible($value)) {
             throw new NotArrayException('Field value is not an array');
         }

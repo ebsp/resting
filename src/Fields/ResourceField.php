@@ -23,6 +23,10 @@ class ResourceField extends FieldAbstract
 
     public function setMutator($value)
     {
+        if (is_null($value) && $this->isNullable()) {
+            return $value;
+        }
+
         // not sure why this one has to be here in order to work
         if ($value instanceof Resource) {
             return $value;
