@@ -11,9 +11,11 @@ use Seier\Resting\Support\Resourcable;
 
 class ResourceField extends FieldAbstract
 {
+    public $resource;
+    
     public function __construct(Resource $resource)
     {
-        $this->value = $resource;
+        $this->resource = $this->value = $resource;
     }
 
     public function getMutator($value)
