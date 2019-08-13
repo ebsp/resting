@@ -82,7 +82,7 @@ class ResourceField extends FieldAbstract
     protected function fieldValidation() : array
     {
         return $this->isNull() && $this->nullable ? [] : [
-            new ResourceRule($this->value, false)
+            new ResourceRule($this->resource, false)
         ];
     }
 
