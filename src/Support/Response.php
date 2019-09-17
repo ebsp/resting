@@ -18,7 +18,7 @@ class Response implements Responsable
     public static function fromResources(array $resources)
     {
         return new static(array_map(function (Resource $resource) {
-            return $resource->toArray();
+            return $resource->toResponseArray();
         }, $resources));
     }
 

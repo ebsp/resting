@@ -2,7 +2,6 @@
 
 namespace Seier\Resting\Fields;
 
-use Exception;
 use Seier\Resting\Support\SuppressErrorsTrait;
 
 abstract class FieldAbstract
