@@ -4,7 +4,7 @@ namespace Seier\Resting\Fields;
 
 class Field extends FieldAbstract
 {
-    protected function getMutator($value)
+    public function getMutator($value)
     {
         return $value;
     }
