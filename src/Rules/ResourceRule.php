@@ -27,7 +27,7 @@ class ResourceRule implements Rule
         );
 
         $validator = $this->getValidator()->make(
-            $this->resource->toArray(),
+            $values,
             $rules
         );
 
