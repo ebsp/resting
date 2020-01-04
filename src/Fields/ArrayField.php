@@ -24,7 +24,7 @@ class ArrayField extends FieldAbstract
         } elseif (is_null($value) && $this->isNullable()) {
             return $value;
         } else {
-            throw new NotArrayException('Field value is not an array');
+            $this->error(new NotArrayException('Field value is not an array'));
         }
     }
 
