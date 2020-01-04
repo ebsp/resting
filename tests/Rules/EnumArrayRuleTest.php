@@ -12,7 +12,7 @@ class EnumArrayRuleTest extends TestCase
         $rule = new EnumArrayRule(['john', 'doe']);
 
         $this->assertFalse($rule->passes(null, false));
-        $this->assertEquals('invalid_enum', $rule->message());
+        $this->assertEquals('validation.invalid_enum_array', $rule->message());
     }
 
     public function testValidationFailsWrongOption()
@@ -20,7 +20,7 @@ class EnumArrayRuleTest extends TestCase
         $rule = new EnumArrayRule(['john', 'doe']);
 
         $this->assertFalse($rule->passes(null, 'invalid option'));
-        $this->assertEquals('invalid_enum', $rule->message());
+        $this->assertEquals('validation.invalid_enum_array', $rule->message());
     }
 
     public function testValidationPassesOption()

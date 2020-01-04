@@ -38,6 +38,7 @@ class EnumArrayField extends FieldAbstract
         } elseif (is_null($value) && $this->isNullable()) {
             return $value;
         } else {
+            $values = $value;
             $this->error(new NotArrayException('Field value is not an array'));
         }
 

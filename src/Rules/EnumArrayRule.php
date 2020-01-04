@@ -35,6 +35,6 @@ class EnumArrayRule implements Rule
      */
     public function message()
     {
-        return 'invalid_enum';
+        return 'validation.invalid_enum_array';
     }
 }
