@@ -14,7 +14,7 @@ class ResourceRuleTest extends TestCase
         $resource->_string->required();
 
         $rule = new ResourceRule($resource);
-        $this->assertFalse($rule->passes(null, $resource));
+        $this->assertFalse($rule->passes(null, $resource->toArray()));
         $this->assertArrayHasKey('_string', $rule->message());
         $this->assertEquals(1, count($rule->message()));
     }

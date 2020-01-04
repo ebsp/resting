@@ -14,6 +14,7 @@ use Seier\Resting\Fields\NumberField;
 use Seier\Resting\Fields\StringField;
 use Seier\Resting\Fields\PasswordField;
 use Seier\Resting\Fields\ResourceField;
+use Seier\Resting\Fields\EnumArrayField;
 use Seier\Resting\Fields\ResourceArrayField;
 
 class TestResource extends Resource
@@ -30,6 +31,7 @@ class TestResource extends Resource
     public $_resource;
     public $_string;
     public $_hidden;
+    public $_enum_array;
 
     public function __construct()
     {
@@ -45,6 +47,7 @@ class TestResource extends Resource
         $this->_resource = new ResourceField(new TestSubResource);
         $this->_string = new StringField;
         $this->_hidden = new HiddenField;
+        $this->_enum_array = new EnumArrayField(['john', 'doe']);
     }
 }
 

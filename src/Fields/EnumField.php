@@ -2,38 +2,21 @@
 
 namespace Seier\Resting\Fields;
 
-use Seier\Resting\Exceptions\InvalidEnumException;
-use Seier\Resting\Exceptions\InvalidEnumOptionsException;
+use Seier\Resting\Tests\Support\HandlesEnum;
 
 class EnumField extends StringField
 {
-    protected $options;
-
-    public function __construct(...$options)
-    {
-        if (is_array($options[0]) && 1 === func_num_args()) {
-            $this->options = $options[0];
-            return;
-        } elseif (is_array($options[0])) {
-            throw new InvalidEnumOptionsException;
-        }
-
-        $this->options = $options;
-    }
+    use HandlesEnum;
 
     protected function setMutator($value)
     {
         if (is_null($value) && $this->isNullable()){
             return $value;
-        } elseif (! is_string($value) && ! is_int($value)) {
-            $this->error(
-                new InvalidEnumException('Enum value must be a string')
-            );
+        } elseif (! $this->isValidType($value)) {
+            $this->error($this->invalidType($value));
         }
-        elseif (! $this->isValid($value)) {
-            $this->error(
-                new InvalidEnumException('Enum value \''. $value .'\' not valid')
-            );
+        elseif (! $this->isValidOption($value)) {
+            $this->error($this->invalidOption($value));
         }
 
         return $value;
@@ -44,16 +27,6 @@ class EnumField extends StringField
         return [
             'in:' . implode(',', $this->options())
         ];
-    }
-
-    public function options() : array
-    {
-        return $this->options;
-    }
-
-    public function isValid($value)
-    {
-        return in_array($value, $this->options());
     }
 
     public function type() : array

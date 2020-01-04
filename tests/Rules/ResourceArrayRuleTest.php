@@ -2,9 +2,8 @@
 
 namespace Seier\Resting\Tests\Rules;
 
-use Seier\Resting\Rules\ResourceArrayRule;
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Rules\ResourceRule;
+use Seier\Resting\Rules\ResourceArrayRule;
 use Seier\Resting\Tests\Resources\TestResource;
 
 class ResourceArrayRuleTest extends TestCase
