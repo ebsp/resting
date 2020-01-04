@@ -1,6 +1,6 @@
 <?php
 
-namespace Seier\Resting\Tests\Support;
+namespace Seier\Resting\Support;
 
 use Seier\Resting\Exceptions\InvalidEnumException;
 use Seier\Resting\Exceptions\InvalidEnumOptionsException;

@@ -2,7 +2,7 @@
 
 namespace Seier\Resting\Fields;
 
-use Seier\Resting\Tests\Support\HandlesEnum;
+use Seier\Resting\Support\HandlesEnum;
 
 class EnumField extends StringField
 {

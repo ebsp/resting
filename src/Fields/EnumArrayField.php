@@ -4,8 +4,8 @@ namespace Seier\Resting\Fields;
 
 use Illuminate\Support\Arr;
 use Seier\Resting\Rules\EnumArrayRule;
+use Seier\Resting\Support\HandlesEnum;
 use Illuminate\Contracts\Support\Arrayable;
-use Seier\Resting\Tests\Support\HandlesEnum;
 use Seier\Resting\Exceptions\NotArrayException;
 
 class EnumArrayField extends FieldAbstract

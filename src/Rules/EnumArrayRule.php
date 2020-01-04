@@ -3,10 +3,9 @@
 namespace Seier\Resting\Rules;
 
 use Illuminate\Support\Arr;
+use Seier\Resting\Support\HandlesEnum;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Support\Arrayable;
-use Seier\Resting\Tests\Support\HandlesEnum;
-use Seier\Resting\Exceptions\InvalidEnumOptionsException;
 
 class EnumArrayRule implements Rule
 {
