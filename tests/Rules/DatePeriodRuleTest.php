@@ -28,6 +28,16 @@ class DatePeriodRuleTest extends TestCase
         ], $rule->message());
     }
 
+    public function testValidationFailsWhenPeriodExceedsRange()
+    {
+        $rule = new DatePeriodRule(1);
+        $this->assertFalse($rule->passes(null, [Carbon::create(2020, 1, 1), Carbon::create(2020, 1, 10)]));
+
+        $this->assertEquals([
+            'period_ends' => ['validation.range_limit_exceeds'],
+        ], $rule->message());
+    }
+
     public function testValidationPasses()
     {
         $rule = new DatePeriodRule;

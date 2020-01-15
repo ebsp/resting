@@ -63,7 +63,7 @@ class DatePeriodStringField extends FieldAbstract
     protected function fieldValidation() : array
     {
         return [new DatePeriodRule(
-            $this->maxRangeInDays, $this->value
+            $this->maxRangeInDays
         )];
     }
 
