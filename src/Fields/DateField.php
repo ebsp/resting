@@ -16,7 +16,7 @@ class DateField extends FieldAbstract
         $value = $value ? Carbon::parse($value) : null;
 
         /** @var $value Carbon */
-        return optional($value)->format('Y-m-d');
+        return optional($value)->toDateString();
     }
 
     protected function fieldValidation() : array
