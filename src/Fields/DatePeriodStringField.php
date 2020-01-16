@@ -30,21 +30,22 @@ class DatePeriodStringField extends FieldAbstract
 
         $period = explode(',', $value);
         $values = [];
+        $to = null;
 
         try {
             if (! $from = $this->dateIsValid($period[0])) {
                 $this->error(new InvalidPeriodException('Period has invalid date'));
             }
 
-            $values[] = $from;
-
             if (count($period) === 2) {
                 if (! $to = $this->dateIsValid($period[1])) {
                     $this->error(new InvalidPeriodException('Period has invalid date'));
                 }
-
-                $values[] = $to;
             }
+
+            $values = [
+                $from, $to
+            ];
         } catch (Exception $exception) {
             $this->error(new InvalidPeriodException('Period has invalid date'));
         }

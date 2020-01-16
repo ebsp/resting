@@ -65,8 +65,9 @@ class DatePeriodStringFieldTest extends TestCase
         $field->set($starts->toDateString());
 
         $this->assertIsArray($field->get());
-        $this->assertCount(1, $field->get());
+        $this->assertCount(2, $field->get());
         $this->assertTrue($starts->eq($field->get()[0]));
+        $this->assertNull($field->get()[1]);
     }
 
     public function testEndsMustBeAfterStarts()
