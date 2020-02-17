@@ -4,10 +4,9 @@ namespace Seier\Resting\Rules;
 
 use Illuminate\Support\Arr;
 use Seier\Resting\Support\HandlesEnum;
-use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Support\Arrayable;
 
-class EnumArrayRule implements Rule
+class EnumArrayRule extends BaseRule
 {
     use HandlesEnum;
 

@@ -3,10 +3,8 @@
 namespace Seier\Resting\Rules;
 
 use Seier\Resting\Resource;
-use Illuminate\Validation\Factory;
-use Illuminate\Contracts\Validation\Rule;
 
-class ResourceArrayRule implements Rule
+class ResourceArrayRule extends BaseRule
 {
     protected $resource;
     protected $resources = 0;
@@ -57,18 +55,5 @@ class ResourceArrayRule implements Rule
     public function resource()
     {
         return $this->resource;
-    }
-
-    /**
-     * @return Factory
-     */
-    protected function getValidator()
-    {
-        return app('restingValidator');
-    }
-
-    protected function getRequest()
-    {
-        return app('request');
     }
 }

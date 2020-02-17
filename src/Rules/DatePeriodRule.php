@@ -2,11 +2,9 @@
 
 namespace Seier\Resting\Rules;
 
-use Carbon\Carbon;
 use Illuminate\Validation\Factory;
-use Illuminate\Contracts\Validation\Rule;
 
-class DatePeriodRule implements Rule
+class DatePeriodRule extends BaseRule
 {
     protected $maxRangeInDays;
     protected $value;
@@ -49,13 +47,5 @@ class DatePeriodRule implements Rule
     public function message()
     {
         return $this->messages;
-    }
-
-    /**
-     * @return Factory
-     */
-    protected function getValidator()
-    {
-        return app('restingValidator');
     }
 }

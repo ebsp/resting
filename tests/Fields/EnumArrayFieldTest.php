@@ -39,12 +39,14 @@ class EnumArrayFieldTest extends TestCase
         $field->set([false]);
     }
 
-    public function testValueCanBeSet()
+    public function testSetOption()
     {
         $field = new EnumArrayField('john', 'doe');
         $field->set(['john']);
         $this->assertEquals(['john'], $field->get());
     }
+
+
     public function testEnumValidation()
     {
         $field = new EnumArrayField(['john', 'doe']);

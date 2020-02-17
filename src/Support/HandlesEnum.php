@@ -31,7 +31,7 @@ trait HandlesEnum
         return in_array($value, $this->options());
     }
 
-    public function options() : array
+    public function options(): array
     {
         return $this->options;
     }

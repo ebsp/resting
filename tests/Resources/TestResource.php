@@ -14,6 +14,7 @@ use Seier\Resting\Fields\NumberField;
 use Seier\Resting\Fields\StringField;
 use Seier\Resting\Fields\PasswordField;
 use Seier\Resting\Fields\ResourceField;
+use Seier\Resting\Fields\IntArrayField;
 use Seier\Resting\Fields\EnumArrayField;
 use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Fields\DatePeriodStringField;
@@ -34,6 +35,7 @@ class TestResource extends Resource
     public $_hidden;
     public $_enum_array;
     public $period_string;
+    public $int_array;
 
     public function __construct()
     {
@@ -51,6 +53,6 @@ class TestResource extends Resource
         $this->_hidden = new HiddenField;
         $this->_enum_array = new EnumArrayField(['john', 'doe']);
         $this->period_string = new DatePeriodStringField;
+        $this->int_array = new IntArrayField;
     }
 }
-

@@ -3,22 +3,18 @@
 namespace Seier\Resting\Fields;
 
 use Illuminate\Support\Arr;
-use Seier\Resting\Rules\EnumArrayRule;
-use Seier\Resting\Support\HandlesEnum;
+use Seier\Resting\Rules\IntArrayRule;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Exceptions\NotArrayException;
+use Seier\Resting\Exceptions\InvalidTypeException;
 
-class EnumArrayField extends FieldAbstract
+class IntArrayField extends FieldAbstract
 {
-    use HandlesEnum;
-
     protected $value = [];
 
     public function push($value)
     {
-        $this->value = $this->setMutator(array_merge($this->value, [$value]));
-
-        return $this;
+        return $this->set(array_merge($this->value, [$value]));
     }
 
     protected function setMutator($value)
@@ -29,10 +25,6 @@ class EnumArrayField extends FieldAbstract
             foreach ($values as $value) {
                 if (! $this->isValidType($value)) {
                     $this->error($this->invalidType($value));
-                }
-
-                if (! $this->isValidOption($value)) {
-                    $this->error($this->invalidOption($value));
                 }
             }
         } elseif (is_null($value) && $this->isNullable()) {
@@ -45,9 +37,19 @@ class EnumArrayField extends FieldAbstract
         return $values;
     }
 
+    protected function isValidType($value)
+    {
+        return is_int($value);
+    }
+
+    protected function invalidType($value)
+    {
+        return new InvalidTypeException('Value must be an int');
+    }
+
     protected function fieldValidation() : array
     {
-        return ['array', new EnumArrayRule($this->options())];
+        return ['array', new IntArrayRule];
     }
 
     public function type() : array
@@ -55,8 +57,7 @@ class EnumArrayField extends FieldAbstract
         return [
             'type' => 'array',
             'items' => [
-                'type' => 'string',
-                'enum' => $this->options(),
+                'type' => 'integer',
             ],
         ];
     }
