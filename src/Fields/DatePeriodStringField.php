@@ -50,11 +50,14 @@ class DatePeriodStringField extends FieldAbstract
             $this->error(new InvalidPeriodException('Period has invalid date'));
         }
 
-        if (count($period) === 2 && $this->maxRangeInDays && $values[0]->diffInDays($values[1]) > $this->maxRangeInDays) {
+        $from = $values[0] ?? null;
+        $to = $values[1] ?? null;
+
+        if (count($period) === 2 && $this->maxRangeInDays && optional($from)->diffInDays($to) > $this->maxRangeInDays) {
             $this->error(new PeriodExceedsRangeException('Period exceeds range'));
         }
 
-        if (count($period) === 2 && $values[0]->gt($values[1])) {
+        if (count($period) === 2 && optional($from)->gt($to)) {
             $this->error(new InvalidPeriodException('Period ends before it starts'));
         }
 
