@@ -10,7 +10,7 @@ class StringField extends FieldAbstract
 
     protected function setMutator($value)
     {
-        if (! is_string($value)) {
+        if (!is_string($value) && (!is_null($value) && $this->nullable)) {
             $this->error(new InvalidTypeException('Value must be string'));
         }
 

@@ -44,6 +44,13 @@ class StringFieldTest extends TestCase
         $this->assertNull($field->get());
     }
 
+    public function testNullable()
+    {
+        $field = new StringField;
+        $field->set(null);
+        $this->assertNull($field->get());
+    }
+
     public function testNonNullable()
     {
         $field = (new StringField)->nullable(false);
