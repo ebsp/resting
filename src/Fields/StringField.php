@@ -2,13 +2,19 @@
 
 namespace Seier\Resting\Fields;
 
+use Seier\Resting\Exceptions\InvalidTypeException;
+
 class StringField extends FieldAbstract
 {
     protected $value = '';
 
     protected function setMutator($value)
     {
-        return (string) $value;
+        if (! is_string($value)) {
+            $this->error(new InvalidTypeException('Value must be string'));
+        }
+
+        return $value;
     }
 
     public function formatted()

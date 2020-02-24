@@ -4,6 +4,7 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\StringField;
+use Seier\Resting\Exceptions\InvalidTypeException;
 
 class StringFieldTest extends TestCase
 {
@@ -13,12 +14,28 @@ class StringFieldTest extends TestCase
         $this->assertEquals($field->validation()[0], 'string');
     }
 
-    public function testCasting()
+    public function testInvalidTypeInt()
     {
+        $this->expectException(InvalidTypeException::class);
+
         $field = new StringField;
         $field->set(1);
-        $this->assertFalse(is_int($field->get()));
-        $this->assertTrue(is_string($field->get()));
+    }
+
+    public function testInvalidTypeArray()
+    {
+        $this->expectException(InvalidTypeException::class);
+
+        $field = new StringField;
+        $field->set([]);
+    }
+
+    public function testInvalidTypeBool()
+    {
+        $this->expectException(InvalidTypeException::class);
+
+        $field = new StringField;
+        $field->set(false);
     }
 
     public function testEmptyReturnsNull()
