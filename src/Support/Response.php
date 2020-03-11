@@ -9,6 +9,7 @@ use Illuminate\Contracts\Support\Responsable;
 class Response implements Responsable
 {
     private $data = [];
+    private $status = 200;
 
     public function __construct(array $data)
     {
@@ -20,6 +21,13 @@ class Response implements Responsable
         return new static(array_map(function (Resource $resource) {
             return $resource->toResponseArray();
         }, $resources));
+    }
+
+    public function responseCode(int $code)
+    {
+        $this->status = $code;
+
+        return $this;
     }
 
     /**
@@ -38,6 +46,6 @@ class Response implements Responsable
     {
         return new JsonResponse([
             'data' => $this->data,
-        ]);
+        ], $this->status);
     }
 }
