@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Tests\Fields;
 
+use Illuminate\Support\Str;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Exceptions\InvalidEnumException;
@@ -49,9 +50,9 @@ class EnumFieldTest extends TestCase
         unset($validation[$nullableKey]);
 
         $enumRule = $validation[0];
-        $this->assertTrue(str_contains($enumRule, 'in:'));
-        $this->assertTrue(str_contains($enumRule, 'john'));
-        $this->assertTrue(str_contains($enumRule, 'doe'));
+        $this->assertTrue(Str::contains($enumRule, 'in:'));
+        $this->assertTrue(Str::contains($enumRule, 'john'));
+        $this->assertTrue(Str::contains($enumRule, 'doe'));
     }
 
     public function testArrayAsOptions()
