@@ -46,7 +46,7 @@ class OpenAPI implements Arrayable, Responsable
         $this->document['openapi'] = '3.0.0';
 
         $this->document['info'] = [
-            'version' => (string) config('resting.version'),
+            'version' => (string)config('resting.version'),
             'title' => config('resting.api_name'),
         ];
 
@@ -66,8 +66,7 @@ class OpenAPI implements Arrayable, Responsable
             });
 
             $fields->each(function (FieldAbstract $abstract, $key) use ($query, $where) {
-                $this->document['components']['parameters'][static::parametersRefName(get_class($query), $key)
-                ] = [
+                $this->document['components']['parameters'][static::parametersRefName(get_class($query), $key)] = [
                     'in' => $where,
                     'name' => $key,
                     'required' => $abstract->isRequired(),
@@ -104,8 +103,7 @@ class OpenAPI implements Arrayable, Responsable
             return $field->isRequired();
         });
 
-        $this->document['components']['schemas'][static::resourceRefName(get_class($resource))
-        ] = [
+        $this->document['components']['schemas'][static::resourceRefName(get_class($resource))] = [
             'type' => 'object',
             'required' => $requiredFields->map(function (FieldAbstract $field, $key) {
                 return $key;
@@ -131,14 +129,12 @@ class OpenAPI implements Arrayable, Responsable
         foreach ($this->routes->getRoutes() as $route) {
             /** @var $route Route */
             $method = Arr::first(array_filter($route->methods(), function ($method) {
-                return ! in_array($method, ['OPTIONS', 'HEAD']);
+                return !in_array($method, ['OPTIONS', 'HEAD']);
             }));
 
             $route->bind(new Request);
 
-            $paths[
-                '/' . $route->uri()
-            ][strtolower($method)] = $this->describeEndpoint($route, $method);
+            $paths['/' . $route->uri()][strtolower($method)] = $this->describeEndpoint($route, $method);
         }
 
         $this->document['paths'] = $paths;
@@ -157,15 +153,15 @@ class OpenAPI implements Arrayable, Responsable
             ],
         ];
 
-        $resourceClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
-            if (! $type = $parameter->getType()) {
+        $resourceClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (!$type = $parameter->getType()) {
                 return false;
             }
 
             $reflectionClass = new ReflectionClass($type->getName());
 
             if ($reflectionClass->isInstantiable()) {
-                if ($reflectionClass->isSubclassOf(Resource::class) && ! $reflectionClass->isSubclassOf(Query::class) && ! $reflectionClass->isSubclassOf(Params::class)) {
+                if ($reflectionClass->isSubclassOf(Resource::class) && !$reflectionClass->isSubclassOf(Query::class) && !$reflectionClass->isSubclassOf(Params::class)) {
                     return true;
                 }
             }
@@ -205,8 +201,8 @@ class OpenAPI implements Arrayable, Responsable
             ];
         }
 
-        $queryClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
-            if (! $type = $parameter->getType()) {
+        $queryClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (!$type = $parameter->getType()) {
                 return false;
             }
 
@@ -240,8 +236,8 @@ class OpenAPI implements Arrayable, Responsable
             $endpoint['parameters'] = $fields->toArray();
         }
 
-        $paramClass = array_first($route->signatureParameters(), function (ReflectionParameter $parameter) {
-            if (! $type = $parameter->getType()) {
+        $paramClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+            if (!$type = $parameter->getType()) {
                 return false;
             }
 
