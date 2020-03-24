@@ -1,7 +1,7 @@
 {
     "name": "ebsp/resting",
     "require": {
-        "laravel/framework": "6.*"
+        "laravel/framework": "^5.7 || ^6.0 || ^7.0"
     },
     "authors": [
         {

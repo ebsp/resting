@@ -23,7 +23,7 @@ class RestingServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->mergeConfigFrom(
-            $configPath = __DIR__.'/../config/resting.php', 'resting'
+            $configPath = __DIR__ . '/../config/resting.php', 'resting'
         );
 
         $this->publishes([
@@ -34,7 +34,7 @@ class RestingServiceProvider extends ServiceProvider
             return $this->app->get('validator');
         });
 
-        \Illuminate\Support\Facades\Validator::resolver(function($translator, $data, $rules, $messages) {
+        \Illuminate\Support\Facades\Validator::resolver(function ($translator, $data, $rules, $messages) {
             return new RestValidator($translator, $data, $rules, $messages);
         });
 
@@ -43,41 +43,48 @@ class RestingServiceProvider extends ServiceProvider
             $request->setContainer($app)->setRedirector($app->make(Redirector::class));
         });
 
-        if (class_exists('\Illuminate\Foundation\Testing\TestResponse')) {
-            \Illuminate\Foundation\Testing\TestResponse::macro('assertNestedJsonValidationErrors', function ($errors, $group = 'body') {
-                $errors = Arr::wrap($errors);
+        $macroName = 'assertNestedJsonValidationErrors';
+        $macroAction = function ($errors, $group = 'body') {
+            $errors = Arr::wrap($errors);
 
-                Assert::assertNotEmpty($errors, 'No validation errors were provided.');
+            Assert::assertNotEmpty($errors, 'No validation errors were provided.');
 
-                $jsonErrors = $this->json()['errors'][$group] ?? [];
+            $jsonErrors = $this->json()['errors'][$group] ?? [];
 
-                $errorMessage = $jsonErrors
-                    ? 'Response has the following JSON validation errors:'.
-                    PHP_EOL.PHP_EOL.json_encode($jsonErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
-                    : 'Response does not have JSON validation errors.';
+            $errorMessage = $jsonErrors
+                ? 'Response has the following JSON validation errors:' .
+                PHP_EOL . PHP_EOL . json_encode($jsonErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL
+                : 'Response does not have JSON validation errors.';
 
-                foreach ($errors as $key => $value) {
-                    Assert::assertArrayHasKey(
-                        (is_int($key)) ? $value : $key,
-                        $jsonErrors,
-                        "Failed to find a validation error in the response for key: '{$value}'".PHP_EOL.PHP_EOL.$errorMessage
-                    );
+            foreach ($errors as $key => $value) {
+                Assert::assertArrayHasKey(
+                    (is_int($key)) ? $value : $key,
+                    $jsonErrors,
+                    "Failed to find a validation error in the response for key: '{$value}'" . PHP_EOL . PHP_EOL . $errorMessage
+                );
 
-                    if (! is_int($key)) {
-                        foreach (Arr::wrap($jsonErrors[$key]) as $jsonErrorMessage) {
-                            if (Str::contains($jsonErrorMessage, $value)) {
-                                return $this;
-                            }
+                if (!is_int($key)) {
+                    foreach (Arr::wrap($jsonErrors[$key]) as $jsonErrorMessage) {
+                        if (Str::contains($jsonErrorMessage, $value)) {
+                            return $this;
                         }
-
-                        Assert::fail(
-                            "Failed to find a validation error in the response for key and message: '$key' => '$value'".PHP_EOL.PHP_EOL.$errorMessage
-                        );
                     }
-                }
 
-                return $this;
-            });
+                    Assert::fail(
+                        "Failed to find a validation error in the response for key and message: '$key' => '$value'" . PHP_EOL . PHP_EOL . $errorMessage
+                    );
+                }
+            }
+
+            return $this;
+        };
+
+        if (class_exists('\Illuminate\Foundation\Testing\TestResponse')) {
+            \Illuminate\Foundation\Testing\TestResponse::macro($macroName, $macroAction);
+        }
+
+        if (class_exists('\Illuminate\Testing\TestResponse')) {
+            \Illuminate\Testing\TestResponse::macro($macroName, $macroAction);
         }
 
         \Illuminate\Routing\Route::macro('rest', function () {
