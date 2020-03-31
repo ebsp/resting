@@ -14,7 +14,14 @@ class DatePeriodStringField extends FieldAbstract
 
     public function __construct(int $maxRangeInDays = null)
     {
+        $this->setMaxRange($maxRangeInDays);
+    }
+
+    public function setMaxRange(?int $maxRangeInDays)
+    {
         $this->maxRangeInDays = $maxRangeInDays;
+
+        return $this;
     }
 
     public function getMutator($value)
