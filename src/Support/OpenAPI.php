@@ -286,32 +286,35 @@ class OpenAPI implements Arrayable, Responsable
             $type = $reflectionClass->getMethod($_method)->getReturnType();
 
             $lists = false;
-            $className = null;
+            $classes = [];
 
-            if ($route->_lists) {
+            if (is_array($route->_lists) && count($route->_lists)) {
                 $lists = true;
-                $className = $route->_lists;
+                $classes = $route->_lists;
             } elseif ($type) {
-                $className = $type->getName();
+                $classes = [$type->getName()];
             }
 
-            if ($className) {
-                $this->addResource($className);
-                $refName = static::resourceRefName($className);
+            if (count($classes)) {
+                foreach ($classes as $className) {
+                    $this->addResource($className);
+                }
+
+                $refs = array_map(function ($_className) {
+                    return ['$ref' => static::componentPath(static::resourceRefName($_className))];
+                }, $classes);
 
                 $response = [
-                    'schema' => $lists ? ([
+                    'schema' => $lists ? [
                         'type' => 'array',
                         'items' => [
-                            '$ref' => static::componentPath($refName),
+                            'oneOf' => $refs
                         ],
-                    ]) : ([
-                        '$ref' => static::componentPath($refName),
-                    ]),
+                    ] : $refs[0],
                 ];
             }
         }
-
+        
         return $response;
     }
 
