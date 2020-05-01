@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Support\Response;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Fields\FieldAbstract;

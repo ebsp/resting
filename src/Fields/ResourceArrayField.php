@@ -8,6 +8,7 @@ use Seier\Resting\Support\OpenAPI;
 use Illuminate\Support\Collection;
 use Seier\Resting\Rules\ResourceArrayRule;
 use Seier\Resting\Exceptions\NotArrayException;
+use Seier\Resting\UnionResource;
 
 class ResourceArrayField extends FieldAbstract
 {
@@ -40,7 +41,7 @@ class ResourceArrayField extends FieldAbstract
             return $value;
         }
 
-        if (! Arr::accessible($value)) {
+        if (!Arr::accessible($value)) {
             throw new NotArrayException('Field value is not an array');
         }
 
@@ -49,10 +50,16 @@ class ResourceArrayField extends FieldAbstract
         }
 
         return array_map(function ($_value) {
-            $class = get_class($this->resource);
+
+            if ($this->resource instanceof UnionResource) {
+                $instance = $this->resource->copy();
+            } else {
+                $class = get_class($this->resource);
+                $instance = new $class;
+            }
 
             return (new ResourceField(
-                new $class
+                $instance
             ))->setMutator(
                 $_value
             );
@@ -71,7 +78,7 @@ class ResourceArrayField extends FieldAbstract
         return $this->value = $value;
     }
 
-    protected function fieldValidation() : array
+    protected function fieldValidation(): array
     {
         return [
             new ResourceArrayRule($this->resource)
@@ -111,7 +118,7 @@ class ResourceArrayField extends FieldAbstract
         return $this->resource;
     }
 
-    public function type() : array
+    public function type(): array
     {
         return [
             'type' => 'array',
@@ -123,7 +130,7 @@ class ResourceArrayField extends FieldAbstract
         ];
     }
 
-    public function nestedRefs() : array
+    public function nestedRefs(): array
     {
         return [
             'schema' => get_class($this->resource),

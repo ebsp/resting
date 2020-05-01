@@ -8,11 +8,12 @@ use Illuminate\Support\Collection;
 use Seier\Resting\Support\OpenAPI;
 use Seier\Resting\Rules\ResourceRule;
 use Seier\Resting\Support\Resourcable;
+use Seier\Resting\UnionResource;
 
 class ResourceField extends FieldAbstract
 {
     public $resource;
-    
+
     public function __construct(Resource $resource)
     {
         $this->resource = $this->value = $resource;
@@ -94,7 +95,7 @@ class ResourceField extends FieldAbstract
     public function requiredFields(...$fields)
     {
         $this->required();
-        
+
         foreach ($this->value->fields() as $name => $field) {
             /** @var Field $field */
             $field->required(
