@@ -42,7 +42,7 @@ abstract class Resource implements
      * @param bool $suppressErrors
      * @return static
      */
-    public static function fromArray(array $values, bool $suppressErrors = false) : self
+    public static function fromArray(array $values, bool $suppressErrors = false): self
     {
         return static::fromCollection(collect($values), $suppressErrors);
     }
@@ -52,7 +52,7 @@ abstract class Resource implements
      * @param bool $suppressErrors
      * @return static
      */
-    public static function fromCollection(Collection $values, bool $suppressErrors = false) : self
+    public static function fromCollection(Collection $values, bool $suppressErrors = false): self
     {
         return (new static)->suppressErrors($suppressErrors)->setPropertiesFromCollection($values);
     }
@@ -107,7 +107,7 @@ abstract class Resource implements
         return $this;
     }
 
-    public function fields() : Collection
+    public function fields(): Collection
     {
         return collect(
             objectProperties($this)
@@ -122,10 +122,10 @@ abstract class Resource implements
 
         return $this->fields()
             ->filter(function ($field) {
-                return ! ($field instanceof FieldAbstract && $field->isHidden());
+                return !($field instanceof FieldAbstract && $field->isHidden());
             })
             ->map(function ($field) {
-                if ($field instanceof ResourceField && ! $field->filled()) {
+                if ($field instanceof ResourceField && !$field->filled()) {
                     return null;
                 }
 
@@ -222,7 +222,7 @@ abstract class Resource implements
         );
     }
 
-    protected function responseData() : array
+    protected function responseData(): array
     {
         return (new Response(
             $this->toResponseArray()
@@ -248,7 +248,7 @@ abstract class Resource implements
         return $this;
     }
 
-    public function responseCode($code) : self
+    public function responseCode($code): self
     {
         $this->_responseCode = $code;
 
@@ -257,7 +257,7 @@ abstract class Resource implements
 
     public function trimNullValues(bool $should = null)
     {
-        if (! is_null($should)) {
+        if (!is_null($should)) {
             return $this->_trimNullValues = $should;
         }
 
@@ -301,5 +301,10 @@ abstract class Resource implements
         $this->_is_null = true;
 
         return $this;
+    }
+
+    public function getDependantResources()
+    {
+        return [];
     }
 }

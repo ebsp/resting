@@ -15,7 +15,7 @@ class UnionResourceB extends Resource
 
     public function __construct()
     {
-        $this->value = new StringField;
+        $this->value = (new StringField)->required();
         $this->b_specific = new StringField;
     }
 }

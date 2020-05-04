@@ -80,7 +80,7 @@ class ResourceField extends FieldAbstract
         return $this->value->{$name}->set($value);
     }
 
-    protected function fieldValidation() : array
+    protected function fieldValidation(): array
     {
         return $this->isNull() && $this->nullable ? [] : [
             new ResourceRule($this->resource, false)
@@ -120,8 +120,12 @@ class ResourceField extends FieldAbstract
         return $this;
     }
 
-    public function type() : array
+    public function type(): array
     {
+        if ($this->value instanceof UnionResource) {
+            return $this->value->type();
+        }
+
         return [
             '$ref' => OpenAPI::componentPath(
                 OpenAPI::resourceRefName(get_class($this->value))
@@ -129,7 +133,7 @@ class ResourceField extends FieldAbstract
         ];
     }
 
-    public function nestedRefs() : array
+    public function nestedRefs(): array
     {
         return [
             'schema' => get_class($this->value),

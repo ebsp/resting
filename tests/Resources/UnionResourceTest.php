@@ -4,6 +4,8 @@
 namespace Seier\Resting\Tests\Resources;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteCollection;
 use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\TestCase;
@@ -87,5 +89,17 @@ class UnionResourceTest extends TestCase
         $this->assertInstanceOf(UnionResourceB::class, $get[1]);
         $this->assertEquals('b_value', $get[1]->b_specific);
         $this->assertEquals('b_value', $get[1]->value);
+    }
+
+    public function testFromRaw()
+    {
+        $value = [[
+            'union' => [
+                ['discriminator' => 'a', 'a_specific' => 'a_value', 'value' => 'a_value'],
+                ['discriminator' => 'b', 'b_specific' => 'b_value', 'value' => 'b_value'],
+            ]
+        ]];
+
+        $this->assertEquals($value, UnionParentResource::fromRaw($value)->toArray());
     }
 }

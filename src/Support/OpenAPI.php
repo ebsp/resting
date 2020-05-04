@@ -17,6 +17,7 @@ use Illuminate\Routing\RouteCollection;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Fields\ResourceArrayField;
 use Illuminate\Contracts\Support\Responsable;
+use Seier\Resting\UnionResource;
 
 class OpenAPI implements Arrayable, Responsable
 {
@@ -90,10 +91,15 @@ class OpenAPI implements Arrayable, Responsable
             $field = $attr instanceof FieldAbstract;
 
             if ($attr instanceof ResourceField) {
-                $this->describeResource($attr->get()->original());
+                $class = get_class($attr->get()->original());
+                if ($class !== UnionResource::class) {
+                    $this->describeResource($attr->get()->original());
+                }
             } elseif ($attr instanceof ResourceArrayField) {
-                //dd($attr->resources());
-                $this->describeResource($attr->resources());
+                $class = get_class($attr->resources());
+                if ($class !== UnionResource::class) {
+                    $this->describeResource($attr->resources());
+                }
             }
 
             return $field;
@@ -172,23 +178,57 @@ class OpenAPI implements Arrayable, Responsable
         if (in_array($method, ['POST', 'PATCH', 'PUT']) && $resourceClass) {
             /** @var ReflectionParameter $resourceClass */
             $this->addResource($resourceClass->getType()->getName());
+            $resourceName = $resourceClass->getType()->getName();
+            if ($resourceName !== UnionResource::class) {
+                $instance = new $resourceName;
+                if ($instance instanceof Resource) {
+                    foreach ($instance->fields() as $k => $field) {
+                        if ($field instanceof ResourceField) {
+                            if ($field->get() instanceof UnionResource) {
+                                foreach ($field->get()->getDependantResources() as $dependantResource) {
+                                    $this->addResource($dependantResource);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
-            $schema = $ref = [
-                '$ref' => static::componentPath(
-                    static::resourceRefName($resourceClass->getType()->getName())
-                ),
-            ];
+            if ((new $resourceName) instanceof UnionResource) {
+                $schema = [
+                    'oneOf' => array_values(array_map(function (string $dependant) {
+                        return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
+                    }, ((new $resourceName)->getDependantResources())))
+                ];
+            } else {
+                $schema = $ref = [
+                    '$ref' => static::componentPath(
+                        static::resourceRefName($resourceClass->getType()->getName())
+                    ),
+                ];
+            }
 
             if ($resourceClass->isVariadic()) {
-                $schema = [
-                    'type' => 'object',
-                    'properties' => [
-                        'data' => [
-                            'type' => 'array',
-                            'items' => $ref,
+                if ((new $resourceName) instanceof UnionResource) {
+                    $schema = [
+                        'type' => 'array',
+                        'items' => [
+                            'oneOf' => array_values(array_map(function (string $dependant) {
+                                return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
+                            }, ((new $resourceName)->getDependantResources())))
                         ]
-                    ]
-                ];
+                    ];
+                } else {
+                    $schema = [
+                        'type' => 'object',
+                        'properties' => [
+                            'data' => [
+                                'type' => 'array',
+                                'items' => $ref,
+                            ]
+                        ]
+                    ];
+                }
             }
 
             $endpoint['requestBody'] = [
@@ -297,6 +337,7 @@ class OpenAPI implements Arrayable, Responsable
 
             if ($className) {
                 $this->addResource($className);
+
                 $refName = static::resourceRefName($className);
 
                 $response = [
@@ -315,14 +356,23 @@ class OpenAPI implements Arrayable, Responsable
         return $response;
     }
 
-    protected function addResource($resourceClass)
+    protected function addResource($resourceName)
     {
-        $this->resources[$resourceClass] = [];
+        if ($resourceName !== UnionResource::class) {
+            if (($item = new $resourceName) instanceof UnionResource) {
+                foreach ($item->getDependantResources() as $unionType) {
+                    $this->addResource($unionType);
+                }
+            } else {
+                $this->resources[$resourceName] = [];
+            }
+        }
     }
 
     public function addParameter($queryClass, $where = 'query')
     {
-        $this->parameters[$queryClass] = $where;
+        if ($queryClass !== UnionResource::class)
+            $this->parameters[$queryClass] = $where;
     }
 
     public static function componentPath($component, $type = 'schemas')
