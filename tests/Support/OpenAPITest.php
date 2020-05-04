@@ -67,14 +67,48 @@ class OpenAPITest extends TestCase
         $this->assertComponentExists($schema, UnionResourceB::class);
     }
 
-    public function testAids(){
+    public function testOutputUnionResourceComposition()
+    {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'composition', fn(UnionParentResource $r) => null)));
-        $routeCollection->add((new Route(['POST'], 'inheritance', fn(ExtendsUnionResource $r) => null)));
-        $routeCollection->add((new Route(['POST'], 'variadic', fn(ExtendsUnionResource ...$r) => null)));
+        $routeCollection->add((new Route(['POST'], 'variadic', fn(): UnionParentResource => null)));
+
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
-        var_dump(json_encode($schema));
+
+        $this->assertComponentExists($schema, UnionParentResource::class);
+        $this->assertComponentExists($schema, UnionResourceA::class);
+        $this->assertComponentExists($schema, UnionResourceB::class);
+    }
+
+    public function testOutputUnionResourceInheritance()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'inheritance', fn(): ExtendsUnionResource => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertComponentNotExists($schema, ExtendsUnionResource::class);
+        $this->assertComponentExists($schema, UnionResourceA::class);
+        $this->assertComponentExists($schema, UnionResourceB::class);
+    }
+
+    public function testOutputUnionResourceListInheritance()
+    {
+        \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
+            $this->_lists = $resource;
+            return $this;
+        });
+
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'inheritance', fn(): ExtendsUnionResource => null))->lists(ExtendsUnionResource::class));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertComponentNotExists($schema, ExtendsUnionResource::class);
+        $this->assertComponentExists($schema, UnionResourceA::class);
+        $this->assertComponentExists($schema, UnionResourceB::class);
     }
 
     private function assertComponentExists(array $schema, string $resource)

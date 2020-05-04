@@ -179,26 +179,11 @@ class OpenAPI implements Arrayable, Responsable
             /** @var ReflectionParameter $resourceClass */
             $this->addResource($resourceClass->getType()->getName());
             $resourceName = $resourceClass->getType()->getName();
-            if ($resourceName !== UnionResource::class) {
-                $instance = new $resourceName;
-                if ($instance instanceof Resource) {
-                    foreach ($instance->fields() as $k => $field) {
-                        if ($field instanceof ResourceField) {
-                            if ($field->get() instanceof UnionResource) {
-                                foreach ($field->get()->getDependantResources() as $dependantResource) {
-                                    $this->addResource($dependantResource);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
-            if ((new $resourceName) instanceof UnionResource) {
+            if ($this->isUnionSubclass($resourceName)) {
                 $schema = [
-                    'oneOf' => array_values(array_map(function (string $dependant) {
-                        return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
-                    }, ((new $resourceName)->getDependantResources())))
+                    'type' => 'object',
+                    'oneOf' => $this->createOneOfArray($resourceName)
                 ];
             } else {
                 $schema = $ref = [
@@ -209,13 +194,11 @@ class OpenAPI implements Arrayable, Responsable
             }
 
             if ($resourceClass->isVariadic()) {
-                if ((new $resourceName) instanceof UnionResource) {
+                if ($this->isUnionSubclass($resourceName)) {
                     $schema = [
                         'type' => 'array',
                         'items' => [
-                            'oneOf' => array_values(array_map(function (string $dependant) {
-                                return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
-                            }, ((new $resourceName)->getDependantResources())))
+                            'oneOf' => $this->createOneOfArray($resourceName)
                         ]
                     ];
                 } else {
@@ -317,13 +300,18 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeResponse(Route $route)
     {
         $response = [];
-
         $type = null;
+
         if ($type = $route->action['controller'] ?? null) {
             list($_class, $_method) = explode('@', $type);
-
             $reflectionClass = new ReflectionClass($_class);
             $type = $reflectionClass->getMethod($_method)->getReturnType();
+        } elseif ($route->action['uses'] instanceof \Closure) {
+            $reflectionFunction = new \ReflectionFunction($route->action['uses']);
+            $type = $reflectionFunction->getReturnType();
+        }
+
+        if ($type) {
 
             $lists = false;
             $className = null;
@@ -336,24 +324,42 @@ class OpenAPI implements Arrayable, Responsable
             }
 
             if ($className) {
-                $this->addResource($className);
 
+                $this->addResource($className);
                 $refName = static::resourceRefName($className);
 
-                $response = [
-                    'schema' => $lists ? ([
+                if ($lists || $this->isUnionSubclass($className)) {
+                    $schema = [
                         'type' => 'array',
-                        'items' => [
+                        'items' => $this->isUnionSubclass($className) ? [
+                            'oneOf' => $this->createOneOfArray($className)
+                        ] : [
                             '$ref' => static::componentPath($refName),
                         ],
-                    ]) : ([
+                    ];
+                } else {
+                    $schema = [
                         '$ref' => static::componentPath($refName),
-                    ]),
-                ];
+                    ];
+                }
+
+                $response = compact('schema');
             }
         }
 
         return $response;
+    }
+
+    protected function isUnionSubclass($className)
+    {
+        return (new ReflectionClass($className))->isSubclassOf(UnionResource::class);
+    }
+
+    protected function createOneOfArray($className)
+    {
+        return array_values(array_map(function (string $dependant) {
+            return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
+        }, ((new $className)->getDependantResources())));
     }
 
     protected function addResource($resourceName)
@@ -366,13 +372,22 @@ class OpenAPI implements Arrayable, Responsable
             } else {
                 $this->resources[$resourceName] = [];
             }
+
+            foreach ($item->fields() as $k => $field) {
+                if ($field instanceof ResourceField) {
+                    if ($field->get() instanceof UnionResource) {
+                        foreach ($field->get()->getDependantResources() as $dependantResource) {
+                            $this->addResource($dependantResource);
+                        }
+                    }
+                }
+            }
         }
     }
 
     public function addParameter($queryClass, $where = 'query')
     {
-        if ($queryClass !== UnionResource::class)
-            $this->parameters[$queryClass] = $where;
+        $this->parameters[$queryClass] = $where;
     }
 
     public static function componentPath($component, $type = 'schemas')
