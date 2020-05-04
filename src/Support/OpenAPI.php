@@ -10,7 +10,6 @@ use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
-use Illuminate\Http\JsonResponse;
 use Seier\Resting\Fields\FieldAbstract;
 use Seier\Resting\Fields\ResourceField;
 use Illuminate\Routing\RouteCollection;
@@ -313,37 +312,46 @@ class OpenAPI implements Arrayable, Responsable
 
         if ($type) {
 
-            $lists = false;
-            $className = null;
+            $classes = [];
 
-            if ($route->_lists) {
-                $lists = true;
-                $className = $route->_lists;
+            if (is_array($route->_lists) && count($route->_lists)) {
+                $classes = $route->_lists;
             } elseif ($type) {
-                $className = $type->getName();
+                $classes = [$type->getName()];
             }
 
-            if ($className) {
+            $transform = $classes;
+            $classes = [];
 
-                $this->addResource($className);
-                $refName = static::resourceRefName($className);
-
-                if ($lists || $this->isUnionSubclass($className)) {
-                    $schema = [
-                        'type' => 'array',
-                        'items' => $this->isUnionSubclass($className) ? [
-                            'oneOf' => $this->createOneOfArray($className)
-                        ] : [
-                            '$ref' => static::componentPath($refName),
-                        ],
-                    ];
+            foreach ($transform as $class) {
+                if ($this->isUnionSubclass($class)) {
+                    foreach ($this->getDependantResources($class) as $dependantResource) {
+                        $classes[] = $dependantResource;
+                    }
                 } else {
-                    $schema = [
-                        '$ref' => static::componentPath($refName),
-                    ];
+                    $classes[] = $class;
+                }
+            }
+
+            $lists = count($classes) > 1;
+
+            if (count($classes)) {
+                foreach ($classes as $className) {
+                    $this->addResource($className);
                 }
 
-                $response = compact('schema');
+                $refs = array_map(function ($_className) {
+                    return ['$ref' => static::componentPath(static::resourceRefName($_className))];
+                }, $classes);
+
+                $response = [
+                    'schema' => $lists ? [
+                        'type' => 'array',
+                        'items' => [
+                            'oneOf' => $refs
+                        ],
+                    ] : $refs[0],
+                ];
             }
         }
 
@@ -359,7 +367,12 @@ class OpenAPI implements Arrayable, Responsable
     {
         return array_values(array_map(function (string $dependant) {
             return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
-        }, ((new $className)->getDependantResources())));
+        }, $this->getDependantResources($className)));
+    }
+
+    protected function getDependantResources($className)
+    {
+        return (new $className)->getDependantResources();
     }
 
     protected function addResource($resourceName)

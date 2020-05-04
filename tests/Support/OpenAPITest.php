@@ -31,7 +31,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceCompositionHasSchemaResources()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'composition', fn(UnionParentResource $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/composition', fn(UnionParentResource $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -44,7 +44,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceInheritance()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'inheritance', fn(ExtendsUnionResource $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn(ExtendsUnionResource $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -57,7 +57,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceVariadic()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'variadic', fn(ExtendsUnionResource ...$r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn(ExtendsUnionResource ...$r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -70,7 +70,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceComposition()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'variadic', fn(): UnionParentResource => null)));
+        $routeCollection->add((new Route(['POST'], 'output/union/variadic', fn(): UnionParentResource => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -83,7 +83,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceInheritance()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'inheritance', fn(): ExtendsUnionResource => null)));
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn(): ExtendsUnionResource => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -101,12 +101,32 @@ class OpenAPITest extends TestCase
         });
 
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'inheritance', fn(): ExtendsUnionResource => null))->lists(ExtendsUnionResource::class));
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn(): ExtendsUnionResource => null))->lists(ExtendsUnionResource::class));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
 
         $this->assertComponentNotExists($schema, ExtendsUnionResource::class);
+        $this->assertComponentExists($schema, UnionResourceA::class);
+        $this->assertComponentExists($schema, UnionResourceB::class);
+    }
+
+    public function testOutputUnionResourceListInheritanceCombination()
+    {
+
+        \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
+            $this->_lists = $resource;
+            return $this;
+        });
+
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn(): ExtendsUnionResource => null))->lists([UnionParentResource::class, ExtendsUnionResource::class]));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertComponentNotExists($schema, ExtendsUnionResource::class);
+        $this->assertComponentExists($schema, UnionParentResource::class);
         $this->assertComponentExists($schema, UnionResourceA::class);
         $this->assertComponentExists($schema, UnionResourceB::class);
     }
