@@ -1,5 +1,6 @@
 {
     "name": "ebsp/resting",
+    "description": "Simple REST library for Laravel",
     "require": {
         "laravel/framework": "^5.7 || ^6.0 || ^7.0"
     },
