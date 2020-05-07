@@ -47,6 +47,9 @@ abstract class UnionResource extends Resource
         $unionDegree = $this->getUnionDegree($this);
 
         if ($unionDegree === 0) {
+            if (!$collection->has($this->_unionDiscriminatorKey)) {
+                return parent::setPropertiesFromCollection($collection);
+            }
             $this->_currentDiscriminatorValue = $collection->get($this->_unionDiscriminatorKey);
             $subResource = $this->_unionResources[$this->_currentDiscriminatorValue];
             return $subResource->setPropertiesFromCollection($collection);
@@ -139,11 +142,11 @@ abstract class UnionResource extends Resource
                 : $getRequestResource();
 
             if ($subResource !== null) {
-                return array_merge_recursive($discriminatorRules, $subResource->{__FUNCTION__}(...func_get_args()));
+                return array_merge($subResource->{__FUNCTION__}(...func_get_args()), $discriminatorRules);
             }
         }
 
-        return array_merge_recursive($discriminatorRules, parent::{__FUNCTION__}(...func_get_args()));
+        return array_merge(parent::{__FUNCTION__}(...func_get_args()), $discriminatorRules);
     }
 
     public function type(): array

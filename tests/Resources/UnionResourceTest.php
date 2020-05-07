@@ -11,9 +11,13 @@ use Seier\Resting\Tests\TestCase;
 class UnionResourceTest extends TestCase
 {
 
-    protected function unionResourceArrayField()
+    public function testFromArrayOnUnionSubResource()
     {
-        return new ResourceArrayField(new UnionResourceBase());
+        $a = UnionResourceA::fromArray(['discriminator' => 'a', 'a' => 'a_value', 'value' => 'value'])->flatten();
+
+        $this->assertInstanceOf(UnionResourceA::class, $a);
+        $this->assertEquals('a_value', $a->a);
+        $this->assertEquals('value', $a->value);
     }
 
     public function testUnionResourceFieldRecognizesResourceA()
@@ -119,7 +123,7 @@ class UnionResourceTest extends TestCase
 
     public function testUnionResourceArrayField()
     {
-        $resourceArrayField = $this->unionResourceArrayField();
+        $resourceArrayField = new ResourceArrayField(new UnionResourceBase());
         $resourceArrayField->set([
             ['discriminator' => 'a', 'a' => 'a_value', 'value' => 'a_value'],
             ['discriminator' => 'b', 'b' => 'b_value', 'value' => 'b_value'],
@@ -136,6 +140,21 @@ class UnionResourceTest extends TestCase
         $this->assertInstanceOf(UnionResourceB::class, $get[1]);
         $this->assertEquals('b_value', $get[1]->b);
         $this->assertEquals('b_value', $get[1]->value);
+    }
+
+    public function testUnionSubResourceOnArrayField()
+    {
+        $resourceArrayField = new ResourceArrayField(new UnionResourceA());
+        $resourceArrayField->set([
+            ['discriminator' => 'a', 'a' => 'a_value', 'value' => 'a_value'],
+            ['discriminator' => 'a', 'a' => 'a_value', 'value' => 'a_value'],
+        ]);
+
+        $get = $resourceArrayField->get();
+
+        $this->assertCount(2, $get);
+        $this->assertInstanceOf(UnionResourceA::class, $get[0]);
+        $this->assertInstanceOf(UnionResourceA::class, $get[1]);
     }
 
     public function testFromRaw()
