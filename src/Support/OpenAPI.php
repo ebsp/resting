@@ -28,6 +28,8 @@ class OpenAPI implements Arrayable, Responsable
 
     public function __construct(RouteCollection $collection)
     {
+        echo "describeResources \n";
+        flush();
         $this->routes = $collection;
 
         $this->process();
@@ -35,9 +37,18 @@ class OpenAPI implements Arrayable, Responsable
 
     protected function process()
     {
+        echo "processsInfo \n";
+        flush();
         $this->processInfo();
+
+        echo "processPaths \n";
+        flush();
         $this->processPaths();
+        echo "describeResources \n";
+        flush();
         $this->processResources();
+        echo "processParameters \n";
+        flush();
         $this->processParameters();
     }
 
@@ -420,6 +431,9 @@ class OpenAPI implements Arrayable, Responsable
 
     public function toArray()
     {
+        echo "toArray \n";
+        flush();
+
         return $this->document;
     }
 

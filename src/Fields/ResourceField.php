@@ -21,6 +21,10 @@ class ResourceField extends FieldAbstract
 
     public function getMutator($value)
     {
+        if ($value instanceof UnionResource) {
+            $value = $value->get();
+        }
+
         return optional($value)->flatten();
     }
 
@@ -122,9 +126,11 @@ class ResourceField extends FieldAbstract
 
     public function type(): array
     {
-        if ($this->value instanceof UnionResource) {
-            return $this->value->type();
-        }
+
+
+//        if ($this->value instanceof UnionResource) {
+//            return $this->value->type();
+//        }
 
         return [
             '$ref' => OpenAPI::componentPath(
@@ -135,6 +141,7 @@ class ResourceField extends FieldAbstract
 
     public function nestedRefs(): array
     {
+
         return [
             'schema' => get_class($this->value),
         ];

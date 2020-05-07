@@ -5,19 +5,20 @@ namespace Seier\Resting\Tests\Resources;
 
 
 use Seier\Resting\Fields\StringField;
-use Seier\Resting\Resource;
 
-class UnionResourceA extends Resource
+class UnionResourceA extends UnionResourceBase
 {
 
     public $value;
-    public $a_specific;
+    public $a;
     public $discriminator;
 
     public function __construct()
     {
+        parent::__construct();
+
         $this->value = (new StringField)->required();
-        $this->a_specific = new StringField;
+        $this->a = new StringField;
         $this->discriminator = new StringField;
     }
 }

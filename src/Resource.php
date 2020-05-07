@@ -5,7 +5,6 @@ namespace Seier\Resting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Seier\Resting\Support\Response;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Fields\FieldAbstract;
@@ -87,7 +86,6 @@ abstract class Resource implements
             $this->touch();
 
             $property = $this->{$field};
-
             if ($property instanceof FieldAbstract && $collection->has($field)) {
                 $property->suppressErrors($this->suppressErrors)->set(
                     $collection->get($field)
@@ -173,7 +171,6 @@ abstract class Resource implements
     public function flatten()
     {
         $copy = $this->copy();
-
         foreach ($copy->fields() as $field => $value) {
             if ($value instanceof FieldAbstract) {
                 $copy->{$field} = $value->get();
