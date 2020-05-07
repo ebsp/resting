@@ -126,11 +126,14 @@ class ResourceField extends FieldAbstract
 
     public function type(): array
     {
-
-
-//        if ($this->value instanceof UnionResource) {
-//            return $this->value->type();
-//        }
+        if ($this->value instanceof UnionResource) {
+            return [
+                'type' => 'object',
+                'oneOf' => array_map(function ($resource) {
+                    return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
+                }, $this->value->getDependantResources()),
+            ];
+        }
 
         return [
             '$ref' => OpenAPI::componentPath(
@@ -141,7 +144,6 @@ class ResourceField extends FieldAbstract
 
     public function nestedRefs(): array
     {
-
         return [
             'schema' => get_class($this->value),
         ];

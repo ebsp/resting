@@ -156,10 +156,26 @@ abstract class UnionResource extends Resource
         return compact('type', 'oneOf');
     }
 
+    public function nestedRefs()
+    {
+        if ($this->getUnionDegree($this) === 0) {
+            return ['type' => 'object', 'oneOf' => array_map(function ($dt) {
+                return ['$ref' => $dt];
+            }, $this->getDependantResources())];
+        }
+
+        return get_class($this->get());
+    }
 
     public function getDependantResources()
     {
-        return array_map(fn(Resource $resource) => get_class($resource), $this->_unionResources);
+        if (!$this->_unionResources) {
+            $this->_unionResources = $this->getUnionDegree($this) === 0
+                ? ($this->_unionResourcesFactory)()
+                : [];
+        }
+
+        return array_values(array_map(fn(Resource $resource) => get_class($resource), $this->_unionResources));
     }
 
     private function getUnionDegree($item)

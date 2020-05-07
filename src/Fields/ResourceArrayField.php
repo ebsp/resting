@@ -68,11 +68,6 @@ class ResourceArrayField extends FieldAbstract
         }));
     }
 
-    /*public function __get($name)
-    {
-        return $this->value;
-    }*/
-
     public function __set($name, $value)
     {
         return $this->value = $value;
@@ -120,6 +115,15 @@ class ResourceArrayField extends FieldAbstract
 
     public function type(): array
     {
+        if ($this->resource instanceof UnionResource) {
+            return [
+                'type' => 'array',
+                'items' => ['oneOf' => array_map(function ($resource) {
+                    return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
+                }, $this->resource->getDependantResources())],
+            ];
+        }
+
         return [
             'type' => 'array',
             'items' => [
