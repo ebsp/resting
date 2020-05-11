@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Support;
 
+use Illuminate\Http\JsonResponse;
 use ReflectionClass;
 use ReflectionParameter;
 use Seier\Resting\Query;

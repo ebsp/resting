@@ -30,7 +30,7 @@ abstract class UnionResource extends Resource
 
     public function get()
     {
-        if ($this->_currentDiscriminatorValue) {
+        if ($this->_currentDiscriminatorValue !== null && array_key_exists($this->_currentDiscriminatorValue, $this->_unionResources)) {
             return $this->_unionResources[$this->_currentDiscriminatorValue];
         }
 
@@ -47,10 +47,16 @@ abstract class UnionResource extends Resource
         $unionDegree = $this->getUnionDegree($this);
 
         if ($unionDegree === 0) {
+
             if (!$collection->has($this->_unionDiscriminatorKey)) {
                 return parent::setPropertiesFromCollection($collection);
             }
+
             $this->_currentDiscriminatorValue = $collection->get($this->_unionDiscriminatorKey);
+            if (!array_key_exists($this->_currentDiscriminatorValue, $this->_unionResources)) {
+                return parent::setPropertiesFromCollection($collection);
+            }
+
             $subResource = $this->_unionResources[$this->_currentDiscriminatorValue];
             return $subResource->setPropertiesFromCollection($collection);
         } else {
@@ -104,7 +110,7 @@ abstract class UnionResource extends Resource
 
         // we cannot delegate to a sub-resource when _currentDiscriminatorValue is not set,
         // since we cannot know which of the sub-resources to use
-        if ($unionDegree === 0 && $this->_currentDiscriminatorValue) {
+        if ($unionDegree === 0 && $this->_currentDiscriminatorValue !== null && array_key_exists($this->_currentDiscriminatorValue, $this->_unionResources)) {
             return $this->get()->{$method}(...$arguments);
         } else {
             return parent::{$method}(...$arguments);
@@ -117,6 +123,7 @@ abstract class UnionResource extends Resource
             $this->_unionResources = ($this->_unionResourcesFactory)();
         }
 
+        $values = $request->all();
         $unionDegree = $this->getUnionDegree($this);
         $discriminatorRules = [$this->_unionDiscriminatorKey => [
             'in:' . implode(',', array_keys($this->_unionResources)),
@@ -127,17 +134,25 @@ abstract class UnionResource extends Resource
         // since we cannot know which of the sub-resources to use
         if ($unionDegree === 0) {
 
-            $getRequestResource = function () use ($request) {
-                $values = $request->all();
-                $exists = array_key_exists($this->_unionDiscriminatorKey, $values);
-                if ($exists) {
+            if (!array_key_exists($this->_unionDiscriminatorKey, $values)) {
+                return $discriminatorRules;
+            }
+
+            $discriminatorValue = $values[$this->_unionDiscriminatorKey];
+
+            if (!array_key_exists($discriminatorValue, $this->_unionResources)) {
+                return $discriminatorRules;
+            }
+
+            $getRequestResource = function () use ($values) {
+                if ($exists = array_key_exists($this->_unionDiscriminatorKey, $values)) {
                     $this->_currentDiscriminatorValue = $values[$this->_unionDiscriminatorKey];
                 }
 
                 return !$this->_currentDiscriminatorValue ? null : $this->_unionResources[$this->_currentDiscriminatorValue];
             };
 
-            $subResource = $this->_currentDiscriminatorValue = $this->_currentDiscriminatorValue
+            $subResource = $this->_currentDiscriminatorValue
                 ? $this->_unionResources[$this->_currentDiscriminatorValue]
                 : $getRequestResource();
 
@@ -157,17 +172,6 @@ abstract class UnionResource extends Resource
         }
 
         return compact('type', 'oneOf');
-    }
-
-    public function nestedRefs()
-    {
-        if ($this->getUnionDegree($this) === 0) {
-            return ['type' => 'object', 'oneOf' => array_map(function ($dt) {
-                return ['$ref' => $dt];
-            }, $this->getDependantResources())];
-        }
-
-        return get_class($this->get());
     }
 
     public function getDependantResources()

@@ -79,8 +79,8 @@ class UnionResourceTest extends TestCase
     {
         $request = \Mockery::mock(Request::class);
         $request->makePartial();
-        $request->expects('all')->andReturn(['discriminator' => 'a']);
-        $request->expects('getMethod')->andReturn('GET');
+        $request->allows('all')->andReturn(['discriminator' => 'a']);
+        $request->allows('getMethod')->andReturn('GET');
 
         $unionResource = new UnionResourceBase();
 
