@@ -8,11 +8,12 @@ use Illuminate\Support\Collection;
 use Seier\Resting\Support\OpenAPI;
 use Seier\Resting\Rules\ResourceRule;
 use Seier\Resting\Support\Resourcable;
+use Seier\Resting\UnionResource;
 
 class ResourceField extends FieldAbstract
 {
     public $resource;
-    
+
     public function __construct(Resource $resource)
     {
         $this->resource = $this->value = $resource;
@@ -20,6 +21,10 @@ class ResourceField extends FieldAbstract
 
     public function getMutator($value)
     {
+        if ($value instanceof UnionResource) {
+            $value = $value->get();
+        }
+
         return optional($value)->flatten();
     }
 
@@ -79,7 +84,7 @@ class ResourceField extends FieldAbstract
         return $this->value->{$name}->set($value);
     }
 
-    protected function fieldValidation() : array
+    protected function fieldValidation(): array
     {
         return $this->isNull() && $this->nullable ? [] : [
             new ResourceRule($this->resource, false)
@@ -94,7 +99,7 @@ class ResourceField extends FieldAbstract
     public function requiredFields(...$fields)
     {
         $this->required();
-        
+
         foreach ($this->value->fields() as $name => $field) {
             /** @var Field $field */
             $field->required(
@@ -119,8 +124,17 @@ class ResourceField extends FieldAbstract
         return $this;
     }
 
-    public function type() : array
+    public function type(): array
     {
+        if ($this->value instanceof UnionResource) {
+            return [
+                'type' => 'object',
+                'oneOf' => array_map(function ($resource) {
+                    return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
+                }, $this->value->getDependantResources()),
+            ];
+        }
+
         return [
             '$ref' => OpenAPI::componentPath(
                 OpenAPI::resourceRefName(get_class($this->value))
@@ -128,7 +142,7 @@ class ResourceField extends FieldAbstract
         ];
     }
 
-    public function nestedRefs() : array
+    public function nestedRefs(): array
     {
         return [
             'schema' => get_class($this->value),

@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Support;
 
+use Illuminate\Http\JsonResponse;
 use ReflectionClass;
 use ReflectionParameter;
 use Seier\Resting\Query;
@@ -10,13 +11,13 @@ use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
-use Illuminate\Http\JsonResponse;
 use Seier\Resting\Fields\FieldAbstract;
 use Seier\Resting\Fields\ResourceField;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Fields\ResourceArrayField;
 use Illuminate\Contracts\Support\Responsable;
+use Seier\Resting\UnionResource;
 
 class OpenAPI implements Arrayable, Responsable
 {
@@ -36,6 +37,7 @@ class OpenAPI implements Arrayable, Responsable
     protected function process()
     {
         $this->processInfo();
+
         $this->processPaths();
         $this->processResources();
         $this->processParameters();
@@ -90,10 +92,15 @@ class OpenAPI implements Arrayable, Responsable
             $field = $attr instanceof FieldAbstract;
 
             if ($attr instanceof ResourceField) {
-                $this->describeResource($attr->get()->original());
+                $class = get_class($attr->get()->original());
+                if ($class !== UnionResource::class && (new ReflectionClass($class))->getParentClass()->getName() !== UnionResource::class) {
+                    $this->describeResource($attr->get()->original());
+                }
             } elseif ($attr instanceof ResourceArrayField) {
-                //dd($attr->resources());
-                $this->describeResource($attr->resources());
+                $class = get_class($attr->resources());
+                if ($class !== UnionResource::class && (new ReflectionClass($class))->getParentClass()->getName() !== UnionResource::class) {
+                    $this->describeResource($attr->resources());
+                }
             }
 
             return $field;
@@ -109,11 +116,13 @@ class OpenAPI implements Arrayable, Responsable
                 return $key;
             })->values()->toArray(),
             'properties' => $fields->map(function (FieldAbstract $field) {
-                foreach ($field->nestedRefs() as $type => $ref) {
+                foreach ($field->nestedRefs() as $type => $refs) {
                     if ('schema' === $type) {
-                        $this->addResource($ref);
+                        foreach ((array)$refs as $ref)
+                            $this->addResource($ref);
                     } elseif ('parameters' === $type) {
-                        $this->addParameter($ref);
+                        foreach ((array)$refs as $ref)
+                            $this->addParameter($ref);
                     }
                 }
 
@@ -172,23 +181,40 @@ class OpenAPI implements Arrayable, Responsable
         if (in_array($method, ['POST', 'PATCH', 'PUT']) && $resourceClass) {
             /** @var ReflectionParameter $resourceClass */
             $this->addResource($resourceClass->getType()->getName());
+            $resourceName = $resourceClass->getType()->getName();
 
-            $schema = $ref = [
-                '$ref' => static::componentPath(
-                    static::resourceRefName($resourceClass->getType()->getName())
-                ),
-            ];
-
-            if ($resourceClass->isVariadic()) {
+            if ($this->isUnionSubclass($resourceName)) {
                 $schema = [
                     'type' => 'object',
-                    'properties' => [
-                        'data' => [
-                            'type' => 'array',
-                            'items' => $ref,
-                        ]
-                    ]
+                    'oneOf' => $this->createOneOfArray($resourceName)
                 ];
+            } else {
+                $schema = $ref = [
+                    '$ref' => static::componentPath(
+                        static::resourceRefName($resourceClass->getType()->getName())
+                    ),
+                ];
+            }
+
+            if ($resourceClass->isVariadic()) {
+                if ($this->isUnionSubclass($resourceName)) {
+                    $schema = [
+                        'type' => 'array',
+                        'items' => [
+                            'oneOf' => $this->createOneOfArray($resourceName)
+                        ]
+                    ];
+                } else {
+                    $schema = [
+                        'type' => 'object',
+                        'properties' => [
+                            'data' => [
+                                'type' => 'array',
+                                'items' => $ref,
+                            ]
+                        ]
+                    ];
+                }
             }
 
             $endpoint['requestBody'] = [
@@ -277,50 +303,105 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeResponse(Route $route)
     {
         $response = [];
-
         $type = null;
+        $classes = [];
+
         if ($type = $route->action['controller'] ?? null) {
             list($_class, $_method) = explode('@', $type);
-
             $reflectionClass = new ReflectionClass($_class);
-            $type = $reflectionClass->getMethod($_method)->getReturnType();
+            $return = $reflectionClass->getMethod($_method)->getReturnType();
+            if ($return)
+                $classes[] = $return->getName();
+        } elseif ($route->action['uses'] instanceof \Closure) {
+            $reflectionFunction = new \ReflectionFunction($route->action['uses']);
+            $return = $reflectionFunction->getReturnType();
+            if ($return)
+                $classes[] = $return->getName();
+        }
 
-            $lists = false;
-            $classes = [];
+        foreach ((array)$route->_lists as $type) {
+            $classes[] = $type;
+        }
 
-            if (is_array($route->_lists) && count($route->_lists)) {
-                $lists = true;
-                $classes = $route->_lists;
-            } elseif ($type) {
-                $classes = [$type->getName()];
-            }
+        $transform = $classes;
+        $classes = [];
 
-            if (count($classes)) {
-                foreach ($classes as $className) {
-                    $this->addResource($className);
+        foreach ($transform as $class) {
+            if ($this->isUnionSubclass($class)) {
+                foreach ($this->getDependantResources($class) as $dependantResource) {
+                    $classes[] = $dependantResource;
                 }
-
-                $refs = array_map(function ($_className) {
-                    return ['$ref' => static::componentPath(static::resourceRefName($_className))];
-                }, $classes);
-
-                $response = [
-                    'schema' => $lists ? [
-                        'type' => 'array',
-                        'items' => [
-                            'oneOf' => $refs
-                        ],
-                    ] : $refs[0],
-                ];
+            } else {
+                $classes[] = $class;
             }
         }
-        
+
+        $lists = count($classes) > 1;
+
+        if (count($classes)) {
+            foreach ($classes as $className) {
+                $this->addResource($className);
+            }
+
+            $refs = array_map(function ($_className) {
+                return ['$ref' => static::componentPath(static::resourceRefName($_className))];
+            }, array_unique($classes));
+
+            $response = [
+                'schema' => $lists ? [
+                    'type' => 'array',
+                    'items' => [
+                        'oneOf' => $refs
+                    ],
+                ] : $refs[0],
+            ];
+        }
+
         return $response;
     }
 
-    protected function addResource($resourceClass)
+    protected function isUnionSubclass($className)
     {
-        $this->resources[$resourceClass] = [];
+        return (new ReflectionClass($className))->isSubclassOf(UnionResource::class);
+    }
+
+    protected function createOneOfArray($className)
+    {
+        return array_values(array_map(function (string $dependant) {
+            return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
+        }, $this->getDependantResources($className)));
+    }
+
+    protected function getDependantResources($className)
+    {
+        return (new $className)->getDependantResources();
+    }
+
+    protected function addResource($resourceName)
+    {
+        if ($resourceName !== UnionResource::class) {
+            $resource = new $resourceName;
+            if ((new ReflectionClass($resourceName))->getParentClass()->getName() === UnionResource::class) {
+                foreach ($resource->getDependantResources() as $unionType) {
+                    $this->addResource($unionType);
+                }
+            } else {
+                $this->resources[$resourceName] = [];
+            }
+
+            foreach ($resource->fields() as $k => $field) {
+                if ($field instanceof ResourceField && $field->get() instanceof UnionResource) {
+                    foreach ($field->get()->getDependantResources() as $dependantResource) {
+                        $this->addResource($dependantResource);
+                    }
+                }
+                if ($field instanceof ResourceArrayField && $field->resources() instanceof UnionResource) {
+                    foreach ($field->resources()->getDependantResources() as $dependantResource) {
+                        $this->addResource($dependantResource);
+                    }
+                }
+            }
+        }
     }
 
     public function addParameter($queryClass, $where = 'query')

@@ -24,8 +24,8 @@ class RestMiddleware
         foreach ($request->route()->signatureParameters() as $parameter) {
             /** @var \ReflectionParameter $parameter */
             $type = $parameter->getType();
-            
-            if (! $type) {
+
+            if (!$type) {
                 continue;
             }
 
@@ -40,9 +40,9 @@ class RestMiddleware
                     foreach (array_slice($value, 1) as $v) {
                         $request->route()->pushParameter($v);
                     }
-                } elseif (! $parameter->isVariadic() && is_array($value) && isset($value[0])) {
+                } elseif (!$parameter->isVariadic() && is_array($value) && isset($value[0])) {
                     $request->route()->setParameter($parameter->getName(), $value[0]);
-                } elseif (! is_array($value)) {
+                } elseif (!is_array($value)) {
                     $request->route()->setParameter($parameter->getName(), $value);
                 }
             }
@@ -53,7 +53,7 @@ class RestMiddleware
 
     protected function resolveParameter(ReflectionClass $_class, $isVariadic = false)
     {
-        if (! $_class->isSubclassOf(Resource::class)) {
+        if (!$_class->isSubclassOf(Resource::class)) {
             return null;
         }
 
@@ -68,9 +68,9 @@ class RestMiddleware
         $value = [];
 
         if ($isVariadic) {
-            foreach ($this->request->json('data', $this->request->json()) as $values) {
+            foreach ($this->request->json('data', $this->request->json()) as $index => $values) {
                 $this->request->_arrayBody = true;
-                $value[] = $this->resolveResource($_class->getName(), $values, true);
+                $value[] = $this->resolveResource($_class->getName(), $values, true, $index);
             }
         } else {
             $value[] = $this->resolveResource($_class->getName(), $this->request->all());
@@ -93,23 +93,23 @@ class RestMiddleware
         );
     }
 
-    protected function resolveResource($_class, $values, $multiple = false)
+    protected function resolveResource($_class, $values, $multiple = false, int $index = 0)
     {
         $values = is_array($values) ? $values : [];
 
         return $this->finalizeInstance(
-            $_class::fromArray($values, true)->setRequest($this->request), $multiple, 'body'
+            $_class::fromArray($values, true)->setRequest($this->request), $multiple, 'body', $index
         );
     }
 
-    public function finalizeInstance(Resource $resource, $multiple = false, string $group)
+    public function finalizeInstance(Resource $resource, $multiple = false, string $group, int $index = 0)
     {
         $resource->prepare();
         $validation = $resource->validation($this->request);
 
         if ($multiple && 'body' === $group) {
             $this->request->_arrayBody = true;
-            $group .= '.*';
+            $group .= '.' . $index;
         }
 
         $validation = array_merge(
@@ -117,7 +117,7 @@ class RestMiddleware
             $validation
         );
 
-        if (! $this->request->_validation) {
+        if (!$this->request->_validation) {
             $this->request->_validation = [];
         }
 
@@ -130,7 +130,7 @@ class RestMiddleware
     {
         $body = $this->request->getContent();
 
-        if (! $this->request->expectsJson() || empty($body)) {
+        if (!$this->request->expectsJson() || empty($body)) {
             return true;
         }
 

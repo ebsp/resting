@@ -2,8 +2,6 @@
 
 namespace Seier\Resting\Rules;
 
-use Illuminate\Validation\Factory;
-
 class DatePeriodRule extends BaseRule
 {
     protected $maxRangeInDays;
@@ -19,8 +17,8 @@ class DatePeriodRule extends BaseRule
 
     public function passes($attribute, $values)
     {
-        if (! is_array($values)) {
-            return ! $this->messages = [
+        if (!is_array($values)) {
+            return !$this->messages = [
                 'period_starts' => ['validation.date'],
             ];
         }

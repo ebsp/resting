@@ -65,12 +65,12 @@ class ResourceRequest extends FormRequest
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
                 $cleanedArray = $this->cleanData($value);
-                $value = ! count($cleanedArray) ? null : $cleanedArray;
+                $value = !count($cleanedArray) ? null : $cleanedArray;
             }
         }
 
         return array_filter($data, function ($value) {
-            return ! is_null($value);
+            return !is_null($value);
         });
     }
 
@@ -79,10 +79,10 @@ class ResourceRequest extends FormRequest
         $results = [];
 
         foreach ($array ?? [] as $key => $value) {
-            if (is_array($value) && ! empty($value) && $depth >= $level) {
-                $results = array_merge($results, $this->formatData($value, $prepend.$key.'.', $depth, $level+1));
+            if (is_array($value) && !empty($value) && $depth >= $level) {
+                $results = array_merge($results, $this->formatData($value, $prepend . $key . '.', $depth, $level + 1));
             } else {
-                $results[$prepend.$key] = $value;
+                $results[$prepend . $key] = $value;
             }
         }
 
