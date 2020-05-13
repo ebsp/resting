@@ -145,6 +145,16 @@ class OpenAPITest extends TestCase
         $this->assertComponentExists($schema, UnionResourceB::class);
     }
 
+    public function testInputHandleScalarParameters()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add(new Route(['POST'], 'scalar_parameters', fn(string $string) => null));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $openAPI->toArray();
+        $this->assertTrue(true);
+    }
+
     private function assertComponentExists(array $schema, string $resource)
     {
         $this->assertArrayHasKey('components', $schema);

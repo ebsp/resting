@@ -2,21 +2,21 @@
 
 namespace Seier\Resting\Support;
 
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
-use ReflectionClass;
-use ReflectionParameter;
-use Seier\Resting\Query;
-use Seier\Resting\Params;
-use Illuminate\Support\Arr;
-use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
-use Seier\Resting\Fields\FieldAbstract;
-use Seier\Resting\Fields\ResourceField;
 use Illuminate\Routing\RouteCollection;
-use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Arr;
+use ReflectionClass;
+use ReflectionParameter;
+use Seier\Resting\Fields\FieldAbstract;
 use Seier\Resting\Fields\ResourceArrayField;
-use Illuminate\Contracts\Support\Responsable;
+use Seier\Resting\Fields\ResourceField;
+use Seier\Resting\Params;
+use Seier\Resting\Query;
+use Seier\Resting\Resource;
 use Seier\Resting\UnionResource;
 
 class OpenAPI implements Arrayable, Responsable
@@ -163,7 +163,12 @@ class OpenAPI implements Arrayable, Responsable
         ];
 
         $resourceClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+
             if (!$type = $parameter->getType()) {
+                return false;
+            }
+
+            if ($type->isBuiltin()) {
                 return false;
             }
 
@@ -228,7 +233,12 @@ class OpenAPI implements Arrayable, Responsable
         }
 
         $queryClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+
             if (!$type = $parameter->getType()) {
+                return false;
+            }
+
+            if ($type->isBuiltin()) {
                 return false;
             }
 
@@ -263,7 +273,12 @@ class OpenAPI implements Arrayable, Responsable
         }
 
         $paramClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
+
             if (!$type = $parameter->getType()) {
+                return false;
+            }
+
+            if ($type->isBuiltin()) {
                 return false;
             }
 
