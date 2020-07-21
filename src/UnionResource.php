@@ -58,7 +58,7 @@ abstract class UnionResource extends Resource
             }
 
             $subResource = $this->_unionResources[$this->_currentDiscriminatorValue];
-            return $subResource->setPropertiesFromCollection($collection);
+            return $subResource->suppressErrors($this->suppressErrors)->setPropertiesFromCollection($collection);
         } else {
             return parent::setPropertiesFromCollection($collection);
         }
