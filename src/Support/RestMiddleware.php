@@ -68,7 +68,8 @@ class RestMiddleware
         $value = [];
 
         if ($isVariadic) {
-            foreach ($this->request->json('data', $this->request->json()) as $index => $values) {
+            $data = $this->request->json('data', $this->request->json());
+            foreach (!$data->count() || is_array($data->all()[0]) ? $data : [] as $index => $values) {
                 $this->request->_arrayBody = true;
                 $value[] = $this->resolveResource($_class->getName(), $values, true, $index);
             }
