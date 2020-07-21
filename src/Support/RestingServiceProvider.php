@@ -38,6 +38,21 @@ class RestingServiceProvider extends ServiceProvider
             return new RestValidator($translator, $data, $rules, $messages);
         });
 
+        \Illuminate\Support\Facades\Validator::extendImplicit('valid_timestamp', function ($attribute, $value, $parameters, $validator) {
+
+            [$required] = $parameters;
+
+            if ($required === 'required') {
+                return !!$value;
+            }
+
+            if ($required === 'nullable') {
+                return true;
+            }
+
+            return false;
+        });
+
         $this->app->resolving(FormRequest::class, function ($request, $app) {
             $request = FormRequest::createFrom($app['request'], $request);
             $request->setContainer($app)->setRedirector($app->make(Redirector::class));

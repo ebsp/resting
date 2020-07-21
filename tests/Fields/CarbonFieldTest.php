@@ -5,15 +5,9 @@ namespace Seier\Resting\Tests\Fields;
 use Carbon\Carbon;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonField;
-use Seier\Resting\Fields\StringField;
 
 class CarbonFieldTest extends TestCase
 {
-    public function testValidation()
-    {
-        $field = new CarbonField;
-        $this->assertEquals($field->validation()[0], 'date');
-    }
 
     public function testCasting()
     {

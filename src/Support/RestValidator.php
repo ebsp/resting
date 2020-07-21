@@ -10,10 +10,10 @@ class RestValidator extends Validator
 {
     protected function validateUsingCustomRule($attribute, $value, $rule)
     {
-        if (! $rule->passes($attribute, $value)) {
+        if (!$rule->passes($attribute, $value)) {
             $this->failedRules[$attribute][get_class($rule)] = [];
 
-            $messages = (array) $rule->message();
+            $messages = (array)$rule->message();
 
             if ($rule instanceof ResourceArrayRule || $rule instanceof ResourceRule) {
                 $this->messages()->merge(
