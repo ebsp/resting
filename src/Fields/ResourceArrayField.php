@@ -4,15 +4,16 @@ namespace Seier\Resting\Fields;
 
 use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
-use Seier\Resting\Support\OpenAPI;
+use Seier\Resting\UnionResource;
 use Illuminate\Support\Collection;
+use Seier\Resting\Support\OpenAPI;
 use Seier\Resting\Rules\ResourceArrayRule;
 use Seier\Resting\Exceptions\NotArrayException;
-use Seier\Resting\UnionResource;
 
 class ResourceArrayField extends FieldAbstract
 {
     protected $resource;
+    protected $flatten = true;
 
     public function __construct(Resource $resource)
     {
@@ -31,7 +32,7 @@ class ResourceArrayField extends FieldAbstract
         return array_map(function ($_value) {
             return (new ResourceField(
                 $this->resource->copy()
-            ))->set($_value)->get();
+            ))->flatten($this->flatten)->set($_value)->get();
         }, $value ?? []);
     }
 
@@ -60,7 +61,7 @@ class ResourceArrayField extends FieldAbstract
 
             return (new ResourceField(
                 $instance
-            ))->setMutator(
+            ))->flatten($this->flatten)->setMutator(
                 $_value
             );
         }, array_filter($value ?? [], function ($_value) {
@@ -111,6 +112,13 @@ class ResourceArrayField extends FieldAbstract
     public function resources()
     {
         return $this->resource;
+    }
+
+    public function flatten(bool $should = true)
+    {
+        $this->flatten = $should;
+
+        return $this;
     }
 
     public function type(): array

@@ -4,15 +4,16 @@ namespace Seier\Resting\Fields;
 
 use Exception;
 use Seier\Resting\Resource;
-use Illuminate\Support\Collection;
+use Seier\Resting\UnionResource;
 use Seier\Resting\Support\OpenAPI;
+use Illuminate\Support\Collection;
 use Seier\Resting\Rules\ResourceRule;
 use Seier\Resting\Support\Resourcable;
-use Seier\Resting\UnionResource;
 
 class ResourceField extends FieldAbstract
 {
     public $resource;
+    protected bool $flatten = true;
 
     public function __construct(Resource $resource)
     {
@@ -25,7 +26,7 @@ class ResourceField extends FieldAbstract
             $value = $value->get();
         }
 
-        return optional($value)->flatten();
+        return $this->flatten ? optional($value)->flatten() : $value;
     }
 
     public function setMutator($value)
@@ -113,6 +114,13 @@ class ResourceField extends FieldAbstract
     public function formatted()
     {
         return $this->value;
+    }
+
+    public function flatten(bool $should = true)
+    {
+        $this->flatten = $should;
+
+        return $this;
     }
 
     public function suppressErrors($should = false)
