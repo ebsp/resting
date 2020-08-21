@@ -136,11 +136,11 @@ class RestingServiceProvider extends ServiceProvider
 
         $request = $this->app->get('request');
 
-        $paginatableMacro = function ($limit = 15) use ($request, $_self) {
+        $paginatableMacro = function ($limit = 15, ?callable $resourceMapper = null) use ($request, $_self) {
             $limit = optional($request)->query('limit', $limit) ?? $limit;
 
             return $_self->mapPagination(
-                $this->paginate($limit)
+                $this->paginate($limit), $resourceMapper
             );
         };
 
@@ -149,27 +149,28 @@ class RestingServiceProvider extends ServiceProvider
         Builder::macro('asPaginatedResource', $paginatableMacro);
     }
 
-    public function mapPagination(LengthAwarePaginator $paginator)
+    public function mapPagination(LengthAwarePaginator $paginator, ?callable $resourceMapper = null)
     {
         $paginator->setCollection(
             $this->mapCollection(
-                $paginator->getCollection()
+                $paginator->getCollection(), $resourceMapper
             )
         );
 
         return $this->paginatedResponse($paginator);
     }
 
-    public function mapCollection(Collection $collection)
+    public function mapCollection(Collection $collection, ?callable $resourceMapper = null)
     {
         return $collection->filter(function ($item) {
             return $item instanceof Resourcable || $item instanceof Resource;
-        })->map(function ($item) {
+        })->map(function ($item) use ($resourceMapper) {
             if ($item instanceof Resource) {
                 return $item;
             }
 
-            return $item->asResource()->toResponseArray();
+            $item = $resourceMapper ? $resourceMapper($item) : $item->asResource();
+            return $item->toResponseArray();
         });
     }
 

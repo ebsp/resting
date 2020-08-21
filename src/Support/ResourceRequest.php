@@ -52,7 +52,7 @@ class ResourceRequest extends FormRequest
             $this->mergeData($data, $group);
         }
 
-        return $this->cleanData($this->data);
+        return $this->cleanData($this->data)[0];
     }
 
     protected function mergeData(array $data, string $group)
@@ -64,14 +64,16 @@ class ResourceRequest extends FormRequest
     {
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
-                $cleanedArray = $this->cleanData($value);
-                $value = !count($cleanedArray) ? null : $cleanedArray;
+                [$cleanedArray, $wasEmptied] = $this->cleanData($value);
+                $value = !count($cleanedArray) && $wasEmptied ? null : $cleanedArray;
             }
         }
 
-        return array_filter($data, function ($value) {
+        $filtered = array_filter($data, function ($value) {
             return !is_null($value);
         });
+
+        return [$filtered, count($filtered) !== count($data)];
     }
 
     protected function formatData($array, $prepend = '', $depth = 0, $level = 0)

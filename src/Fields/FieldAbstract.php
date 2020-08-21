@@ -94,7 +94,9 @@ abstract class FieldAbstract
     {
         $rules = $this->fieldValidation();
 
-        $rules[] = $this->required ? 'required' : 'nullable';
+        if ($this->required || $this->nullable) {
+            $rules[] = $this->required ? 'required' : 'nullable';
+        }
 
         return array_merge($rules, $this->additionalRules);
     }
