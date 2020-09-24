@@ -10,26 +10,25 @@ class EnumField extends StringField
 
     protected function setMutator($value)
     {
-        if (is_null($value) && $this->isNullable()){
+        if (is_null($value) && $this->isNullable()) {
             return $value;
-        } elseif (! $this->isValidType($value)) {
+        } elseif (!$this->isValidType($value)) {
             $this->error($this->invalidType($value));
-        }
-        elseif (! $this->isValidOption($value)) {
+        } elseif (!$this->isValidOption($value)) {
             $this->error($this->invalidOption($value));
         }
 
         return $value;
     }
 
-    protected function fieldValidation() : array
+    protected function fieldValidation(): array
     {
         return [
             'in:' . implode(',', $this->options())
         ];
     }
 
-    public function type() : array
+    public function type(): array
     {
         return [
             'type' => 'string',
