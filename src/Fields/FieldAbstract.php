@@ -48,7 +48,8 @@ abstract class FieldAbstract
         if ($condition) {
             $this->value = /*is_null($value) && $this->nullable
                 ? $this->defaultBuildValue()
-                :*/ $this->setMutator($value);
+                :*/
+                $this->setMutator($value);
 
             $this->filled = true;
         }
@@ -70,7 +71,7 @@ abstract class FieldAbstract
 
     public function getMutator($value)
     {
-        if ($this->nullable && ! $this->filled) {
+        if ($this->nullable && !$this->filled) {
             return null;
         }
 
@@ -82,15 +83,16 @@ abstract class FieldAbstract
         return $value;
     }
 
-    abstract protected function fieldValidation() : array;
-    abstract public function type() : array;
+    abstract protected function fieldValidation(): array;
 
-    public function nestedRefs() : array
+    abstract public function type(): array;
+
+    public function nestedRefs(): array
     {
         return [];
     }
 
-    final public function validation() : array
+    final public function validation(): array
     {
         $rules = $this->fieldValidation();
 
@@ -134,7 +136,7 @@ abstract class FieldAbstract
 
     public function filled()
     {
-        return (bool) $this->filled;
+        return (bool)$this->filled;
     }
 
     public function isNull()
