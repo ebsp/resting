@@ -4,11 +4,19 @@ namespace Seier\Resting\Fields;
 
 class IntField extends FieldAbstract
 {
-    protected $value;
+    protected $value = 0;
 
-    public function getMutator($value)
+    protected function setMutator($value)
     {
-        return is_null($value) ? $value : (int)$value;
+        if (is_int($value) || is_null($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value) || preg_match('/^[0-9]+$/', $value)) {
+            return (int)$value;
+        }
+
+        return $value;
     }
 
     protected function fieldValidation(): array
