@@ -134,9 +134,8 @@ class RestingServiceProvider extends ServiceProvider
             );
         });
 
-        $request = $this->app->get('request');
-
-        $paginatableMacro = function ($limit = 15, ?callable $resourceMapper = null) use ($request, $_self) {
+        $paginatableMacro = function ($limit = 15, ?callable $resourceMapper = null) use ($_self) {
+            $request = app()->get('request');
             $limit = optional($request)->query('limit', $limit) ?? $limit;
 
             return $_self->mapPagination(
