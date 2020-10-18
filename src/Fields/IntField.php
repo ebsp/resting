@@ -12,7 +12,7 @@ class IntField extends FieldAbstract
             return $value;
         }
 
-        if (is_numeric($value) || preg_match('/^[0-9]+$/', $value)) {
+        if (is_numeric($value) || (is_string($value) && preg_match('/^[0-9]+$/', $value))) {
             return (int)$value;
         }
 
