@@ -4,21 +4,25 @@
 namespace Seier\Resting\Parsing;
 
 
+use Seier\Resting\Fields\EmptyStringAsNull;
+
 class StringParser implements Parser
 {
+
+    use EmptyStringAsNull;
 
     public function canParse(ParseContext $context): array
     {
         return [];
     }
 
-    public function parse(ParseContext $context): string
+    public function parse(ParseContext $context): ?string
     {
-        return $context->getValue();
+        return $this->maybeEmptyStringAsNull($context->getValue());
     }
 
     public function shouldParse(ParseContext $context): bool
     {
-        return false;
+        return $this->emptyStringAsNull;
     }
 }

@@ -5,9 +5,12 @@ namespace Seier\Resting\Parsing;
 
 
 use Seier\Resting\Fields\Time;
+use Seier\Resting\Fields\EmptyStringAsNull;
 
 class TimeParser implements Parser
 {
+
+    use EmptyStringAsNull;
 
     private string $separator = ':';
     private bool $requireSeconds = false;
@@ -22,6 +25,10 @@ class TimeParser implements Parser
     public function canParse(ParseContext $context): array
     {
         $raw = $context->getValue();
+        if ($raw === '' && $this->emptyStringAsNull) {
+            return [];
+        }
+
         $required = $this->requireSeconds ? '' : '?';
         $regex = "/^(2[0-3]|[01]?[0-9])\\$this->separator([0-5]?[0-9])(\\$this->separator([0-5]?[0-9])){$required}$/";
 
@@ -30,9 +37,13 @@ class TimeParser implements Parser
             : [new TimeParseError($raw)];
     }
 
-    public function parse(ParseContext $context): Time
+    public function parse(ParseContext $context): ?Time
     {
-        $raw = $context->getValue();
+        $raw = $this->maybeEmptyStringAsNull($context->getValue());
+        if ($raw === null) {
+            return null;
+        }
+
         $sections = explode($this->separator, $raw);
 
         return new Time(
@@ -51,6 +62,8 @@ class TimeParser implements Parser
 
     public function shouldParse(ParseContext $context): bool
     {
-        return is_string($context->getValue());
+        $value = $context->getValue();
+
+        return $value === null || is_string($context->getValue());
     }
 }

@@ -5,8 +5,8 @@ namespace Seier\Resting\Tests\Fields;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Parsing\CarbonParseError;
-use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Errors\NotCarbonValidationError;
@@ -154,5 +154,13 @@ class CarbonFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testCanCastEmptyValuesToNull()
+    {
+        $this->instance->emptyStringAsNull();
+
+        $this->instance->set('');
+        $this->assertNull($this->instance->get());
     }
 }

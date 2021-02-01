@@ -5,6 +5,10 @@ namespace Seier\Resting\Tests\Marshaller;
 
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\DynamicResource;
+use Seier\Resting\Fields\TimeField;
+use Seier\Resting\Fields\CarbonField;
+use Seier\Resting\Fields\StringField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\ClassResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
@@ -842,6 +846,39 @@ class ResourceMarshallerTest extends TestCase
         $this->assertType($result->getValue(), function (PersonResource $person) use ($name, $age) {
             $this->assertEquals($name, $person->name->get());
             $this->assertEquals(intval($age), $person->age->get());
+        });
+    }
+
+    public function testFieldEmptyStringAsNull()
+    {
+        $factory = $this->resourceFactory(function () {
+            $dynamic = new DynamicResource();
+
+            $dynamic->withField('time', (new TimeField)->emptyStringAsNull());
+            $dynamic->withField('carbon', (new CarbonField)->emptyStringAsNull());
+            $dynamic->withField('string', (new StringField)->emptyStringAsNull());
+
+            return $dynamic;
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'time' => '',
+            'carbon' => '',
+            'string' => '',
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (DynamicResource $resource) {
+
+            $this->assertTrue($resource->time->isFilled());
+            $this->assertNull($resource->time->get());
+
+            $this->assertTrue($resource->carbon->isFilled());
+            $this->assertNull($resource->carbon->get());
+
+            $this->assertTrue($resource->string->isFilled());
+            $this->assertNull($resource->string->get());
+
         });
     }
 }

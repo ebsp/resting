@@ -5,9 +5,9 @@ namespace Seier\Resting\Tests\Fields;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\StringField;
 use Jchook\AssertThrows\AssertThrows;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 
 class StringFieldTest extends TestCase
@@ -83,5 +83,13 @@ class StringFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testCanCastEmptyValuesToNull()
+    {
+        $this->instance->emptyStringAsNull();
+
+        $this->instance->set('');
+        $this->assertNull($this->instance->get());
     }
 }

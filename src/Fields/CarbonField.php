@@ -51,8 +51,8 @@ class CarbonField extends Field
 
     public function set($value): static
     {
-        if (is_string($value)) {
-            $parseContext = new DefaultParseContext($value, false);
+        $parseContext = new DefaultParseContext($value, false);
+        if ($this->parser->shouldParse($parseContext)) {
             if ($parseErrors = $this->parser->canParse($parseContext)) {
                 throw new ValidationException($parseErrors);
             }
@@ -94,6 +94,16 @@ class CarbonField extends Field
     {
         $this->withFormat('Y-m-d|');
         $this->withOutputFormat('Y-m-d');
+
+        return $this;
+    }
+
+    public function emptyStringAsNull(bool $state = true): static
+    {
+        $this->parser->emptyStringAsNull($state);
+        if ($state) {
+            $this->nullable();
+        }
 
         return $this;
     }

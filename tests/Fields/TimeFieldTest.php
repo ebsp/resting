@@ -6,8 +6,8 @@ use Seier\Resting\Fields\Time;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\TimeField;
 use Seier\Resting\Parsing\TimeParseError;
-use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 
@@ -163,5 +163,13 @@ class TimeFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testCanCastEmptyValuesToNull()
+    {
+        $this->instance->emptyStringAsNull();
+
+        $this->instance->set('');
+        $this->assertNull($this->instance->get());
     }
 }

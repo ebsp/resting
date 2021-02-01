@@ -5,10 +5,13 @@ namespace Seier\Resting\Parsing;
 
 
 use Carbon\Carbon;
+use Seier\Resting\Fields\EmptyStringAsNull;
 use Carbon\Exceptions\InvalidFormatException;
 
 class CarbonParser implements Parser
 {
+
+    use EmptyStringAsNull;
 
     private ?string $format = null;
 
@@ -22,6 +25,11 @@ class CarbonParser implements Parser
     public function canParse(ParseContext $context): array
     {
         $raw = $context->getValue();
+
+        if ($raw === '' && $this->emptyStringAsNull) {
+            return [];
+        }
+
         if ($raw === '') {
             return [new CarbonParseError($this->format, $raw)];
         }
@@ -40,9 +48,13 @@ class CarbonParser implements Parser
         }
     }
 
-    public function parse(ParseContext $context): Carbon
+    public function parse(ParseContext $context): ?Carbon
     {
         $raw = $context->getValue();
+        $raw = $this->maybeEmptyStringAsNull($raw);
+        if ($raw === null) {
+            return null;
+        }
 
         return $this->format
             ? Carbon::createFromFormat($this->format, $raw, now()->timezone)
@@ -51,6 +63,6 @@ class CarbonParser implements Parser
 
     public function shouldParse(ParseContext $context): bool
     {
-        return $context->isNotNull();
+        return is_string($context->getValue());
     }
 }

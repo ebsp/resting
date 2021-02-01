@@ -78,8 +78,8 @@ class TimeField extends Field
             return Time::fromCarbon($value);
         }
 
-        if (is_string($value)) {
-            $parseContext = new DefaultParseContext($value, false);
+        $parseContext = new DefaultParseContext($value, false);
+        if ($this->parser->shouldParse($parseContext)) {
             $errors = $this->parser->canParse($parseContext);
             if ($errors) {
                 throw new ValidationException($errors);
@@ -99,6 +99,16 @@ class TimeField extends Field
         }
 
         return parent::set($this->parsed($value));
+    }
+
+    public function emptyStringAsNull(bool $state = true): static
+    {
+        $this->parser->emptyStringAsNull($state);
+        if ($state) {
+            $this->nullable();
+        }
+
+        return $this;
     }
 
     public function requireSeconds(bool $state = true): static
