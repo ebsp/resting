@@ -3,47 +3,103 @@
 namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Rules\ResourceRule;
+use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Fields\ResourceField;
-use Seier\Resting\Tests\Resources\TestResource;
+use Seier\Resting\Tests\Meta\PetResource;
+use Seier\Resting\Tests\Meta\PersonResource;
+use Seier\Resting\Exceptions\ValidationException;
 
 class ResourceFieldTest extends TestCase
 {
-    private function fieldInstance()
+
+    use AssertThrows;
+
+    private ResourceField $instance;
+
+    public function setUp(): void
     {
-        return new ResourceField(new TestResource);
+        parent::setUp();
+
+        $this->instance = new ResourceField(fn() => new PersonResource);
     }
 
-    public function testValidation()
+    public function testGetEmptyReturnsNull()
     {
-        $field = $this->fieldInstance();
-        $this->assertInstanceOf(ResourceRule::class, $field->validation()[0]);
-        $this->assertInstanceOf(TestResource::class, $field->validation()[0]->resource());
-    }
-/*
-    public function testInvalidValueValidation()
-    {
-        $field = $this->fieldInstance();
-        $this->expectException(NotArrayException::class);
-        $field->set(1);
+        $this->assertNull($this->instance->get());
     }
 
-    public function testValueCanBeSet()
+    public function testIsNullReturnsTrue()
     {
-        $field = $this->fieldInstance();
-        $field->set($values = [new TestResource]);
-        $this->assertInstanceOf(TestResource::class, $field->get()[0]);
+        $this->assertTrue($this->instance->isNull());
     }
 
-    public function testEmptyReturnsNull()
+    public function testSetWhenGivenArray()
     {
-        $field = $this->fieldInstance();
-        $this->assertNull($field->get());
+        $this->instance->set([
+            'name' => $name = $this->faker->name,
+            'age' => $age = $this->faker->randomNumber(2),
+        ]);
+
+        $this->assertType($this->instance->get(), function (PersonResource $resource) use ($name, $age) {
+            $this->assertEquals($name, $resource->name->get());
+            $this->assertEquals($age, $resource->age->get());
+        });
     }
 
-    public function testNonNullableReturnsEmptyArrayA()
+    public function testSetValidationWhenGivenArray()
     {
-        $field = $this->fieldInstance()->nullable(false);
-        $this->assertEquals($field->get(), []);
-    }*/
+        $assertion = function (ValidationException $exception) {
+            $this->assertCount(2, $exception->getErrors());
+        };
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(['name' => null]);
+        }, $assertion);
+    }
+
+    public function testSetValidationWhenGivenMultipleInvalidValues()
+    {
+        $assertion = function (ValidationException $exception) {
+            $this->assertCount(2, $exception->getErrors());
+        };
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(['name' => null, 'age' => null]);
+        }, $assertion);
+    }
+
+    public function testSetWhenGivenCorrectResource()
+    {
+        $this->instance->set($expect = new PersonResource);
+
+        $this->assertSame($expect, $this->instance->get());
+    }
+
+    public function testSetWhenGivenIncorrectResource()
+    {
+        $assertion = function (ValidationException $exception) {
+            $this->assertCount(1, $exception->getErrors());
+        };
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(new PetResource());
+        }, $assertion);
+    }
+
+    public function testNullableSetWhenGivenNull()
+    {
+        $this->instance->nullable();
+
+        $this->instance->set(null);
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testNonNullableSetWhenGivenNull()
+    {
+        $this->instance->nullable(false);
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(null);
+        });
+    }
 }

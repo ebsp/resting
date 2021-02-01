@@ -2,134 +2,91 @@
 
 namespace Seier\Resting\Fields;
 
+use Closure;
 use Exception;
-use Seier\Resting\Resource;
+use ReflectionClass;
 use Seier\Resting\UnionResource;
 use Seier\Resting\Support\OpenAPI;
 use Illuminate\Support\Collection;
-use Seier\Resting\Rules\ResourceRule;
 use Seier\Resting\Support\Resourcable;
+use Seier\Resting\Resource as RestingResource;
+use Seier\Resting\Validation\NullableValidator;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Errors\NotSubclassOfError;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
-class ResourceField extends FieldAbstract
+class ResourceField extends Field
 {
-    public $resource;
-    protected bool $flatten = true;
 
-    public function __construct(Resource $resource)
+    private Closure $resourceFactory;
+    private RestingResource $resource;
+    private ReflectionClass $resourceReflection;
+
+    public function __construct(Closure $resourceFactory)
     {
-        $this->resource = $this->value = $resource;
+        parent::__construct();
+
+        $this->resourceFactory = $resourceFactory;
+        $this->resource = $resourceFactory();
+        $this->resourceReflection = new ReflectionClass($this->resource::class);
     }
 
-    public function getMutator($value)
+    public function get(): ?RestingResource
     {
-        if ($value instanceof UnionResource) {
-            $value = $value->get();
+        if ($this->resource instanceof UnionResource) {
+            return $this->value?->get();
         }
 
-        return $this->flatten ? optional($value)->flatten() : $value;
+        return $this->value;
     }
 
-    public function setMutator($value)
+    public function set($value): static
     {
-        if (is_null($value) && $this->isNullable()) {
-            return $value;
-        }
-
-        // not sure why this one has to be here in order to work
-        if ($value instanceof Resource) {
-            return $value;
-        }
-
-        if ($value instanceof Collection) {
-            return $this->value->setPropertiesFromCollection($value);
-        }
-
-        if (is_array($value)) {
-            return $this->value->setPropertiesFromCollection(
-                collect($value)
-            );
-        }
-
-        if (method_exists($this->value, 'fromInput')) {
-            return $this->value->fromInput($value);
+        if ($value === null) {
+            return parent::set($value);
         }
 
         if ($value instanceof Resourcable) {
-            return $value->asResource();
+            $value = $value->asResource();
         }
 
-        if ($value instanceof Resource) {
-            return $value;
+        if ($value instanceof RestingResource) {
+
+            if (!$this->resourceReflection->isInstance($value)) {
+                throw new ValidationException([new NotSubclassOfError($this->resourceReflection, $value)]);
+            }
+
+            $this->value = $value;
+
+            return $this;
         }
 
-        if (is_null($value)) {
-            $this->setNull();
-
-            return $this->value->setNull();
+        if ($value instanceof Collection) {
+            $value = $value->toArray();
         }
 
-        $this->error(
-            new Exception('Value cannot be applied to resource')
-        );
-
-        return $this->value;
-    }
-
-    public function __get($name)
-    {
-        return $this->value->{$name};
-    }
-
-    public function __set($name, $value)
-    {
-        return $this->value->{$name}->set($value);
-    }
-
-    protected function fieldValidation(): array
-    {
-        return $this->isNull() && $this->nullable ? [] : [
-            new ResourceRule($this->resource, false)
-        ];
-    }
-
-    public function defaultBuildValue()
-    {
-        return $this->value;
-    }
-
-    public function requiredFields(...$fields)
-    {
-        $this->required();
-
-        foreach ($this->value->fields() as $name => $field) {
-            /** @var Field $field */
-            $field->required(
-                in_array($name, $fields)
-            );
+        if (is_array($value)) {
+            $this->value = ($this->value ?? ($this->resourceFactory)())->setFieldsFromCollection(collect($value));
+            $this->isFilled = true;
+            return $this;
         }
+
+        $this->resource = $value;
+        $this->isFilled = true;
 
         return $this;
     }
 
-    public function formatted()
+    public function resourceAsDefault(): static
     {
-        return $this->value;
-    }
-
-    public function flatten(bool $should = true)
-    {
-        $this->flatten = $should;
+        $this->nullDefault($this->resourceFactory);
 
         return $this;
     }
 
-    public function suppressErrors($should = false)
+    public function formatted(): mixed
     {
-        parent::suppressErrors($should);
-
-        $this->value->suppressErrors($should);
-
-        return $this;
+        return $this->value?->toArray();
     }
 
     public function type(): array
@@ -145,15 +102,35 @@ class ResourceField extends FieldAbstract
 
         return [
             '$ref' => OpenAPI::componentPath(
-                OpenAPI::resourceRefName(get_class($this->value))
+                OpenAPI::resourceRefName(get_class($this->resource))
             ),
         ];
+    }
+
+    public function getResourcePrototype(): RestingResource
+    {
+        return $this->resource;
+    }
+
+    public function getNullableValidator(): NullableValidator
+    {
+        return $this->nullableValidator;
     }
 
     public function nestedRefs(): array
     {
         return [
-            'schema' => get_class($this->value),
+            'schema' => get_class($this->resource),
         ];
+    }
+
+    public function getReferenceResource()
+    {
+        return $this->resource;
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        throw new Exception('unsupported');
     }
 }

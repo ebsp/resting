@@ -2,115 +2,166 @@
 
 namespace Seier\Resting\Tests\Fields;
 
+use Seier\Resting\Fields\Time;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\TimeField;
-use Seier\Resting\Exceptions\InvalidTimeFormatException;
+use Seier\Resting\Parsing\TimeParseError;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
+use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
+use Seier\Resting\Validation\Errors\NullableValidationError;
 
 class TimeFieldTest extends TestCase
 {
-    public function testValidation()
+
+    use AssertsErrors;
+
+    private TimeField $instance;
+
+    public function setUp(): void
     {
-        $field = new TimeField;
-        $this->assertEquals($field->validation()[0], 'date_format:"H:i:s"');
+        parent::setUp();
+
+        $this->instance = new TimeField();
     }
 
-    public function testInvalidStringValueValidation()
+    public function testGetEmptyReturnsNull()
     {
-        $this->expectException(InvalidTimeFormatException::class);
-
-        $field = new TimeField;
-        $field->set('No time here');
+        $this->assertNull($this->instance->get());
     }
 
-    public function testInvalidAmericanTimeValueValidation()
+    public function testIsNullReturnsTrue()
     {
-        $this->expectException(InvalidTimeFormatException::class);
-
-        $field = new TimeField;
-        $field->set('10 am');
+        $this->assertTrue($this->instance->isNull());
     }
 
-    public function testInvalidFormatValueValidation()
+    public function testSetTimeObject()
     {
-        $this->expectException(InvalidTimeFormatException::class);
+        $this->instance->set(new Time(hours: 20, minutes: 10, seconds: 30));
 
-        $field = new TimeField;
-        $field->set('10 00');
+        $result = $this->instance->get();
+        $this->assertEquals(20, $result->hours);
+        $this->assertEquals(10, $result->minutes);
+        $this->assertEquals(30, $result->seconds);
     }
 
-    public function testInvalidHourValueValidation()
+    public function testSetCarbon()
     {
-        $this->expectException(InvalidTimeFormatException::class);
+        $this->instance->set(now()->hours(10)->minutes(20)->seconds(30));
 
-        $field = new TimeField;
-        $field->set('24:00:00');
+        $result = $this->instance->get();
+        $this->assertEquals(10, $result->hours);
+        $this->assertEquals(20, $result->minutes);
+        $this->assertEquals(30, $result->seconds);
     }
 
-    public function testInvalidMinuteValueValidation()
+    public function testSetCanParseStringWithHoursAndMinutes()
     {
-        $this->expectException(InvalidTimeFormatException::class);
+        $this->instance->set('20:30');
 
-        $field = new TimeField;
-        $field->set('00:60:00');
+        $result = $this->instance->get();
+        $this->assertEquals(20, $result->hours);
+        $this->assertEquals(30, $result->minutes);
+        $this->assertEquals(0, $result->seconds);
     }
 
-    public function testInvalidSeconds()
+    public function testSetCanParseStringWithHoursMinutesAndSeconds()
     {
-        $this->expectException(InvalidTimeFormatException::class);
+        $this->instance->set('20:30:15');
 
-        $field = new TimeField;
-        $field->set('00:00:60');
+        $result = $this->instance->get();
+        $this->assertEquals(20, $result->hours);
+        $this->assertEquals(30, $result->minutes);
+        $this->assertEquals(15, $result->seconds);
     }
 
-    public function testValidValus()
+    public function testNullableSetWhenGivenNull()
     {
-        $field = new TimeField;
+        $this->instance->nullable();
 
-        for ($hour = 0; $hour <= 23; $hour++) {
-            for ($minute = 0; $minute <= 59; $minute++) {
-                for ($seconds = 0; $seconds <= 59; $seconds++) {
-                    $field->set(implode(':', [$hour, $minute, $seconds]));
-                }
-            }
-        }
-
-        $this->assertTrue(true);
+        $this->instance->set(null);
+        $this->assertNull($this->instance->get());
     }
 
-    public function testValueCanBeSet()
+    public function testNonNullableSetWhenGivenNull()
     {
-        $field = new TimeField;
-        $field->set($time = '10:01:02');
-        $this->assertEquals($time, $field->get());
+        $this->instance->nullable(false);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set(null);
+        });
+
+        $this->assertCount(1, $exception->getErrors());
+        $this->assertHasError($exception, NullableValidationError::class, '');
     }
 
-    public function testValueWithoutSecondsValidation()
+    public function testSetThrowsWhenProvidedInvalidFormat()
     {
-        $this->expectException(InvalidTimeFormatException::class);
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set('a:b:c');
+        });
 
-        $field = new TimeField;
-        $field->withSeconds(false);
-        $field->set($time = '10:01:02');
-        $this->assertEquals($time, $field->get());
+        $this->assertCount(1, $exception->getErrors());
+        $this->assertHasError($exception, TimeParseError::class, '');
     }
 
-    public function testValueCanBeSetWithoutSeconds()
+    public function testSetThrowsWhenSecondsRequiredButNotProvided()
     {
-        $field = new TimeField;
-        $field->withSeconds(false);
-        $field->set($time = '10:01');
-        $this->assertEquals($time, $field->get());
+        $this->instance->requireSeconds();
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set('10:20');
+        });
+
+        $this->assertCount(1, $exception->getErrors());
+        $this->assertHasError($exception, TimeParseError::class, '');
     }
 
-    public function testEmptyReturnsNull()
+    public function testFormattedWithoutCustomFormat()
     {
-        $field = new TimeField;
-        $this->assertNull($field->get());
+        $this->instance->set($time = new Time(
+            hours: 5,
+            minutes: 6,
+            seconds: 19
+        ));
+
+        $this->assertEquals(
+            '05:06:19',
+            $this->instance->formatted(),
+        );
     }
 
-    public function testNonNullableReturnsNull()
+    public function testFormattedWithCustomFormat()
     {
-        $field = (new TimeField)->nullable(false);
-        $this->assertNull($field->get());
+        $this->instance->getFormatter()->withFormat('H:s');
+        $this->instance->set($time = new Time(
+            hours: 5,
+            minutes: 6,
+            seconds: 19
+        ));
+
+        $this->assertEquals(
+            '05:19',
+            $this->instance->formatted(),
+        );
+    }
+
+    public function testValidateWithRegisteredSecondaryValidationThatPasses()
+    {
+        $this->instance->withValidator(MockSecondaryValidator::pass());
+
+        $this->instance->set($time = Time::zeroes());
+        $this->assertSame($time, $this->instance->get());
+    }
+
+    public function testValidateWithRegisteredSecondaryValidationThatFails()
+    {
+        $this->instance->withValidator(MockSecondaryValidator::fail());
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set(Time::zeroes());
+        });
+
+        $this->assertHasError($exception, MockSecondaryValidationError::class);
     }
 }

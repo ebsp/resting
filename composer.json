@@ -2,8 +2,9 @@
     "name": "ebsp/resting",
     "description": "Simple REST library for Laravel",
     "require": {
+        "php": "^7.0 || ^8.0",
         "laravel/framework": "^7.0 || ^8.0",
-        "codeception/assert-throws": "^1.0"
+        "ext-json": "*"
     },
     "authors": [
         {
@@ -16,7 +17,7 @@
             "Seier\\Resting\\": "src/"
         },
         "files": [
-            "src/Support/helpers.php"
+            "src/Validation/Predicates/factories.php"
         ]
     },
     "autoload-dev": {
@@ -27,7 +28,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Seier\\Resting\\Support\\RestingServiceProvider"
+                "Seier\\Resting\\Support\\Laravel\\RestingServiceProvider"
             ]
         }
     },
@@ -35,7 +36,8 @@
     "prefer-stable": true,
     "require-dev": {
         "phpunit/phpunit": "9.5.0",
-        "orchestra/testbench": "^6.3"
+        "orchestra/testbench": "^6.3",
+        "jchook/phpunit-assert-throws": "^1.0"
     },
     "scripts": {
     	"coverage": "phpunit --coverage-html ./docs/coverage"

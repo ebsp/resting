@@ -27,7 +27,7 @@ The Resting package comes with a number of predefined field types. The following
 - `ResourceArrayField`
 - `StringField`
 
-You may define your own depending on your needs. Each field type implements `protected function setMutator($value)` which is responsible for casting and/or validating the field input when being set.
+You may define your own depending on your needs. Each field type implements `public function set($value)` which is responsible for casting and/or validating the field input when being set.
 
 An instance of a field type is defined on each of the resource’s properties through the resource’s constructor. For instance if the resource expose an attribute `id` the corresponding field type could be `IntField`
 

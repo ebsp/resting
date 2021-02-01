@@ -2,27 +2,27 @@
 
 namespace Seier\Resting\Support;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Responsable;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
-use Illuminate\Routing\RouteCollection;
-use Illuminate\Support\Arr;
 use ReflectionClass;
 use ReflectionParameter;
-use Seier\Resting\Fields\FieldAbstract;
-use Seier\Resting\Fields\ResourceArrayField;
-use Seier\Resting\Fields\ResourceField;
-use Seier\Resting\Params;
 use Seier\Resting\Query;
+use Seier\Resting\Params;
+use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
+use Seier\Resting\Fields\Field;
 use Seier\Resting\UnionResource;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\RouteCollection;
+use Seier\Resting\Fields\ResourceField;
+use Illuminate\Contracts\Support\Arrayable;
+use Seier\Resting\Fields\ResourceArrayField;
+use Illuminate\Contracts\Support\Responsable;
 
 class OpenAPI implements Arrayable, Responsable
 {
-    public $document;
 
+    public $document;
     protected $routes;
     protected $resources = [];
     protected $parameters = [];
@@ -64,10 +64,10 @@ class OpenAPI implements Arrayable, Responsable
             $query = new $query;
 
             $fields = $query->fields()->filter(function ($field) {
-                return $field instanceof FieldAbstract;
+                return $field instanceof Field;
             });
 
-            $fields->each(function (FieldAbstract $abstract, $key) use ($query, $where) {
+            $fields->each(function (Field $abstract, $key) use ($query, $where) {
                 $this->document['components']['parameters'][static::parametersRefName(get_class($query), $key)] = [
                     'in' => $where,
                     'name' => $key,
@@ -89,33 +89,33 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeResource(Resource $resource)
     {
         $fields = $resource->fields()->filter(function ($attr) {
-            $field = $attr instanceof FieldAbstract;
+            $field = $attr instanceof Field;
 
             if ($attr instanceof ResourceField) {
-                $class = get_class($attr->get()->original());
+                $class = get_class($attr->getResourcePrototype());
                 if ($class !== UnionResource::class && (new ReflectionClass($class))->getParentClass()->getName() !== UnionResource::class) {
-                    $this->describeResource($attr->get()->original());
+                    $this->describeResource($attr->getResourcePrototype());
                 }
             } elseif ($attr instanceof ResourceArrayField) {
-                $class = get_class($attr->resources());
+                $class = get_class($attr->resource());
                 if ($class !== UnionResource::class && (new ReflectionClass($class))->getParentClass()->getName() !== UnionResource::class) {
-                    $this->describeResource($attr->resources());
+                    $this->describeResource($attr->resource());
                 }
             }
 
             return $field;
         });
 
-        $requiredFields = $fields->filter(function (FieldAbstract $field) {
+        $requiredFields = $fields->filter(function (Field $field) {
             return $field->isRequired();
         });
 
         $this->document['components']['schemas'][static::resourceRefName(get_class($resource))] = [
             'type' => 'object',
-            'required' => $requiredFields->map(function (FieldAbstract $field, $key) {
+            'required' => $requiredFields->map(function (Field $field, $key) {
                 return $key;
             })->values()->toArray(),
-            'properties' => $fields->map(function (FieldAbstract $field) {
+            'properties' => $fields->map(function (Field $field) {
                 foreach ($field->nestedRefs() as $type => $refs) {
                     if ('schema' === $type) {
                         foreach ((array)$refs as $ref)
@@ -126,7 +126,22 @@ class OpenAPI implements Arrayable, Responsable
                     }
                 }
 
-                return $field->type();
+                $merge = [];
+
+                if ($validator = $field->getValidator()) {
+                    $description = $validator->description();
+                    if ($secondary = $validator->getSecondaryValidators()) {
+                        $description .= "<br/>The value must also conform to the following:";
+                        foreach ($secondary as $val) {
+                            $description .= "<br/>&nbsp;&nbsp;- " . $val->description();
+                        }
+                    }
+
+                    $merge['description'] = $description;
+                }
+
+                return $merge + $field->type();
+
             })->toArray(),
         ];
     }
@@ -149,7 +164,7 @@ class OpenAPI implements Arrayable, Responsable
         $this->document['paths'] = $paths;
     }
 
-    protected function describeEndpoint(Route $route, $method)
+    protected function describeEndpoint(Route $route, $method): array
     {
         $endpoint = [
             'description' => $route->_docs ?? null,
@@ -260,8 +275,8 @@ class OpenAPI implements Arrayable, Responsable
             $query = new $queryClass;
 
             $fields = $query->fields()->filter(function ($field) {
-                return $field instanceof FieldAbstract;
-            })->map(function (FieldAbstract $fieldAbstract, $key) use ($query) {
+                return $field instanceof Field;
+            })->map(function (Field $fieldAbstract, $key) use ($query) {
                 return [
                     '$ref' => static::componentPath(
                         static::parametersRefName(get_class($query), $key), 'parameters'
@@ -300,8 +315,8 @@ class OpenAPI implements Arrayable, Responsable
             $query = new $paramClass;
 
             $fields = $query->fields()->filter(function ($field) {
-                return $field instanceof FieldAbstract;
-            })->map(function (FieldAbstract $fieldAbstract, $key) use ($query) {
+                return $field instanceof Field;
+            })->map(function (Field $fieldAbstract, $key) use ($query) {
                 return [
                     '$ref' => static::componentPath(
                         static::parametersRefName(get_class($query), $key), 'parameters'
@@ -325,12 +340,12 @@ class OpenAPI implements Arrayable, Responsable
             list($_class, $_method) = explode('@', $type);
             $reflectionClass = new ReflectionClass($_class);
             $return = $reflectionClass->getMethod($_method)->getReturnType();
-            if ($return)
+            if ($return && ($return instanceof \ReflectionNamedType) && (new ReflectionClass($return->getName()))->isSubclassOf(Resource::class))
                 $classes[] = $return->getName();
         } elseif ($route->action['uses'] instanceof \Closure) {
             $reflectionFunction = new \ReflectionFunction($route->action['uses']);
             $return = $reflectionFunction->getReturnType();
-            if ($return)
+            if ($return && ($return instanceof \ReflectionNamedType) && (new ReflectionClass($return->getName()))->isSubclassOf(Resource::class))
                 $classes[] = $return->getName();
         }
 
@@ -405,13 +420,13 @@ class OpenAPI implements Arrayable, Responsable
             }
 
             foreach ($resource->fields() as $k => $field) {
-                if ($field instanceof ResourceField && $field->get() instanceof UnionResource) {
-                    foreach ($field->get()->getDependantResources() as $dependantResource) {
+                if ($field instanceof ResourceField && ($field->getResourcePrototype() instanceof UnionResource)) {
+                    foreach ($field->getResourcePrototype()->getDependantResources() as $dependantResource) {
                         $this->addResource($dependantResource);
                     }
                 }
-                if ($field instanceof ResourceArrayField && $field->resources() instanceof UnionResource) {
-                    foreach ($field->resources()->getDependantResources() as $dependantResource) {
+                if ($field instanceof ResourceArrayField && $field->resource() instanceof UnionResource) {
+                    foreach ($field->resource()->getDependantResources() as $dependantResource) {
                         $this->addResource($dependantResource);
                     }
                 }

@@ -1,30 +1,39 @@
 <?php
 
+
 namespace Seier\Resting\Exceptions;
 
-use Illuminate\Support\Arr;
-use Illuminate\Validation\ValidationException as BaseValidationException;
-use stdClass;
 
-class ValidationException extends BaseValidationException
+class ValidationException extends RestingRuntimeException
 {
-    public function errors()
+
+    private array $errors;
+
+    public function __construct(array $errors)
     {
-        $messages = [];
+        parent::__construct();
 
-        foreach ($this->validator->errors()->messages() as $key => $value) {
-            Arr::set($messages, $key, $value);
+        $this->errors = $errors;
+        $this->message = $this->createMessage($errors);
+    }
+
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+    private function createMessage(array $errors): string
+    {
+        $message = 'There were validation errors:';
+        foreach ($errors as $error) {
+
+            $errorPath = $error->getPath();
+            $errorMessage = $error->getMessage();
+
+            $message .= "\n\t";
+            $message .= "at path '$errorPath': $errorMessage";
         }
 
-        if (isset($messages['body'])) {
-            foreach ($messages['body'] as $key => $value) {
-                if (is_int($key) && is_array($value)) {
-                    unset($messages['body'][$key]);
-                    $messages['body']['_' . $key] = $value;
-                }
-            }
-        }
-
-        return $messages;
+        return $message;
     }
 }

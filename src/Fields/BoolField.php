@@ -2,27 +2,51 @@
 
 namespace Seier\Resting\Fields;
 
-class BoolField extends FieldAbstract
+use Seier\Resting\Parsing\BoolParser;
+use Seier\Resting\Validation\BoolValidator;
+use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
+
+class BoolField extends Field
 {
-    public function getMutator($value)
+
+    use EnumValidation;
+
+    private BoolValidator $validator;
+    private BoolParser $parser;
+
+    public function __construct()
     {
-        return (bool) $value;
+        parent::__construct();
+
+        $this->validator = new BoolValidator();
+        $this->parser = new BoolParser();
     }
 
-    public function setMutator($value)
+    public function getValidator(): BoolValidator
     {
-        return (bool) $value;
+        return $this->validator;
     }
 
-    protected function fieldValidation() : array
+    public function getParser(): BoolParser
     {
-        return ['bool'];
+        return $this->parser;
     }
 
-    public function type() : array
+    public function get(): ?bool
+    {
+        return $this->value;
+    }
+
+    public function type(): array
     {
         return [
             'type' => 'boolean',
         ];
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        return $this->validator;
     }
 }

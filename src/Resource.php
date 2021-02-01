@@ -2,104 +2,92 @@
 
 namespace Seier\Resting;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Seier\Resting\Fields\Field;
 use Illuminate\Support\Collection;
-use Seier\Resting\Support\Response;
 use Seier\Resting\Fields\ResourceField;
-use Seier\Resting\Fields\FieldAbstract;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Responsable;
-use Seier\Resting\Support\SuppressErrorsTrait;
+use Seier\Resting\Fields\ResourceArrayField;
+use Seier\Resting\Validation\Secondary\Panics;
+use Seier\Resting\Marshaller\ResourceMarshaller;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Predicates\ResourceContext;
+use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 
-abstract class Resource implements
-    Arrayable,
-    Jsonable,
-    Responsable
+abstract class Resource implements Arrayable, Jsonable
 {
-    protected $_responseCode = 200;
-    protected $_trimNullValues = true;
-    protected $_original;
-    protected $_always_expect_required = false;
-    protected $_is_null = false;
-    protected $_filled = false;
-    protected $_raw = null;
-    protected $_is_flattened = false;
 
-    protected $request;
+    use Panics;
 
-    use SuppressErrorsTrait;
+    private bool $removeNulls = true;
+    private bool $removeEmptyArrays = true;
+    private mixed $raw = null;
 
-    public static function create()
+    public static function create(): static
     {
         return new static;
     }
 
-    /**
-     * @param array $values
-     * @param bool $suppressErrors
-     * @return static
-     */
-    public static function fromArray(array $values, bool $suppressErrors = false): self
+    public static function fromArray(array $values): static
     {
-        return static::fromCollection(collect($values), $suppressErrors);
+        return static::fromCollection(collect($values));
     }
 
-    /**
-     * @param Collection $values
-     * @param bool $suppressErrors
-     * @return static
-     */
-    public static function fromCollection(Collection $values, bool $suppressErrors = false): self
+    public static function fromCollection(Collection $values): static
     {
-        return (new static)->suppressErrors($suppressErrors)->setPropertiesFromCollection($values);
+        $resource = new static();
+        $context = new ArrayResourceContext(
+            $resource->fields()->toArray(),
+            $values->toArray(),
+            isStringBased: false
+        );
+
+        $resource->prepare($context);
+        $resource->setFieldsFromCollection($values);
+        $resource->finish();
+
+        return $resource;
     }
 
-    public static function fromRequest(Request $request, bool $suppressErrors = false)
-    {
-        return static::fromArray($request->all(), $suppressErrors)->setRequest($request);
-    }
-
-    public static function fromRaw(array $data)
+    public static function fromRaw(array $data): static
     {
         return (new static)->setRaw($data);
     }
 
-    protected function setRaw(array $data)
+    public function setRaw(array $data): static
     {
-        $this->_raw = $data;
+        $this->raw = $data;
 
         return $this;
     }
 
-    public function setRequest(Request $request)
+    public function set(array|Collection $values): static
     {
-        $this->request = $request;
+        $this->setFieldsFromCollection(collect($values));
 
         return $this;
     }
 
-    public function setPropertiesFromCollection(Collection $collection)
+    public function setFieldsFromCollection(Collection $collection): static
     {
-        foreach ($this->fields() as $field => $value) {
-            $this->touch();
-
-            $property = $this->{$field};
-            if ($property instanceof FieldAbstract && $collection->has($field)) {
-                $property->suppressErrors($this->suppressErrors)->set(
-                    $collection->get($field)
-                );
-            };
+        $marshaller = new ResourceMarshaller();
+        $marshaller->marshalResourceFields($this, $collection->toArray());
+        if ($errors = $marshaller->getValidationErrors()) {
+            throw new ValidationException($errors);
         }
 
         return $this;
     }
 
-    public function only(...$values)
+    public function only(Field ...$fields): static
     {
-        $this->fields()->diffKeys(array_combine($values, $values))->each(function ($_, $property) {
-            unset($this->{$property});
+        $hashCodes = [];
+        foreach ($fields as $field) {
+            $hashCodes[spl_object_hash($field)] = $field;
+        }
+
+        $this->fields()->each(function ($field) use ($hashCodes) {
+            $field->enable(array_key_exists(spl_object_hash($field), $hashCodes));
         });
 
         return $this;
@@ -107,200 +95,109 @@ abstract class Resource implements
 
     public function fields(): Collection
     {
-        return collect(
-            objectProperties($this)
-        );
+        return collect(get_object_vars($this))
+            ->filter(fn($value) => $value instanceof Field && $value->isEnabled());
     }
 
-    public function values()
+    protected function values(bool $format)
     {
-        if (is_array($this->_raw)) {
-            return $this->_raw;
+        if (is_array($this->raw)) {
+            return $this->raw;
         }
 
         return $this->fields()
-            ->filter(function ($field) {
-                return !($field instanceof FieldAbstract && $field->isHidden());
-            })
-            ->map(function ($field) {
-                if ($field instanceof ResourceField && !$field->filled()) {
+            ->map(function ($field) use ($format) {
+
+                if ($field instanceof ResourceField) {
+                    $resource = $field->get();
+                    return $format ? $resource?->toResponseArray() : $resource?->toArray();
+                }
+
+                if ($field instanceof ResourceArrayField) {
+
+                    $value = $field->get();
+                    if ($value !== null) {
+                        return array_map(function (Resource $resource) use ($format) {
+                            return $format ? $resource->toResponseArray() : $resource->toArray();
+                        }, $field->get());
+                    }
+
                     return null;
                 }
 
-                if ($field instanceof FieldAbstract) {
-                    return $field->formatted();
+                if ($field instanceof Field) {
+                    return $format ? $field->formatted() : $field->get();
                 }
 
-                if (is_array($field)) {
-                    return array_map(function ($element) {
-                        if ($element instanceof Resource) {
-                            return $element->toArray();
-                        }
+                $this->panic();
 
-                        return $element;
-                    }, $field);
-                }
-
-                return $field;
             })->toArray();
     }
 
-    public function __get($name)
+    public function toArray(): array
     {
-        return optional();
+        return $this->values(format: false);
     }
 
-    public function toArray()
+    public function toJson($options = 0): bool|string
     {
-        return $this->values();
+        return json_encode($this->toResponseArray(), $options);
     }
 
-    public function toJson($options = 0)
+    public function copy(): static
     {
-        return json_encode($this->toArray(), $options);
-    }
-
-    public function copy()
-    {
-        return clone $this;
-    }
-
-    /**
-     * @return static
-     */
-    public function flatten()
-    {
-        $copy = $this->copy();
-        foreach ($copy->fields() as $field => $value) {
-            if ($value instanceof FieldAbstract) {
-                $copy->{$field} = $value->get();
-            }
-        }
-
-        $copy->setOriginal($this);
-        $this->_is_flattened = true;
-
-        return $copy;
-    }
-
-    public function original()
-    {
-        return $this->_original;
-    }
-
-    public function setOriginal($original)
-    {
-        $this->_original = $original;
-
-        return $this;
-    }
-
-    public function validation(Request $request, $overwriteRequirements = true)
-    {
-        return $this->fields()->filter(function ($field) {
-            return $field instanceof FieldAbstract;
-        })->map(function (FieldAbstract $field) use ($request, $overwriteRequirements) {
-            return $field->required(
-                $overwriteRequirements
-                    ? $field->isRequired() && $this->requiredFieldsExpected($request)
-                    : $field->isRequired()
-            )->validation();
-        })->toArray();
-    }
-
-    /**
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
-    public function toResponse($request)
-    {
-        return new JsonResponse(
-            $this->responseData(), $this->_responseCode ?? 200
-        );
-    }
-
-    protected function responseData(): array
-    {
-        return (new Response(
-            $this->toResponseArray()
-        ))->toArray();
+        return new static();
     }
 
     public function toResponseArray()
     {
-        return $this->_trimNullValues
-            ? nn($this->toArray())
-            : $this->toArray();
-    }
+        $array = $this->values(format: true);
 
-    public function requiredFieldsExpected(Request $request)
-    {
-        return in_array($request->method(), ['POST', 'PUT']) || $this->_always_expect_required;
-    }
-
-    public function alwaysExpectRequired($should = true)
-    {
-        $this->_always_expect_required = $should;
-
-        return $this;
-    }
-
-    public function responseCode($code): self
-    {
-        $this->_responseCode = $code;
-
-        return $this;
-    }
-
-    public function trimNullValues(bool $should = null)
-    {
-        if (!is_null($should)) {
-            return $this->_trimNullValues = $should;
+        if (!$this->removeNulls && !$this->removeEmptyArrays) {
+            return $array;
         }
 
-        return $this->_trimNullValues;
+        return array_filter($array, function (mixed $value) {
+            return (
+                (!$this->removeNulls || $value !== null) &&
+                (!$this->removeEmptyArrays || $value !== [])
+            );
+        });
     }
 
-    public function fromEloquent($model)
+    public function removeNulls(bool $should): static
     {
-        return $this;
-    }
-
-    public function prepare()
-    {
-        //
-    }
-
-    public function filled()
-    {
-        return $this->_is_null || $this->_filled;
-    }
-
-    public function touch()
-    {
-        $this->_filled = true;
+        $this->removeNulls = $should;
 
         return $this;
     }
 
-    public function isFlattened()
+    public function removeEmptyArrays(bool $should): static
     {
-        return $this->_is_flattened;
-    }
-
-    public function isNull()
-    {
-        return $this->_is_null;
-    }
-
-    public function setNull()
-    {
-        $this->_is_null = true;
+        $this->removeEmptyArrays = $should;
 
         return $this;
     }
 
-    public function getDependantResources()
+    /**
+     * Called before validation and hydration is performed on any fields on the resource.
+     *
+     * @param ResourceContext $context
+     */
+    public function prepare(ResourceContext $context)
+    {
+
+    }
+
+    /**
+     * Called after validation and hydration has finished on the fields on the resource.
+     */
+    public function finish()
+    {
+
+    }
+
+    public function getDependantResources(): array
     {
         return [];
     }
