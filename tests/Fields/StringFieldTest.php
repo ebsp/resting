@@ -4,56 +4,84 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\StringField;
-use Seier\Resting\Exceptions\InvalidTypeException;
+use Jchook\AssertThrows\AssertThrows;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
+use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 
 class StringFieldTest extends TestCase
 {
-    public function testValidation()
+
+    use AssertsErrors;
+    use AssertThrows;
+
+    private StringField $instance;
+
+    public function setUp(): void
     {
-        $field = new StringField;
-        $this->assertEquals($field->validation()[0], 'string');
+        parent::setUp();
+
+        $this->instance = new StringField();
     }
 
-    public function testInvalidTypeInt()
+    public function testGetEmptyReturnsNull()
     {
-        $this->expectException(InvalidTypeException::class);
-
-        $field = new StringField;
-        $field->set(1);
+        $this->assertNull($this->instance->get());
     }
 
-    public function testInvalidTypeArray()
+    public function testIsNullReturnsTrue()
     {
-        $this->expectException(InvalidTypeException::class);
-
-        $field = new StringField;
-        $field->set([]);
+        $this->assertTrue($this->instance->isNull());
     }
 
-    public function testInvalidTypeBool()
+    public function testSetWhenGivenString()
     {
-        $this->expectException(InvalidTypeException::class);
+        $this->instance->set($expected = $this->faker->word);
 
-        $field = new StringField;
-        $field->set(false);
+        $this->assertEquals($expected, $this->instance->get());
     }
 
-    public function testEmptyReturnsNull()
+    public function testSetWhenGivenWrongType()
     {
-        $field = new StringField;
-        $this->assertNull($field->get());
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(1);
+        });
     }
 
-    public function testNullable()
+    public function testNullableSetWhenGivenNull()
     {
-        $field = new StringField;
-        $field->set(null);
-        $this->assertNull($field->get());
+        $this->instance->nullable();
+
+        $this->instance->set(null);
+        $this->assertNull($this->instance->get());
     }
 
-    public function testNonNullable()
+    public function testNonNullableSetWhenGivenNull()
     {
-        $field = (new StringField)->nullable(false);
-        $this->assertEquals($field->get(), '');
+        $this->instance->nullable(false);
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(null);
+        });
+    }
+
+    public function testValidateWithRegisteredSecondaryValidationThatPasses()
+    {
+        $this->instance->withValidator(MockSecondaryValidator::pass());
+
+        $this->instance->set($expected = '');
+        $this->assertEquals($expected, $this->instance->get());
+    }
+
+    public function testValidateWithRegisteredSecondaryValidationThatFails()
+    {
+        $this->instance->withValidator(MockSecondaryValidator::fail());
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set('');
+        });
+
+        $this->assertHasError($exception, MockSecondaryValidationError::class);
     }
 }

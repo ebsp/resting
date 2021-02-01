@@ -2,40 +2,100 @@
 
 namespace Seier\Resting\Fields;
 
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
+use Seier\Resting\Parsing\CarbonParser;
+use Seier\Resting\Validation\CarbonValidator;
+use Seier\Resting\Formatting\CarbonFormatter;
+use Seier\Resting\Parsing\DefaultParseContext;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Secondary\CarbonValidation;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
-class CarbonField extends FieldAbstract
+class CarbonField extends Field
 {
-    public function getMutator($value): ?Carbon
-    {
-        if (!$this->isNullable() && is_null($value)) {
-            return new Carbon;
-        }
 
-        return $value;
+    use CarbonValidation;
+
+    private CarbonValidator $validator;
+    private CarbonParser $parser;
+    private CarbonFormatter $formatter;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->validator = new CarbonValidator();
+        $this->parser = new CarbonParser();
+        $this->formatter = new CarbonFormatter();
     }
 
-    public function setMutator($value): ?Carbon
+    public function getValidator(): CarbonValidator
     {
-        if (!$value instanceof Carbon && !is_null($value)) {
-            try {
-                $value = Carbon::parse($value);
-            } catch (\Exception $e) {
-                $value = null;
+        return $this->validator;
+    }
+
+    public function getParser(): CarbonParser
+    {
+        return $this->parser;
+    }
+
+    public function getFormatter(): CarbonFormatter
+    {
+        return $this->formatter;
+    }
+
+    public function formatted(): ?string
+    {
+        return $this->getFormatter()->format($this->value);
+    }
+
+    public function set($value): static
+    {
+        if (is_string($value)) {
+            $parseContext = new DefaultParseContext($value, false);
+            if ($parseErrors = $this->parser->canParse($parseContext)) {
+                throw new ValidationException($parseErrors);
             }
+
+            $value = $this->parser->parse($parseContext);
         }
 
-        return $value;
+        return parent::set($value);
     }
 
-    public function formatted()
+    public function get(): ?Carbon
     {
-        return optional($this->get())->toIso8601String();
+        return $this->value;
     }
 
-    protected function fieldValidation(): array
+    public function withFormat(string $format): static
     {
-        return $this->required && !$this->nullable ? ['valid_timestamp:required'] : ['valid_timestamp:nullable'];
+        $this->withInputFormat($format);
+        $this->withOutputFormat($format);
+
+        return $this;
+    }
+
+    public function withInputFormat(string $format): static
+    {
+        $this->parser->withFormat($format);
+
+        return $this;
+    }
+
+    public function withOutputFormat(string $format): static
+    {
+        $this->formatter->withFormat($format);
+
+        return $this;
+    }
+
+    public function withIsoDateFormat(): static
+    {
+        $this->withFormat('Y-m-d|');
+        $this->withOutputFormat('Y-m-d');
+
+        return $this;
     }
 
     public function type(): array
@@ -44,5 +104,10 @@ class CarbonField extends FieldAbstract
             'type' => 'string',
             'format' => 'date-time',
         ];
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        return $this->validator;
     }
 }

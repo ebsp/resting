@@ -2,26 +2,56 @@
 
 namespace Seier\Resting\Fields;
 
-class IntField extends FieldAbstract
+use Seier\Resting\Parsing\IntParser;
+use Seier\Resting\Validation\IntValidator;
+use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\Numeric\NumericValidation;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
+
+class IntField extends Field
 {
-    protected $value = 0;
 
-    protected function setMutator($value)
+    use NumericValidation;
+    use EnumValidation;
+
+    private IntValidator $validator;
+    private IntParser $parser;
+
+    public function __construct()
     {
-        if (is_int($value) || is_null($value)) {
-            return $value;
-        }
+        parent::__construct();
 
-        if (is_numeric($value) || (is_string($value) && preg_match('/^[0-9]+$/', $value))) {
-            return (int)$value;
-        }
-
-        return $value;
+        $this->validator = new IntValidator();
+        $this->parser = new IntParser();
     }
 
-    protected function fieldValidation(): array
+    public function getValidator(): IntValidator
     {
-        return ['int'];
+        return $this->validator;
+    }
+
+    public function getParser(): IntParser
+    {
+        return $this->parser;
+    }
+
+    public function get(): ?int
+    {
+        return $this->value;
+    }
+
+    public function set($value): static
+    {
+        if (is_float($value) && floor($value) === $value) {
+            return parent::set((int)$value);
+        }
+
+        return parent::set($value);
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        return $this->validator;
     }
 
     public function type(): array

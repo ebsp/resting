@@ -2,37 +2,118 @@
 
 namespace Seier\Resting\Fields;
 
-use Seier\Resting\Exceptions\InvalidTimeFormatException;
+use Carbon\Carbon;
+use Seier\Resting\Parsing\TimeParser;
+use Seier\Resting\Validation\TimeValidator;
+use Seier\Resting\Formatting\TimeFormatter;
+use Seier\Resting\Parsing\DefaultParseContext;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Secondary\TimeValidation;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
-class TimeField extends FieldAbstract
+class TimeField extends Field
 {
-    protected $withSeconds = true;
 
-    public function withSeconds(bool $withSeconds)
+    use TimeValidation;
+
+    private TimeValidator $validator;
+    private TimeParser $parser;
+    private TimeFormatter $formatter;
+
+    public function __construct()
     {
-        $this->withSeconds = $withSeconds;
+        parent::__construct();
+
+        $this->validator = new TimeValidator();
+        $this->parser = new TimeParser();
+        $this->formatter = new TimeFormatter();
+    }
+
+    public function getValidator(): TimeValidator
+    {
+        return $this->validator;
+    }
+
+    public function getParser(): TimeParser
+    {
+        return $this->parser;
+    }
+
+    public function getFormatter(): TimeFormatter
+    {
+        return $this->formatter;
+    }
+
+    public function formatted(): ?string
+    {
+        return $this->getFormatter()->format($this->value);
+    }
+
+    public function withFormat(string $format): static
+    {
+        $this->withOutputFormat($format);
 
         return $this;
     }
 
-    public function setMutator($value)
+    public function get(): ?Time
     {
-        $secondsPattern = $this->withSeconds ? ':([0-5]?[0-9])' : '';
-        $pattern = "/^(2[0-3]|[01]?[0-9]):([0-5]?[0-9]){$secondsPattern}$/";
+        return $this->value;
+    }
 
-        if (! preg_match($pattern, $value)) {
-            $this->error(new InvalidTimeFormatException);
+    public function withOutputFormat(string $format): static
+    {
+        $this->formatter->withFormat($format);
+
+        return $this;
+    }
+
+    private function parsed($value): ?Time
+    {
+        if ($value instanceof Time) {
+            return $value;
+        }
+
+        if ($value instanceof Carbon) {
+            return Time::fromCarbon($value);
+        }
+
+        if (is_string($value)) {
+            $parseContext = new DefaultParseContext($value, false);
+            $errors = $this->parser->canParse($parseContext);
+            if ($errors) {
+                throw new ValidationException($errors);
+            }
+
+            return $this->parser->parse($parseContext);
         }
 
         return $value;
     }
 
-    protected function fieldValidation() : array
+    public function set($value): static
     {
-        return ['date_format:"H:i' . ($this->withSeconds ? ':s' : '') . '"'];
+        if ($value === null) {
+            parent::set($value);
+            return $this;
+        }
+
+        return parent::set($this->parsed($value));
     }
 
-    public function type() : array
+    public function requireSeconds(bool $state = true): static
+    {
+        $this->getParser()->requireSeconds($state);
+
+        return $this;
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        return $this->validator;
+    }
+
+    public function type(): array
     {
         return [
             'type' => 'string',

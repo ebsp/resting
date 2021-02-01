@@ -5,14 +5,14 @@ namespace Seier\Resting\Tests\Support;
 
 
 use Illuminate\Routing\Route;
-use Illuminate\Routing\RouteCollection;
-use Seier\Resting\Support\OpenAPI;
-use Seier\Resting\Tests\Resources\UnionListParentResource;
-use Seier\Resting\Tests\Resources\UnionParentResource;
-use Seier\Resting\Tests\Resources\UnionResourceA;
-use Seier\Resting\Tests\Resources\UnionResourceB;
-use Seier\Resting\Tests\Resources\UnionResourceBase;
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Support\OpenAPI;
+use Illuminate\Routing\RouteCollection;
+use Seier\Resting\Tests\Meta\UnionResourceA;
+use Seier\Resting\Tests\Meta\UnionResourceB;
+use Seier\Resting\Tests\Meta\UnionResourceBase;
+use Seier\Resting\Tests\Meta\UnionParentResource;
+use Seier\Resting\Tests\Meta\UnionListParentResource;
 
 class OpenAPITest extends TestCase
 {

@@ -7,5 +7,6 @@ use Seier\Resting\Resource;
 
 interface Transformer
 {
-    public function __invoke(Resourcable $resourcable) : Resource;
+
+    public function __invoke(Resourcable $resourcable): Resource;
 }

@@ -2,41 +2,38 @@
 
 namespace Seier\Resting;
 
+use Seier\Resting\Fields\Field;
 use Illuminate\Support\Collection;
-use Seier\Resting\Fields\FieldAbstract;
+use Seier\Resting\Exceptions\DynamicResourceFieldException;
 
 class DynamicResource extends Resource
 {
-    protected $fields = [];
+
+    protected Collection $fields;
 
     public function __construct()
     {
         $this->fields = collect();
     }
 
-    public function fields() : Collection
+    public function fields(): Collection
     {
-        return $this->fields->map(function (FieldAbstract $fieldAbstract) {
-            return $fieldAbstract->touch();
-        });
+        return $this->fields;
     }
 
-    public function addField($key, FieldAbstract $field)
+    public function withField(string $property, Field $field): static
     {
-        $this->fields->put($key, $field);
+        $this->fields->put($property, $field);
 
         return $this;
     }
 
-    public function removeField($key)
+    public function __get($key): Field
     {
-        $this->fields->forget($key);
+        if (!$this->fields->has($key)) {
+            throw new DynamicResourceFieldException();
+        }
 
-        return $this;
-    }
-
-    public function __get($key)
-    {
         return $this->fields->get($key);
     }
 }
