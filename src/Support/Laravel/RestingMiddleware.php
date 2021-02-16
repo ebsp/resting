@@ -74,7 +74,10 @@ class RestingMiddleware
             // when the parameter type is a builtin,
             // we assume the user wants to access input values like query and path parameters
             if (!$parameterType || $parameterType->isBuiltin()) {
-                $parameterValue = $this->request->input($parameterName) ?? (array_key_exists($parameterName, $originalParameters) ? $originalParameters[$parameterName] : null);
+                $parameterValue = array_key_exists($parameterName, $originalParameters)
+                    ? $originalParameters[$parameterName]
+                    : $this->request->query($parameterName);
+
                 $this->request->route()->setParameter($parameter->getName(), $parameterValue);
                 continue;
             }
