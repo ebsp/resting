@@ -19,4 +19,12 @@ class PersonResource extends Resource
         $this->name = new StringField;
         $this->age = new IntField;
     }
+
+    public function from(Person $person): static
+    {
+        $this->name->set($person->name);
+        $this->age->set($person->age);
+
+        return $this;
+    }
 }

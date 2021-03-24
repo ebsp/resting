@@ -4,13 +4,14 @@ namespace Seier\Resting\Tests;
 
 use Carbon\Carbon;
 use Seier\Resting\DynamicResource;
+use Seier\Resting\Tests\Meta\Person;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\ClassResource;
 use Seier\Resting\Tests\Meta\EventResource;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Fields\ResourceArrayField;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
@@ -196,6 +197,51 @@ class ResourceTest extends TestCase
 
         $this->assertHasError($exception, NullableValidationError::class, 'name');
         $this->assertHasError($exception, NullableValidationError::class, 'age');
+    }
+
+    public function testMapManyAcceptsArray()
+    {
+        $persons = [];
+        $resource = new PersonResource();
+        $result = $resource->mapMany($persons, function (PersonResource $resource, Person $person) {
+            return $resource->from($person);
+        });
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    public function testMapManyAcceptsCollection()
+    {
+        $persons = collect();
+        $resource = new PersonResource();
+        $result = $resource->mapMany($persons, function (PersonResource $resource, Person $person) {
+            return $resource->from($person);
+        });
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    public function testMapMany()
+    {
+        $persons = [
+            Person::from('A', 1),
+            Person::from('C', 2),
+            Person::from('B', 5),
+        ];
+
+        $resource = new PersonResource();
+        $result = $resource->mapMany($persons, function (PersonResource $resource, Person $person) {
+            return $resource->from($person);
+        });
+
+        $this->assertIsArray($result);
+        $this->assertEquals([
+            ['name' => 'A', 'age' => 1],
+            ['name' => 'C', 'age' => 2],
+            ['name' => 'B', 'age' => 5],
+        ], $result);
     }
 
     public function testToArray()

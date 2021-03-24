@@ -54,6 +54,16 @@ abstract class Resource implements Arrayable, Jsonable
         return (new static)->setRaw($data);
     }
 
+    public function mapMany(iterable $values, callable $mapper): array
+    {
+        $mapped = [];
+        foreach ($values as $value) {
+            $mapped[] = $mapper($this, $value)->toResponseArray();
+        }
+
+        return $mapped;
+    }
+
     public function setRaw(array $data): static
     {
         $this->raw = $data;
