@@ -23,8 +23,8 @@ class RestingResponse implements Responsable
     {
         $resources = $resources instanceof Collection ? $resources->toArray() : $resources;
 
-        return new static(array_map(function (RestingResource $resource) {
-            return $resource->toResponseArray();
+        return new static(array_map(function ($resource) {
+            return $resource instanceof RestingResource ? $resource->toResponseArray() : $resource;
         }, $resources), $status);
     }
 
