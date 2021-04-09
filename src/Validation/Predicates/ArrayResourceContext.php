@@ -80,6 +80,16 @@ class ArrayResourceContext implements ResourceContext
         return $this->names[$this->hash($field)];
     }
 
+    public function getNames(Field ...$fields): array
+    {
+        $names = [];
+        foreach ($fields as $field) {
+            $names[] = $this->getName($field);
+        }
+
+        return $names;
+    }
+
     protected function hash(Field $field): string
     {
         return spl_object_hash($field);

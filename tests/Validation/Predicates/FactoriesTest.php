@@ -72,6 +72,30 @@ class FactoriesTest extends TestCase
         $this->assertTrue($instance->passes($context));
     }
 
+    public function testWhenProvidedManyWhenSomeAreProvided()
+    {
+        $context = $this->context(['string' => null]);
+        $instance = whenProvided($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenProvidedManyWhenAllAreProvided()
+    {
+        $context = $this->context(['string' => null, 'int' => null]);
+        $instance = whenProvided($this->string, $this->int);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenProvidedManyWhenNoneAreProvided()
+    {
+        $context = $this->context([]);
+        $instance = whenProvided($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
     public function testWhenNotProvidedWhenValueIsProvided()
     {
         $context = $this->context(['string' => $this->faker->word]);
@@ -94,6 +118,30 @@ class FactoriesTest extends TestCase
         $instance = whenNotProvided($this->string);
 
         $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotProvidedManyWhenSomeAreProvided()
+    {
+        $context = $this->context(['string' => null]);
+        $instance = whenNotProvided($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotProvidedManyWhenAllAreProvided()
+    {
+        $context = $this->context(['string' => null, 'int' => null]);
+        $instance = whenNotProvided($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotProvidedManyWhenNoneAreProvided()
+    {
+        $context = $this->context([]);
+        $instance = whenNotProvided($this->string, $this->int);
+
+        $this->assertTrue($instance->passes($context));
     }
 
     public function testWhenNullWhenValueIsProvided()
@@ -120,6 +168,30 @@ class FactoriesTest extends TestCase
         $this->assertTrue($instance->passes($context));
     }
 
+    public function testWhenNullManyWhenSomeAreNull()
+    {
+        $context = $this->context(['string' => null, 'int' => 1]);
+        $instance = whenNull($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNullManyWhenAllAreNull()
+    {
+        $context = $this->context(['string' => null, 'int' => null]);
+        $instance = whenNull($this->string, $this->int);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNullManyWhenNoneAreNull()
+    {
+        $context = $this->context(['string' => 'a', 'int' => 1]);
+        $instance = whenNull($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
     public function testWhenNotNullWhenValueIsProvided()
     {
         $context = $this->context(['string' => $this->faker->word]);
@@ -142,6 +214,30 @@ class FactoriesTest extends TestCase
         $instance = whenNotNull($this->string);
 
         $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotNullManyWhenSomeAreNull()
+    {
+        $context = $this->context(['string' => null, 'int' => 1]);
+        $instance = whenNotNull($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotNullManyWhenAllAreNull()
+    {
+        $context = $this->context(['string' => null, 'int' => null]);
+        $instance = whenNotNull($this->string, $this->int);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotNullManyWhenNoneAreNull()
+    {
+        $context = $this->context(['string' => '', 'int' => 1]);
+        $instance = whenNotNull($this->string, $this->int);
+
+        $this->assertTrue($instance->passes($context));
     }
 
     public function testWhenEqualsWhenEquals()

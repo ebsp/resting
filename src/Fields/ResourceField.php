@@ -10,7 +10,6 @@ use Seier\Resting\Support\OpenAPI;
 use Illuminate\Support\Collection;
 use Seier\Resting\Support\Resourcable;
 use Seier\Resting\Resource as RestingResource;
-use Seier\Resting\Validation\NullableValidator;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Validation\Errors\NotSubclassOfError;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
@@ -26,9 +25,16 @@ class ResourceField extends Field
     {
         parent::__construct();
 
+        $this->setResourcePrototypeFactory($resourceFactory);
+    }
+
+    public function setResourcePrototypeFactory(Closure $resourceFactory): static
+    {
         $this->resourceFactory = $resourceFactory;
         $this->resource = $resourceFactory();
         $this->resourceReflection = new ReflectionClass($this->resource::class);
+
+        return $this;
     }
 
     public function get(): ?RestingResource
@@ -110,11 +116,6 @@ class ResourceField extends Field
     public function getResourcePrototype(): RestingResource
     {
         return $this->resource;
-    }
-
-    public function getNullableValidator(): NullableValidator
-    {
-        return $this->nullableValidator;
     }
 
     public function nestedRefs(): array

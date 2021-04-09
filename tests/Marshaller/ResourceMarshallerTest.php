@@ -24,6 +24,7 @@ use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Errors\NotStringValidationError;
+use Seier\Resting\Validation\Errors\ForbiddenValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 use function Seier\Resting\Validation\Predicates\whenNull;
@@ -135,6 +136,44 @@ class ResourceMarshallerTest extends TestCase
         $this->assertFalse($result->hasErrors());
         $this->assertType($result->getValue(), function (PersonResource $person) {
             $this->assertNull($person->name->get());
+            $this->assertNull($person->age->get());
+        });
+    }
+
+    public function testMarshalResourceWithPredicatedForbiddenThatIsTrue()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->forbidden(whenProvided($person->age));
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'name' => $this->faker->name,
+            'age' => $this->faker->randomNumber(2),
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
+    }
+
+    public function testMarshalResourceWithPredicatedForbiddenThatIsFalse()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->forbidden(whenProvided($person->age));
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'name' => $name = $this->faker->name,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (PersonResource $person) use ($name) {
+            $this->assertEquals($name, $person->name->get());
             $this->assertNull($person->age->get());
         });
     }
@@ -513,6 +552,122 @@ class ResourceMarshallerTest extends TestCase
         $this->assertCount(2, $errors = $result->getErrors());
         $this->assertHasError($errors, RequiredValidationError::class, 'students.0.name');
         $this->assertHasError($errors, RequiredValidationError::class, 'students.0.age');
+    }
+
+    public function testForbiddenValidationOnFields()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->forbidden();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'name' => $this->faker->name,
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
+    }
+
+    public function testForbiddenValidationOnNestedFields()
+    {
+        $factory = $this->resourceFactory(function () {
+            return tap(new PetResource, function (PetResource $petResource) {
+                $petResource->owner->setResourcePrototypeFactory(function () {
+                    $person = new PersonResource();
+                    $person->name->forbidden();
+                    $person->age->notRequired();
+                    return $person;
+                });
+            });
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'name' => $this->faker->name,
+            'owner' => [
+                'name' => $this->faker->name,
+            ]
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'owner.name');
+    }
+
+    public function testForbiddenValidationOnResourceArrayField()
+    {
+        $factory = $this->resourceFactory(function () {
+            return tap(new ClassResource, function (ClassResource $classResource) {
+                $classResource->students->setResourcePrototypeFactory(function () {
+                    $person = new PersonResource();
+                    $person->name->forbidden();
+                    $person->age->notRequired();
+                    return $person;
+                });
+            });
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'grade' => $this->faker->numberBetween(0, 9),
+            'students' => [[
+                'name' => $this->faker->name,
+            ]]
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'students.0.name');
+    }
+
+    public function testForbiddenValidationOnManyResourcesInResourceArrayField()
+    {
+        $factory = $this->resourceFactory(function () {
+            return tap(new ClassResource, function (ClassResource $classResource) {
+                $classResource->students->setResourcePrototypeFactory(function () {
+                    $person = new PersonResource();
+                    $person->name->forbidden();
+                    $person->age->notRequired();
+                    return $person;
+                });
+            });
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'grade' => $this->faker->numberBetween(0, 9),
+            'students' => [
+                ['name' => $this->faker->name],
+                ['name' => $this->faker->name],
+            ]
+        ]);
+
+        $this->assertCount(2, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'students.0.name');
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'students.1.name');
+    }
+
+    public function testForbiddenValidationManyOnSameResourceInResourceArrayField()
+    {
+        $factory = $this->resourceFactory(function () {
+            return tap(new ClassResource, function (ClassResource $classResource) {
+                $classResource->students->setResourcePrototypeFactory(function () {
+                    $person = new PersonResource();
+                    $person->name->forbidden();
+                    $person->age->forbidden();
+                    return $person;
+                });
+            });
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'grade' => $this->faker->numberBetween(0, 9),
+            'students' => [
+                ['name' => $this->faker->name, 'age' => $this->faker->randomNumber(2)],
+            ]
+        ]);
+
+        $this->assertCount(2, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'students.0.name');
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'students.0.age');
     }
 
     public function testNullableWhenProvidedNull()

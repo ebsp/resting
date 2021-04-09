@@ -16,6 +16,7 @@ use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
+use Seier\Resting\Validation\Errors\ForbiddenValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 
 class ResourceMarshaller
@@ -121,6 +122,7 @@ class ResourceMarshaller
 
             $requiredValidator = $field->getRequiredValidator();
             $nullableValidator = $field->getNullableValidator();
+            $forbiddenValidator = $field->getForbiddenValidator();
             $isProvided = array_key_exists($key, $content);
             $field->setFilled($isProvided);
 
@@ -145,6 +147,14 @@ class ResourceMarshaller
                         break;
                     }
                 }
+            } else {
+
+                if ($forbiddenValidator->isForbidden($resourceContext)) {
+                    $path = $this->getCurrentPath($key);
+                    $this->pushPathError($path, new ForbiddenValidationError());
+                    continue;
+                }
+
             }
 
             $fieldValue = $isProvided ? $content[$key] : $defaultValue;
