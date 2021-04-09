@@ -11,6 +11,8 @@ interface ResourceContext
 
     public function getName(Field $field): string;
 
+    public function getNames(Field ...$fields): array;
+
     public function wasProvided(Field $field): bool;
 
     public function isNull(Field $field): bool;

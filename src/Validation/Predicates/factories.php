@@ -4,52 +4,75 @@ namespace Seier\Resting\Validation\Predicates;
 
 use Seier\Resting\Fields\Field;
 
-function whenProvided(Field $field): Predicate
+function whenProvided(Field...$fields): Predicate
 {
     return AnonymousPredicate::of(
-        function (ResourceContext $context) use ($field) {
-            $fieldName = $context->getName($field);
-            return "True when $fieldName was provided.";
+        function (ResourceContext $context) use ($fields) {
+            $fieldNames = join(',', $context->getNames($fields));
+            return "True when $fieldNames is provided.";
         },
-        function (ResourceContext $context) use ($field) {
-            return $context->wasProvided($field);
+        function (ResourceContext $context) use ($fields) {
+            foreach ($fields as $field) {
+                if (!$context->wasProvided($field)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
 }
 
-function whenNotProvided(Field $field): Predicate
+function whenNotProvided(Field...$fields): Predicate
 {
     return AnonymousPredicate::of(
-        function (ResourceContext $context) use ($field) {
-            $fieldName = $context->getName($field);
-            return "True when $fieldName was not provided.";
+        function (ResourceContext $context) use ($fields) {
+            $fieldNames = join(',', $context->getNames($fields));
+            return "True when $fieldNames is not provided.";
         },
-        function (ResourceContext $context) use ($field) {
-            return !$context->wasProvided($field);
+        function (ResourceContext $context) use ($fields) {
+            foreach ($fields as $field) {
+                if ($context->wasProvided($field)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
 }
 
-function whenNull(Field $field): Predicate
+function whenNull(Field...$fields): Predicate
 {
     return AnonymousPredicate::of(
-
-        function (ResourceContext $context) use ($field) {
-            $fieldName = $context->getName($field);
-            return "True when $fieldName is null.";
+        function (ResourceContext $context) use ($fields) {
+            $fieldNames = join(',', $context->getNames($fields));
+            return "True when $fieldNames is null.";
         },
-        function (ResourceContext $context) use ($field) {
-            return $context->isNull($field);
+        function (ResourceContext $context) use ($fields) {
+            foreach ($fields as $field) {
+                if (!$context->isNull($field)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
 }
 
-function whenNotNull(Field $field): Predicate
+function whenNotNull(Field...$fields): Predicate
 {
     return AnonymousPredicate::of(
-        function (ResourceContext $context) use ($field) {
-            $fieldName = $context->getName($field);
-            return "True when $fieldName is not null.";
+        function (ResourceContext $context) use ($fields) {
+            $fieldNames = join(',', $context->getNames($fields));
+            return "True when $fieldNames is not null.";
         },
-        function (ResourceContext $context) use ($field) {
-            return !$context->isNull($field);
+        function (ResourceContext $context) use ($fields) {
+            foreach ($fields as $field) {
+                if ($context->isNull($field)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
 }
 

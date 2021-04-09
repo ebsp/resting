@@ -7,6 +7,7 @@ use Seier\Resting\Validation\DefaultValue;
 use Seier\Resting\Validation\PrimaryValidator;
 use Seier\Resting\Validation\RequiredValidator;
 use Seier\Resting\Validation\NullableValidator;
+use Seier\Resting\Validation\ForbiddenValidator;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Validation\Predicates\Predicate;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
@@ -23,11 +24,13 @@ abstract class Field
     protected bool $isEnabled = true;
     protected RequiredValidator $requiredValidator;
     protected NullableValidator $nullableValidator;
+    protected ForbiddenValidator $forbiddenValidator;
 
     public function __construct()
     {
         $this->requiredValidator = new RequiredValidator();
         $this->nullableValidator = new NullableValidator();
+        $this->forbiddenValidator = new ForbiddenValidator();
     }
 
     public static function create(...$arguments): static
@@ -224,6 +227,19 @@ abstract class Field
         return $this;
     }
 
+    public function forbidden(bool|Predicate $state = true): static
+    {
+        if ($state instanceof Predicate) {
+            $this->forbiddenValidator->setForbidden(true);
+            $this->forbiddenValidator->predicatedOn($state);
+            return $this;
+        }
+
+        $this->forbiddenValidator->setForbidden($state);
+
+        return $this;
+    }
+
     public function getRequiredValidator(): RequiredValidator
     {
         return $this->requiredValidator;
@@ -232,6 +248,11 @@ abstract class Field
     public function getNullableValidator(): NullableValidator
     {
         return $this->nullableValidator;
+    }
+
+    public function getForbiddenValidator(): ForbiddenValidator
+    {
+        return $this->forbiddenValidator;
     }
 
     public function withValidator(SecondaryValidator $secondaryValidator): static

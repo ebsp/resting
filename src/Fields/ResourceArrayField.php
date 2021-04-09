@@ -33,10 +33,17 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
     {
         parent::__construct();
 
+        $this->setResourcePrototypeFactory($resourceFactory);
+        $this->validator = new ArrayValidator();
+    }
+
+    public function setResourcePrototypeFactory(Closure $resourceFactory): static
+    {
         $this->resourceFactory = $resourceFactory;
         $this->resource = $resourceFactory();
         $this->reflectionClass = new ReflectionClass($this->resource);
-        $this->validator = new ArrayValidator();
+
+        return $this;
     }
 
     public function getValidator(): ArrayValidator
