@@ -8,9 +8,11 @@ use ArrayAccess;
 use ArrayIterator;
 use ReflectionClass;
 use IteratorAggregate;
+use Seier\Resting\Resource;
 use Seier\Resting\UnionResource;
 use Seier\Resting\Support\OpenAPI;
 use Illuminate\Support\Collection;
+use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Validation\ArrayValidator;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Exceptions\ValidationException;
@@ -111,7 +113,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         }
 
         if ($value instanceof Collection) {
-            $value = $value->values()->toArray();
+            $value = $value->values()->all();
         }
 
         if (!is_array($value) || $this->isAssociativeArray($value)) {
@@ -123,9 +125,13 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
         foreach ($value as $index => $element) {
 
-            if (is_object($element) && $this->reflectionClass->isInstance($element)) {
+            if ($element instanceof Resource && $this->reflectionClass->isInstance($element)) {
                 $resources[] = $element;
                 continue;
+            }
+
+            if ($element instanceof Arrayable) {
+                $element = $element->toArray();
             }
 
             $resources[] = $resource = ($this->resourceFactory)();
