@@ -11,12 +11,91 @@ use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
+use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 use function Seier\Resting\Validation\Predicates\whenEquals;
 
 class UnionResourceTest extends TestCase
 {
 
     use AssertsErrors;
+
+    public function testFromArrayOnUnionMasterResource()
+    {
+        $instance = UnionResourceBase::fromArray([
+            'discriminator' => 'a',
+            'a' => 'a_value',
+            'value' => 'value',
+        ]);
+
+        $this->assertInstanceOf(UnionResourceA::class, $instance);
+        $this->assertEquals('a', $instance->discriminator->get());
+        $this->assertEquals('a_value', $instance->a->get());
+        $this->assertEquals('value', $instance->value->get());
+    }
+
+    public function testFromArrayOnUnionMasterResourceWhenDiscriminatorIsNotProvided()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            UnionResourceBase::fromArray([
+                'a' => 'a_value',
+                'value' => 'value',
+            ]);
+        });
+
+        $this->assertHasError($exception, RequiredValidationError::class, 'discriminator');
+    }
+
+    public function testFromArrayOnUnionMasterResourceWhenDiscriminatorIsUnknown()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            UnionResourceBase::fromArray([
+                'discriminator' => 'unknown',
+                'a' => 'a_value',
+                'value' => 'value',
+            ]);
+        });
+
+        $this->assertHasError($exception, UnknownUnionDiscriminatorValidationError::class, 'discriminator');
+    }
+
+    public function testFromCollectionOnUnionMasterResource()
+    {
+        $instance = UnionResourceBase::fromCollection(collect([
+            'discriminator' => 'a',
+            'a' => 'a_value',
+            'value' => 'value',
+        ]));
+
+        $this->assertInstanceOf(UnionResourceA::class, $instance);
+        $this->assertEquals('a', $instance->discriminator->get());
+        $this->assertEquals('a_value', $instance->a->get());
+        $this->assertEquals('value', $instance->value->get());
+    }
+
+    public function testFromCollectionOnUnionMasterResourceWhenDiscriminatorIsNotProvided()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            UnionResourceBase::fromCollection(collect([
+                'a' => 'a_value',
+                'value' => 'value',
+            ]));
+        });
+
+        $this->assertHasError($exception, RequiredValidationError::class, 'discriminator');
+    }
+
+    public function testFromCollectionOnUnionMasterResourceWhenDiscriminatorIsUnknown()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            UnionResourceBase::fromCollection(collect([
+                'discriminator' => 'unknown',
+                'a' => 'a_value',
+                'value' => 'value',
+            ]));
+        });
+
+        $this->assertHasError($exception, UnknownUnionDiscriminatorValidationError::class, 'discriminator');
+    }
 
     public function testFromArrayOnUnionSubResource()
     {

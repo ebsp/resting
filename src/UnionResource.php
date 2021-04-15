@@ -8,6 +8,8 @@ use Closure;
 use ReflectionClass;
 use Illuminate\Support\Collection;
 use Seier\Resting\Support\OpenAPI;
+use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 
 abstract class UnionResource extends Resource
 {
@@ -21,7 +23,7 @@ abstract class UnionResource extends Resource
     {
         $this->_unionDiscriminatorKey = $unionDiscriminator;
         $this->_unionResourcesFactory = $unionResourcesFactory;
-        $degree = $this->getUnionDepth($this);
+        $degree = self::getUnionDepth($this);
         if ($degree === 0) {
             $this->_unionResources = $unionResourcesFactory();
         }
@@ -43,7 +45,7 @@ abstract class UnionResource extends Resource
 
     public function setFieldsFromCollection(Collection $collection): static
     {
-        $unionDegree = $this->getUnionDepth($this);
+        $unionDegree = self::getUnionDepth($this);
 
         if ($unionDegree === 0) {
 
@@ -82,7 +84,7 @@ abstract class UnionResource extends Resource
 
     private function delegate(string $method, array $arguments)
     {
-        $unionDegree = $this->getUnionDepth($this);
+        $unionDegree = self::getUnionDepth($this);
 
         // we cannot delegate to a sub-resource when _currentDiscriminatorValue is not set,
         // since we cannot know which of the sub-resources to use
@@ -106,7 +108,7 @@ abstract class UnionResource extends Resource
     public function getDependantResources(): array
     {
         if (!$this->_unionResources) {
-            $this->_unionResources = $this->getUnionDepth($this) === 0
+            $this->_unionResources = self::getUnionDepth($this) === 0
                 ? ($this->_unionResourcesFactory)()
                 : [];
         }
@@ -123,7 +125,7 @@ abstract class UnionResource extends Resource
         return $this->_unionResources;
     }
 
-    private function getUnionDepth(UnionResource $resource): int
+    private static function getUnionDepth(UnionResource $resource): int
     {
         $depth = 0;
         $currentResource = $resource::class;
@@ -143,6 +145,44 @@ abstract class UnionResource extends Resource
                 $depth++;
             }
         }
+    }
+
+    public static function fromArray(array $values): static
+    {
+        return self::fromCollection(
+            collect($values)
+        );
+    }
+
+    public static function fromCollection(Collection $values): static
+    {
+        $staticInstance = new static();
+        $unionDegree = self::getUnionDepth($staticInstance);
+
+        if ($unionDegree > 0) {
+            return parent::fromCollection($values);
+        }
+
+        if (!$values->has($staticInstance->_unionDiscriminatorKey)) {
+            return $staticInstance->setFieldsFromCollection($values);
+        }
+
+        $staticInstance->_discriminatorValue = $values->get($staticInstance->_unionDiscriminatorKey);
+        if (!array_key_exists($discriminatorValue = $staticInstance->_discriminatorValue, $staticInstance->_unionResources)) {
+            throw new ValidationException([
+                (new UnknownUnionDiscriminatorValidationError(
+                    array_keys($staticInstance->_unionResources),
+                    $discriminatorValue
+                ))->prependPath(
+                    $staticInstance->_unionDiscriminatorKey
+                ),
+            ]);
+        }
+
+        $subResource = $staticInstance->_unionResources[$staticInstance->_discriminatorValue];
+        $subResource->setFieldsFromCollection($values);
+
+        return $subResource;
     }
 
     public function getDiscriminatorKey(): string
