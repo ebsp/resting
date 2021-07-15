@@ -16,9 +16,11 @@ class DynamicResource extends Resource
         $this->fields = collect();
     }
 
-    public function fields(): Collection
+    public function fields(array $filter = null, array $rename = null, bool $requireFilled = false): Collection
     {
-        return $this->fields;
+        return $this->transformFields(
+            $this->fields->collect(),
+        );
     }
 
     public function withField(string $property, Field $field): static

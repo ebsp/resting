@@ -11,6 +11,7 @@ use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Validation\Secondary\Panics;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Exceptions\RestingRuntimeException;
 use Seier\Resting\Validation\Predicates\ResourceContext;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 
@@ -103,19 +104,101 @@ abstract class Resource implements Arrayable, Jsonable
         return $this;
     }
 
-    public function fields(): Collection
+    public function fields(array $filter = null, array $rename = null, bool $requireFilled = false): Collection
     {
-        return collect(get_object_vars($this))
-            ->filter(fn($value) => $value instanceof Field && $value->isEnabled());
+        $fields = collect(get_object_vars($this))->filter(function ($value) use ($requireFilled) {
+            return $value instanceof Field && $value->isEnabled();
+        });
+
+        return $this->transformFields(
+            $fields,
+            $filter,
+            $rename,
+            $requireFilled,
+        );
     }
 
-    protected function values(bool $format)
+    protected function transformFields(
+        Collection $fields,
+        array $filter = null,
+        array $rename = null,
+        bool $requireFilled = false): Collection
+    {
+        if ($requireFilled) {
+            $fields = $fields->filter(function (Field $field) {
+                return $field->isFilled();
+            });
+        }
+
+        if ($filter !== null) {
+
+            $fieldsByHash = [];
+            $fieldsByName = [];
+
+            foreach ($filter as $renameKey => $field) {
+                if ($field instanceof Field) {
+                    $fieldsByHash[spl_object_hash($field)] = $renameKey;
+                }
+                if (is_string($field)) {
+                    $fieldsByName[$field] = $renameKey;
+                }
+            }
+
+            $fields = $fields
+                ->filter(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
+                    return array_key_exists($fieldName, $fieldsByName) || array_key_exists(spl_object_hash($field), $fieldsByHash);
+                })
+                ->mapWithKeys(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
+                    $renameKey = array_key_exists($fieldName, $fieldsByName)
+                        ? $fieldsByName[$fieldName]
+                        : $fieldsByHash[spl_object_hash($field)];
+
+                    $name = is_string($renameKey) ? $renameKey : $fieldName;
+                    return [$name => $field];
+                });
+        }
+
+        if ($rename !== null) {
+
+            $fieldsByHash = [];
+            $fieldsByName = [];
+
+            foreach ($rename as $renameKey => $field) {
+
+                if (!is_string($renameKey)) {
+                    throw new RestingRuntimeException("Keys provided to 'rename' parameters must have string keys.");
+                }
+
+                if ($field instanceof Field) {
+                    $fieldsByHash[spl_object_hash($field)] = $renameKey;
+                }
+                if (is_string($field)) {
+                    $fieldsByName[$field] = $renameKey;
+                }
+            }
+
+            $fields = $fields
+                ->mapWithKeys(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
+                    $renameKey = $fieldsByName[$fieldName] ?? $fieldsByHash[spl_object_hash($field)] ?? null;
+                    $name = is_string($renameKey) ? $renameKey : $fieldName;
+                    return [$name => $field];
+                });
+        }
+
+        return $fields;
+    }
+
+    protected function values(
+        bool $format,
+        array $filter = null,
+        array $rename = null,
+        bool $requireFilled = false)
     {
         if (is_array($this->raw)) {
             return $this->raw;
         }
 
-        return $this->fields()
+        return $this->fields($filter, $rename, $requireFilled)
             ->map(function ($field) use ($format) {
 
                 if ($field instanceof ResourceField) {
@@ -144,9 +227,14 @@ abstract class Resource implements Arrayable, Jsonable
             })->toArray();
     }
 
-    public function toArray(): array
+    public function toArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
     {
-        return $this->values(format: false);
+        return $this->values(
+            format: false,
+            filter: $filter,
+            rename: $rename,
+            requireFilled: $requireFilled
+        );
     }
 
     public function toJson($options = 0): bool|string
@@ -159,9 +247,14 @@ abstract class Resource implements Arrayable, Jsonable
         return new static();
     }
 
-    public function toResponseArray()
+    public function toResponseArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
     {
-        $array = $this->values(format: true);
+        $array = $this->values(
+            format: true,
+            filter: $filter,
+            rename: $rename,
+            requireFilled: $requireFilled,
+        );
 
         if (!$this->removeNulls && !$this->removeEmptyArrays) {
             return $array;

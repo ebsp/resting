@@ -67,7 +67,7 @@ abstract class UnionResource extends Resource
         }
     }
 
-    public function toArray(): array
+    public function toArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
     {
         return $this->delegate(__FUNCTION__, func_get_args());
     }
@@ -77,7 +77,7 @@ abstract class UnionResource extends Resource
         return $this->delegate(__FUNCTION__, func_get_args());
     }
 
-    public function toResponseArray(): array
+    public function toResponseArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
     {
         return $this->delegate(__FUNCTION__, func_get_args());
     }

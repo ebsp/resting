@@ -20,6 +20,7 @@ class CarbonPeriodField extends Field
 
     private CarbonPeriodParser $parser;
     private CarbonPeriodValidator $validator;
+    private bool $setEndWhenMissing = false;
 
     public function __construct()
     {
@@ -87,9 +88,20 @@ class CarbonPeriodField extends Field
         return $this;
     }
 
-    public function endNotRequired(): static
+    public function endNotRequired(bool $setEndWithMissing = false): static
     {
+        if ($setEndWithMissing) {
+            $this->setEndWithMissing();
+        }
+
         return $this->endRequired(false);
+    }
+
+    public function setEndWithMissing(): static
+    {
+        $this->setEndWhenMissing = true;
+
+        return $this;
     }
 
     public function set($value): static
