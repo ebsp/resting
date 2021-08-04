@@ -5,7 +5,7 @@ namespace Seier\Resting\Validation\Errors;
 
 
 use Seier\Resting\Support\HasPath;
-use Seier\Resting\Validation\FormatsValues;
+use Seier\Resting\Support\FormatsValues;
 
 class NotTimeValidationError implements ValidationError
 {

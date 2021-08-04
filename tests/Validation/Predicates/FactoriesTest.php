@@ -9,10 +9,13 @@ use Seier\Resting\Fields\IntField;
 use Seier\Resting\Fields\BoolField;
 use Seier\Resting\Fields\StringField;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
+use function Seier\Resting\Validation\Predicates\whenIn;
 use function Seier\Resting\Validation\Predicates\whenNull;
+use function Seier\Resting\Validation\Predicates\whenNotIn;
 use function Seier\Resting\Validation\Predicates\whenEquals;
 use function Seier\Resting\Validation\Predicates\whenNotNull;
 use function Seier\Resting\Validation\Predicates\whenProvided;
+use function Seier\Resting\Validation\Predicates\whenNotEquals;
 use function Seier\Resting\Validation\Predicates\whenNotProvided;
 
 class FactoriesTest extends TestCase
@@ -278,5 +281,141 @@ class FactoriesTest extends TestCase
         $instance = whenEquals($this->int, 'not parable');
 
         $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotEqualsWhenEqual()
+    {
+        $context = $this->context(['string' => $expected = $this->faker->word]);
+        $instance = whenNotEquals($this->string, $expected);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotEqualsWhenNotNotEqual()
+    {
+        $context = $this->context(['string' => 'expected']);
+        $instance = whenNotEquals($this->string, 'does not match');
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNotEqualsUsesStrictComparison()
+    {
+        $context = $this->context(['string' => '1']);
+        $instance = whenNotEquals($this->string, 1);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNotEqualsUsesParsedValueWhenParsable()
+    {
+        $context = $this->context(['int' => '1']);
+        $instance = whenNotEquals($this->int, 1);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotEqualsReturnsFalseWhenCannotBeParsed()
+    {
+        $context = $this->context(['int' => 'not parsable']);
+        $instance = whenNotEquals($this->int, 'not parable');
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenInWhenMatching()
+    {
+        $context = $this->context(['string' => $expected = $this->faker->word]);
+        $instance = whenNotEquals($this->string, [$expected, 1, 2]);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenInWhenNotMatching()
+    {
+        $context = $this->context(['string' => $this->faker->word]);
+        $instance = whenIn($this->string, [1, 2]);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenInWhenOptionsAreEmpty()
+    {
+        $context = $this->context(['string' => $this->faker->word]);
+        $instance = whenIn($this->string, []);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenInUsesStrictComparison()
+    {
+        $context = $this->context(['string' => '1']);
+        $instance = whenIn($this->string, [1]);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenInUsesParsedValueWhenParsable()
+    {
+        $context = $this->context(['int' => '1']);
+        $instance = whenIn($this->int, [1]);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenInReturnsFalseWhenCannotBeParsed()
+    {
+        $context = $this->context(['int' => 'not parsable']);
+        $instance = whenIn($this->int, ['not parable']);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotInWhenMatching()
+    {
+        $context = $this->context(['string' => $expected = $this->faker->word]);
+        $instance = whenNotIn($this->string, [$expected, 1, 2]);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotInWhenNotMatching()
+    {
+        $context = $this->context(['string' => $this->faker->word]);
+        $instance = whenNotIn($this->string, [1, 2]);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNotInWhenOptionsAreEmpty()
+    {
+        $context = $this->context(['string' => $this->faker->word]);
+        $instance = whenNotIn($this->string, []);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNotInUsesStrictComparison()
+    {
+        $context = $this->context(['string' => '1']);
+        $instance = whenNotIn($this->string, [1]);
+
+        $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenNotInUsesParsedValueWhenParsable()
+    {
+        $context = $this->context(['int' => '1']);
+        $instance = whenNotIn($this->int, [1]);
+
+        $this->assertFalse($instance->passes($context));
+    }
+
+    public function testWhenNotInReturnsFalseWhenCannotBeParsed()
+    {
+        $context = $this->context(['int' => 'not parsable']);
+        $instance = whenNotIn($this->int, ['not parable']);
+
+        $this->assertTrue($instance->passes($context));
     }
 }

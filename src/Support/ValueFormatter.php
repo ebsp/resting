@@ -1,22 +1,16 @@
 <?php
 
+namespace Seier\Resting\Support;
 
-namespace Seier\Resting\Validation;
-
-
-trait FormatsValues
+class ValueFormatter
 {
 
-    private function formatArray(array $options): string
+    public static function instance(): static
     {
-        $elements = join(', ', array_map(function (mixed $element) {
-            return $this->format($element);
-        }, $options));
-
-        return "[$elements]";
+        return new static();
     }
 
-    protected function format($value, bool $showType = true): string
+    public function format($value, bool $showType = true): string
     {
         if (is_array($value) && !$this->isAssociativeArray($value)) {
             $content = array_map(fn($element) => $this->format($element), $value);
@@ -49,12 +43,20 @@ trait FormatsValues
         return (string)$value;
     }
 
+    private function formatArray(array $options): string
+    {
+        $elements = join(', ', array_map(function (mixed $element) {
+            return $this->format($element);
+        }, $options));
+
+        return "[$elements]";
+    }
+
     protected function isAssociativeArray(array $arr): bool
     {
         if ([] === $arr) {
             return false;
         }
-
 
         foreach ($arr as $key => $value) {
             if (is_string($key)) {

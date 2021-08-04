@@ -5,7 +5,7 @@ namespace Seier\Resting\Validation\Secondary\Enum;
 
 
 use Seier\Resting\Support\HasPath;
-use Seier\Resting\Validation\FormatsValues;
+use Seier\Resting\Support\FormatsValues;
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class EnumValidationError implements ValidationError

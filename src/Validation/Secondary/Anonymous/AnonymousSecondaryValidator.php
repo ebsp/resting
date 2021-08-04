@@ -5,7 +5,7 @@ namespace Seier\Resting\Validation\Secondary\Anonymous;
 
 
 use Closure;
-use Seier\Resting\Validation\FormatsValues;
+use Seier\Resting\Support\FormatsValues;
 use Seier\Resting\Validation\Errors\ValidationError;
 use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
