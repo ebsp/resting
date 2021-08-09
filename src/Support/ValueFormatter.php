@@ -43,11 +43,11 @@ class ValueFormatter
         return (string)$value;
     }
 
-    private function formatArray(array $options): string
+    public function formatArray(array $array): string
     {
         $elements = join(', ', array_map(function (mixed $element) {
             return $this->format($element);
-        }, $options));
+        }, $array));
 
         return "[$elements]";
     }
