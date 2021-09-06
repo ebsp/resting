@@ -37,7 +37,7 @@ class Time
 
     public function formatWithSeconds(): string
     {
-        return $this->format('H:i');
+        return $this->format('H:i:s');
     }
 
     public function totalSeconds(): int

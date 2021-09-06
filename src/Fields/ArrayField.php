@@ -4,6 +4,7 @@ namespace Seier\Resting\Fields;
 
 use ArrayAccess;
 use Seier\Resting\Parsing\Parser;
+use Illuminate\Support\Collection;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\TimeParser;
