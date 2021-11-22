@@ -110,12 +110,31 @@ class OpenAPI implements Arrayable, Responsable
             return $field->isRequired();
         });
 
+        $unionDiscriminatorKey = $resource instanceof UnionResource
+            ? $resource->getDiscriminatorKey()
+            : null;
+
         $this->document['components']['schemas'][static::resourceRefName(get_class($resource))] = [
             'type' => 'object',
             'required' => $requiredFields->map(function (Field $field, $key) {
                 return $key;
             })->values()->toArray(),
-            'properties' => $fields->map(function (Field $field) {
+            'properties' => $fields->map(function (Field $field, string $fieldName) use ($resource, $unionDiscriminatorKey) {
+
+                if ($resource instanceof UnionResource && $fieldName === $unionDiscriminatorKey) {
+                    $resourceMap = $resource->getResourceMap();
+                    $foundDiscriminatorValue = null;
+                    foreach ($resourceMap as $resourceMapKey => $resourceMapValue) {
+                        if ($resourceMapValue instanceof $resource) {
+                            $foundDiscriminatorValue = $resourceMapKey;
+                        }
+                    }
+
+                    return array_merge($field->type(), [
+                        'enum' => [$foundDiscriminatorValue],
+                    ]);
+                }
+
                 foreach ($field->nestedRefs() as $type => $refs) {
 
                     if ('schema' === $type) {

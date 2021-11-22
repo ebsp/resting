@@ -68,6 +68,24 @@ class OpenAPITest extends TestCase
         $this->assertComponentExists($schema, UnionResourceB::class);
     }
 
+    public function testOutputUnionResourceHasLiteralDiscriminatorKey()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn(UnionResourceBase ...$r) => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $unionResourceA = $this->assertComponentExists($schema, UnionResourceA::class);
+        $unionResourceB = $this->assertComponentExists($schema, UnionResourceB::class);
+
+        $unionResourceADiscriminator = $this->assertPropertyExists($unionResourceA, 'discriminator');
+        $this->assertPropertyHasEnumConstraint($unionResourceADiscriminator, ['a']);
+
+        $unionResourceBDiscriminator = $this->assertPropertyExists($unionResourceB, 'discriminator');
+        $this->assertPropertyHasEnumConstraint($unionResourceBDiscriminator, ['b']);
+    }
+
     public function testOutputUnionResourceComposition()
     {
         $routeCollection = new RouteCollection();
@@ -155,11 +173,15 @@ class OpenAPITest extends TestCase
         $this->assertTrue(true);
     }
 
-    private function assertComponentExists(array $schema, string $resource)
+    private function assertComponentExists(array $schema, string $resource): array
     {
+        $refName = static::resourceRefName($resource);
+
         $this->assertArrayHasKey('components', $schema);
         $this->assertArrayHasKey('schemas', $schema['components']);
-        $this->assertArrayHasKey(static::resourceRefName($resource), $schema['components']['schemas']);
+        $this->assertArrayHasKey($refName, $schema['components']['schemas']);
+
+        return $schema['components']['schemas'][$refName];
     }
 
     private function assertComponentNotExists(array $schema, string $resource)
@@ -172,5 +194,19 @@ class OpenAPITest extends TestCase
     public static function resourceRefName($resourceClass)
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $resourceClass);
+    }
+
+    private function assertPropertyExists(array $resource, string $propertyKey)
+    {
+        $this->assertArrayHasKey('properties', $resource, 'Component does not have any properties');
+        $this->assertArrayHasKey($propertyKey, $resource['properties']);
+
+        return $resource['properties'][$propertyKey];
+    }
+
+    private function assertPropertyHasEnumConstraint(array $property, array $enumValues)
+    {
+        $this->assertArrayHasKey('enum', $property, 'Property does not have enum constraint');
+        $this->assertEquals($enumValues, $property['enum'], 'Property enum constraints do not match expected constraints.');
     }
 }
