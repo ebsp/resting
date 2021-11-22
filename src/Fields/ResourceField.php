@@ -97,18 +97,20 @@ class ResourceField extends Field
 
     public function type(): array
     {
-        if ($this->value instanceof UnionResource) {
+        $resource = ($this->resourceFactory)();
+
+        if ($resource instanceof UnionResource) {
             return [
                 'type' => 'object',
                 'oneOf' => array_map(function ($resource) {
                     return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
-                }, $this->value->getDependantResources()),
+                }, $resource->getDependantResources()),
             ];
         }
 
         return [
             '$ref' => OpenAPI::componentPath(
-                OpenAPI::resourceRefName(get_class($this->resource))
+                OpenAPI::resourceRefName(get_class($resource))
             ),
         ];
     }

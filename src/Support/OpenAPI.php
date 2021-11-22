@@ -117,12 +117,15 @@ class OpenAPI implements Arrayable, Responsable
             })->values()->toArray(),
             'properties' => $fields->map(function (Field $field) {
                 foreach ($field->nestedRefs() as $type => $refs) {
+
                     if ('schema' === $type) {
-                        foreach ((array)$refs as $ref)
+                        foreach ((array)$refs as $ref) {
                             $this->addResource($ref);
+                        }
                     } elseif ('parameters' === $type) {
-                        foreach ((array)$refs as $ref)
+                        foreach ((array)$refs as $ref) {
                             $this->addParameter($ref);
+                        }
                     }
                 }
 
