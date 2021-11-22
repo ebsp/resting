@@ -15,5 +15,6 @@ return [
                 'description' => 'Local'
             ]
         ],
+        'resources' => [],
     ],
 ];

@@ -38,9 +38,17 @@ class OpenAPI implements Arrayable, Responsable
     {
         $this->processInfo();
 
+        $this->processAdditionalResources();
         $this->processPaths();
         $this->processResources();
         $this->processParameters();
+    }
+
+    protected function processAdditionalResources()
+    {
+        foreach (config('resting.documentation.resources', []) as $ref) {
+            $this->addResource($ref);
+        }
     }
 
     protected function processInfo()
@@ -118,11 +126,13 @@ class OpenAPI implements Arrayable, Responsable
             'properties' => $fields->map(function (Field $field) {
                 foreach ($field->nestedRefs() as $type => $refs) {
                     if ('schema' === $type) {
-                        foreach ((array)$refs as $ref)
+                        foreach ((array)$refs as $ref) {
                             $this->addResource($ref);
+                        }
                     } elseif ('parameters' === $type) {
-                        foreach ((array)$refs as $ref)
+                        foreach ((array)$refs as $ref) {
                             $this->addParameter($ref);
+                        }
                     }
                 }
 
@@ -412,6 +422,8 @@ class OpenAPI implements Arrayable, Responsable
         if ($resourceName !== UnionResource::class) {
             $resource = new $resourceName;
             if ((new ReflectionClass($resourceName))->getParentClass()->getName() === UnionResource::class) {
+                $this->resources[$resourceName] = [];
+
                 foreach ($resource->getDependantResources() as $unionType) {
                     $this->addResource($unionType);
                 }
