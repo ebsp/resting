@@ -14,12 +14,14 @@ class DecimalCountValidationError implements ValidationError
     use HasPath;
 
     private int|float $actual;
+    private int $numberOfDecimals;
     private ?int $minDecimals;
     private ?int $maxDecimals;
 
-    public function __construct(float|int $actual, ?int $minDecimals, ?int $maxDecimals)
+    public function __construct(float|int $actual, $numberOfDecimals, ?int $minDecimals, ?int $maxDecimals)
     {
         $this->actual = $actual;
+        $this->numberOfDecimals = $numberOfDecimals;
         $this->minDecimals = $minDecimals;
         $this->maxDecimals = $maxDecimals;
     }
@@ -28,7 +30,7 @@ class DecimalCountValidationError implements ValidationError
     {
         $expected = $this->makeExpectedMessage();
 
-        return "$expected, received $this->actual instead.";
+        return "$expected, received $this->actual ($this->numberOfDecimals decimals) instead.";
     }
 
     private function makeExpectedMessage(): string

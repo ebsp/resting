@@ -4,11 +4,10 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\NumberField;
-use Seier\Resting\Validation\NumberValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
-use Seier\Resting\Validation\Errors\NotNumberValidationError;
+use Seier\Resting\Validation\NumberValidator;
 use Seier\Resting\Validation\Errors\NullableValidationError;
-use Seier\Resting\Validation\Errors\IntNotPositiveValidationError;
+use Seier\Resting\Validation\Errors\NotNumberValidationError;
 use Seier\Resting\Validation\Secondary\Numeric\PositiveNumberValidationError;
 
 class NumberFieldTest extends TestCase

@@ -50,15 +50,14 @@ class DecimalCountValidator implements SecondaryValidator
             ? 0
             : strlen($value) - strrpos($value, '.') - 1;
 
-        if ($this->maxDecimals !== null && $numberOfDecimals > $this->maxDecimals) {
-            return [new DecimalCountValidationError($value, $this->minDecimals, $this->maxDecimals)];
-        }
+        $isInvalid = (
+            ($this->maxDecimals !== null && $numberOfDecimals > $this->maxDecimals) ||
+            ($this->minDecimals !== null && $numberOfDecimals < $this->minDecimals)
+        );
 
-        if ($this->minDecimals !== null && $numberOfDecimals < $this->minDecimals) {
-            return [new DecimalCountValidationError($value, $this->minDecimals, $this->maxDecimals)];
-        }
-
-        return [];
+        return $isInvalid
+            ? [new DecimalCountValidationError($value, $numberOfDecimals, $this->minDecimals, $this->maxDecimals)]
+            : [];
     }
 
     public function isUnique(): bool
