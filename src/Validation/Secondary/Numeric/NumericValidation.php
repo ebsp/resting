@@ -22,6 +22,18 @@ trait NumericValidation
         return $this;
     }
 
+    public function decimalCount(int $min = null, int $max = null): static
+    {
+        if ($min !== null || $max !== null) {
+            $this->getSupportsSecondaryValidation()->withValidator(new DecimalCountValidator(
+                minDecimals: $min,
+                maxDecimals: $max,
+            ));
+        }
+
+        return $this;
+    }
+
     public function min(int|float|Field $bound): static
     {
         if ($bound instanceof Field) {
