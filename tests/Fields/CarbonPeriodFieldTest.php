@@ -7,8 +7,8 @@ namespace Seier\Resting\Tests\Fields;
 use Carbon\CarbonPeriod;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonPeriodField;
-use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 
@@ -94,6 +94,47 @@ class CarbonPeriodFieldTest extends TestCase
         $this->assertCount(2, $result = $this->instance->asArray());
         $this->assertNull($result[0]);
         $this->assertNull($result[1]);
+    }
+
+    public function testGetWhenUseStartWhenEndMissingTrue()
+    {
+        $period = CarbonPeriod::create($start = now());
+
+        $this->instance->useStartWhenEndIsMissing();
+        $this->instance->set($period);
+
+        $this->assertEquals(
+            $start->unix(),
+            $this->instance->get()->end->unix(),
+        );
+    }
+
+    public function testAsArrayWhenUseStartWhenEndMissingTrue()
+    {
+        $period = CarbonPeriod::create(now());
+
+        $this->instance->useStartWhenEndIsMissing();
+        $this->instance->set($period);
+
+        [$start, $end] = $this->instance->asArray();
+
+        $this->assertEquals(
+            $start->unix(),
+            $end->unix(),
+        );
+    }
+
+    public function testEndWhenUseStartWhenEndMissingTrue()
+    {
+        $period = CarbonPeriod::create($start = now());
+
+        $this->instance->useStartWhenEndIsMissing();
+        $this->instance->set($period);
+
+        $this->assertEquals(
+            $start->unix(),
+            $this->instance->end()->unix(),
+        );
     }
 
     public function testValidateWithRegisteredSecondaryValidationThatPasses()

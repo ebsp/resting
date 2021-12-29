@@ -20,7 +20,7 @@ class CarbonPeriodField extends Field
 
     private CarbonPeriodParser $parser;
     private CarbonPeriodValidator $validator;
-    private bool $setEndWhenMissing = false;
+    private bool $useStartWhenEndIsMissing = false;
 
     public function __construct()
     {
@@ -42,16 +42,19 @@ class CarbonPeriodField extends Field
 
     public function get(): ?CarbonPeriod
     {
-        return $this->value;
+        $copy = $this->value?->copy();
+        if ($copy && $copy->end === null && $this->useStartWhenEndIsMissing) {
+            $copy->end = $copy->start->copy();
+        }
+
+        return $copy;
     }
 
     public function asArray(): array
     {
-        $period = $this->get();
-
         return [
-            $period?->start,
-            $period?->end,
+            $this->start(),
+            $this->end(),
         ];
     }
 
@@ -88,18 +91,19 @@ class CarbonPeriodField extends Field
         return $this;
     }
 
-    public function endNotRequired(bool $setEndWhenMissing = false): static
+    public function endNotRequired(bool $useStartWhenEndIsMissing = false): static
     {
-        if ($setEndWhenMissing) {
-            $this->setEndWhenMissing();
+        if ($useStartWhenEndIsMissing) {
+            $this->useStartWhenEndIsMissing();
         }
 
         return $this->endRequired(false);
     }
 
-    public function setEndWhenMissing(): static
+    public function useStartWhenEndIsMissing(): static
     {
-        $this->setEndWhenMissing = true;
+        $this->useStartWhenEndIsMissing = true;
+        $this->endNotRequired();
 
         return $this;
     }
