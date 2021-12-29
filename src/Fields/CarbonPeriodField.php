@@ -88,16 +88,16 @@ class CarbonPeriodField extends Field
         return $this;
     }
 
-    public function endNotRequired(bool $setEndWithMissing = false): static
+    public function endNotRequired(bool $setEndWhenMissing = false): static
     {
-        if ($setEndWithMissing) {
-            $this->setEndWithMissing();
+        if ($setEndWhenMissing) {
+            $this->setEndWhenMissing();
         }
 
         return $this->endRequired(false);
     }
 
-    public function setEndWithMissing(): static
+    public function setEndWhenMissing(): static
     {
         $this->setEndWhenMissing = true;
 
