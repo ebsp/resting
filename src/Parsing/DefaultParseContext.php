@@ -35,4 +35,12 @@ class DefaultParseContext implements ParseContext
     {
         return !$this->isNull();
     }
+
+    public function inherit(mixed $value): DefaultParseContext
+    {
+        return new DefaultParseContext(
+            value: $value,
+            isStringBased: $this->isStringBased(),
+        );
+    }
 }

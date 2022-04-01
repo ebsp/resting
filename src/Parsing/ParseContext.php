@@ -14,4 +14,6 @@ interface ParseContext
     public function isNull(): bool;
 
     public function isNotNull(): bool;
+
+    public function inherit(mixed $value): ParseContext;
 }

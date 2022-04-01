@@ -22,12 +22,14 @@ class ArrayParser implements Parser
             return [];
         }
 
-        $sections = explode($this->separator, $raw);
-        $errors = [];
+        $sections = $context->isStringBased()
+            ? explode($this->separator, $raw)
+            : $raw;
 
+        $errors = [];
         if ($this->elementParser) {
             foreach ($sections as $index => $section) {
-                foreach ($this->elementParser->canParse(new DefaultParseContext($section, $context->isStringBased())) as $error) {
+                foreach ($this->elementParser->canParse($context->inherit($section)) as $error) {
                     $errors[] = $error->prependPath($index);
                 }
             }
@@ -39,24 +41,40 @@ class ArrayParser implements Parser
     public function parse(ParseContext $context): array
     {
         $raw = $context->getValue();
+
         if ($context->isStringBased() && empty($raw)) {
             return [];
         }
 
-        $sections = explode($this->separator, $raw);
+        $sections = $context->isStringBased()
+            ? explode($this->separator, $raw)
+            : $raw;
 
         if (!$this->elementParser) {
             return $sections;
         }
 
         return array_map(function (string $section) use ($context) {
-            return $this->elementParser->parse(new DefaultParseContext($section, $context->isStringBased()));
+            return $this->elementParser->parse($context->inherit($section));
         }, $sections);
     }
 
     public function shouldParse(ParseContext $context): bool
     {
-        return $context->isStringBased();
+        if ($context->isStringBased()) {
+            return true;
+        }
+
+        $values = $context->getValue();
+        if (is_array($values)) {
+            foreach ($values as $value) {
+                if ($this->elementParser?->shouldParse($context->inherit($value))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function setSeparator(string $separator): static

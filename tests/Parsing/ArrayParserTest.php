@@ -4,12 +4,14 @@
 namespace Seier\Resting\Tests\Parsing;
 
 
+use Carbon\Carbon;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\ArrayParser;
+use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\IntParseError;
-use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Parsing\DefaultParseContext;
 
 class ArrayParserTest extends TestCase
 {
@@ -71,5 +73,31 @@ class ArrayParserTest extends TestCase
         $context = new DefaultParseContext('1,a,3');
         $this->assertNotEmpty($errors = $this->instance->canParse($context));
         $this->assertHasError($errors, IntParseError::class, 1);
+    }
+
+    public function testShouldParseCanDelegateToElementParser()
+    {
+        $this->instance->setElementParser(new CarbonParser);
+
+        $context = new DefaultParseContext(['2020-01-02'], isStringBased: false);
+        $this->assertTrue($this->instance->shouldParse($context));
+    }
+
+    public function testCanParseCanDelegateToElementParser()
+    {
+        $this->instance->setElementParser(new CarbonParser);
+
+        $context = new DefaultParseContext(['2020-01-02'], isStringBased: false);
+        $this->assertEmpty($this->instance->canParse($context));
+    }
+
+    public function testParseCanDelegateToElementParser()
+    {
+        $this->instance->setElementParser(new CarbonParser);
+
+        $context = new DefaultParseContext(['2020-01-02'], isStringBased: false);
+        $this->assertIsArray($result = $this->instance->parse($context));
+        $this->assertCount(1, $result);
+        $this->assertEquals(Carbon::parse('2020-01-02')->unix(), $result[0]->unix());
     }
 }
