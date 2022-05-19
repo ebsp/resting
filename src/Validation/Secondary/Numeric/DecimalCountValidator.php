@@ -46,7 +46,7 @@ class DecimalCountValidator implements SecondaryValidator
             $this->panic();
         }
 
-        $numberOfDecimals = is_int($value)
+        $numberOfDecimals = fmod($value, 1) === 0.0
             ? 0
             : strlen($value) - strrpos($value, '.') - 1;
 

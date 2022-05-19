@@ -56,4 +56,11 @@ class DecimalCountValidatorTest extends TestCase
 
         $this->assertEmpty($instance->validate(1.33));
     }
+
+    public function testDoesNotCountDecimalsOnWholeNumberFloats()
+    {
+        $instance = new DecimalCountValidator(maxDecimals: 2);
+
+        $this->assertEmpty($instance->validate(1000.00));
+    }
 }
