@@ -85,31 +85,39 @@ class ResourceMarshaller
         }
 
         if ($resource instanceof UnionResource) {
-            $dependantResources = $resource->getResourceMap();
-            $discriminatorKey = $resource->getDiscriminatorKey();
-
-            if (!array_key_exists($discriminatorKey, $content)) {
-                $path = $this->getCurrentPath($discriminatorKey);
-                $this->pushPathError($path, new RequiredValidationError());
-                return new ResourceMarshallerResult($resource, $this->validationErrors);
+            $resource = $this->getUnionSubResource($resource, $content);
+            if ($resource instanceof ResourceMarshallerResult) {
+                return $resource;
             }
-
-            $discriminatorValue = $content[$discriminatorKey];
-            if (!is_scalar($discriminatorValue) || !array_key_exists($discriminatorValue, $dependantResources)) {
-                $path = $this->getCurrentPath($discriminatorKey);
-                $this->pushPathError($path, new UnknownUnionDiscriminatorValidationError(
-                    array_keys($dependantResources),
-                    $discriminatorValue,
-                ));
-                return new ResourceMarshallerResult($resource, $this->validationErrors);
-            }
-
-            $resource = $dependantResources[$discriminatorValue];
         }
 
         $this->marshalResourceFields($resource, $content);
 
         return new ResourceMarshallerResult($resource, $this->validationErrors);
+    }
+
+    private function getUnionSubResource(UnionResource $baseResource, $content): ResourceMarshallerResult|UnionResource
+    {
+        $dependantResources = $baseResource->getResourceMap();
+        $discriminatorKey = $baseResource->getDiscriminatorKey();
+
+        if (!array_key_exists($discriminatorKey, $content)) {
+            $path = $this->getCurrentPath($discriminatorKey);
+            $this->pushPathError($path, new RequiredValidationError());
+            return new ResourceMarshallerResult($baseResource, $this->validationErrors);
+        }
+
+        $discriminatorValue = $content[$discriminatorKey];
+        if (!is_scalar($discriminatorValue) || !array_key_exists($discriminatorValue, $dependantResources)) {
+            $path = $this->getCurrentPath($discriminatorKey);
+            $this->pushPathError($path, new UnknownUnionDiscriminatorValidationError(
+                array_keys($dependantResources),
+                $discriminatorValue,
+            ));
+            return new ResourceMarshallerResult($baseResource, $this->validationErrors);
+        }
+
+        return $dependantResources[$discriminatorValue];
     }
 
     public function marshalResourceFields(RestingResource $resource, array $content)
@@ -199,26 +207,10 @@ class ResourceMarshaller
                 $resource = $field->getReferenceResource();
 
                 if ($resource instanceof UnionResource) {
-                    $dependantResources = $resource->getResourceMap();
-                    $discriminatorKey = $resource->getDiscriminatorKey();
-
-                    if (!array_key_exists($discriminatorKey, $fieldValue)) {
-                        $path = $this->getCurrentPath($discriminatorKey);
-                        $this->pushPathError($path, new RequiredValidationError());
-                        continue;
+                    $resource = $this->getUnionSubResource($resource, $fieldValue);
+                    if ($resource instanceof ResourceMarshallerResult) {
+                        return $resource;
                     }
-
-                    $discriminatorValue = $fieldValue[$discriminatorKey];
-                    if (!is_scalar($discriminatorValue) || !array_key_exists($discriminatorValue, $dependantResources)) {
-                        $path = $this->getCurrentPath($discriminatorKey);
-                        $this->pushPathError($path, new UnknownUnionDiscriminatorValidationError(
-                            array_keys($dependantResources),
-                            $discriminatorValue,
-                        ));
-                        continue;
-                    }
-
-                    $resource = $dependantResources[$discriminatorValue];
                 }
 
                 $this->marshalResourceFields($resource, $fieldValue);
@@ -292,7 +284,17 @@ class ResourceMarshaller
 
         $resources = [];
         foreach ($values as $index => $value) {
-            $resources[] = $resource = $field->getResourceFactory()();
+            $resource = $field->getResourceFactory()();
+            if ($resource instanceof UnionResource) {
+                $subResource = $this->getUnionSubResource($resource, $value);
+                if ($subResource instanceof ResourceMarshallerResult) {
+                    return $resource;
+                }
+
+                $resource = $subResource;
+            }
+
+            $resources[] = $resource;
             $this->pushPath($index);
             $this->marshalResourceFields($resource, $value);
             $this->popPath();
@@ -324,26 +326,10 @@ class ResourceMarshaller
             }
 
             if ($resource instanceof UnionResource) {
-
-                $dependantResources = $resource->getResourceMap();
-                $discriminatorKey = $resource->getDiscriminatorKey();
-
-                if (!array_key_exists($discriminatorKey, $value)) {
-                    $path = $this->getCurrentPath($discriminatorKey);
-                    $this->pushPathError($path, new RequiredValidationError());
-                    return new ResourceMarshallerResult($resource, $this->validationErrors);
+                $resource = $this->getUnionSubResource($resource, $value);
+                if ($resource instanceof ResourceMarshallerResult) {
+                    return $resource;
                 }
-
-                $discriminatorValue = $value[$discriminatorKey];
-                if (!is_scalar($discriminatorValue) || !array_key_exists($discriminatorValue, $dependantResources)) {
-                    $this->pushError(new UnknownUnionDiscriminatorValidationError(
-                        array_keys($dependantResources),
-                        $discriminatorValue,
-                    ));
-                    return new ResourceMarshallerResult($resource, $this->validationErrors);
-                }
-
-                $resource = $dependantResources[$discriminatorValue];
             }
 
             $this->marshalResourceFields($resource, $value);
