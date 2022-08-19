@@ -1,24 +1,39 @@
 name: build
 
 on:
-  push:
-    branches-ignore: []
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      max-parallel: 4
+      fail-fast: false
+      matrix:
+        operating-system: ["ubuntu-latest"]
+        php-versions: ["8.0", "8.1"]
+        phpunit-versions: ["latest"]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, intl
+          ini-values: post_max_size=256M, max_execution_time=180
+          coverage: xdebug
+          tools: phpunit:${{ matrix.phpunit-versions }}
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Update packages to fit PHP Version
+        run: composer update --no-install
 
-    - name: Run test suite
-      run: ./vendor/bin/phpunit
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run test suite
+        run: ./vendor/bin/phpunit
