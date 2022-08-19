@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         operating-system: ["ubuntu-latest"]
-        php-versions: ["7.0", "7.1", "7.4", "8.0", "8.1"]
+        php-versions: ["8.0", "8.1"]
         phpunit-versions: ["latest"]
 
     steps:
@@ -26,11 +26,11 @@ jobs:
           coverage: xdebug
           tools: phpunit:${{ matrix.phpunit-versions }}
 
+      - name: Update packages to fit PHP Version
+        run: composer update --no-install
+
       - name: Validate composer.json and composer.lock
         run: composer validate
-
-      - name: Making sure PHPUnit fits executing PHP Version
-        run: composer update phpunit/phpunit --no-install
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
