@@ -35,7 +35,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require-dev": {
-        "phpunit/phpunit": "9.5.0",
+        "phpunit/phpunit": "^7.0 || ^8.0 || ^9.0",
         "orchestra/testbench": "^6.3",
         "jchook/phpunit-assert-throws": "^1.0"
     },
