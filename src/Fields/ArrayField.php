@@ -4,7 +4,6 @@ namespace Seier\Resting\Fields;
 
 use ArrayAccess;
 use Seier\Resting\Parsing\Parser;
-use Illuminate\Support\Collection;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\TimeParser;
@@ -40,9 +39,10 @@ class ArrayField extends Field
         $this->parser = new ArrayParser();
     }
 
-    public function get(): ?array
+    public function get(): array
     {
-        return parent::get();
+        $val = parent::get();
+        return is_array($val) ? $val : [];
     }
 
     public function getValidator(): ArrayValidator
