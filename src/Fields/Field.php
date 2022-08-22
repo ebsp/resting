@@ -16,12 +16,29 @@ use Seier\Resting\Validation\Secondary\Anonymous\AnonymousValidation;
 
 abstract class Field
 {
-
     use AnonymousValidation;
 
+    /**
+     * Value of this resource
+     *
+     * @var mixed
+     */
     protected mixed $value = null;
+
+    /**
+     * Wether or not this resource value has been set
+     *
+     * @var bool
+     */
     protected bool $isFilled = false;
+
+    /**
+     * Wether or not this resource can be part of serialization
+     *
+     * @var bool
+     */
     protected bool $isEnabled = true;
+
     protected RequiredValidator $requiredValidator;
     protected NullableValidator $nullableValidator;
     protected ForbiddenValidator $forbiddenValidator;
@@ -38,21 +55,41 @@ abstract class Field
         return new static(...$arguments);
     }
 
+    /**
+     * Returns the current validate if set
+     *
+     * @return PrimaryValidator|null
+     */
     public function getValidator(): ?PrimaryValidator
     {
         return null;
     }
 
+    /**
+     * Returns the current parser if set
+     *
+     * @return Parser|null
+     */
     public function getParser(): ?Parser
     {
         return null;
     }
 
+    /**
+     * Returns formatted value based on Field model
+     *
+     * @return mixed
+     */
     public function formatted(): mixed
     {
         return $this->value;
     }
 
+    /**
+     * Returns the raw value as stored
+     *
+     * @return mixed
+     */
     public function get(): mixed
     {
         return $this->value;
@@ -162,6 +199,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Updates the raw value with validation
+     *
+     * @param mixed $value
+     * @return static
+     */
     public function set($value): static
     {
         $this->validateValue($value);
@@ -171,11 +214,21 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Validate the value between the setter and internal storage
+     *
+     * @param mixed $value
+     * @return void
+     * @throws ValidationException
+     */
     private function validateValue(mixed $value)
     {
         if (is_null($value)) {
 
-            if (!$this->getNullableValidator()->hasPredicates() && !$this->getNullableValidator()->isNullable()) {
+            if (
+                !$this->getNullableValidator()->hasPredicates()
+                && !$this->getNullableValidator()->isNullable()
+            ) {
                 throw new ValidationException([
                     new NullableValidationError,
                 ]);
@@ -195,6 +248,11 @@ abstract class Field
         }
     }
 
+    /**
+     * Turn off value being nullable
+     *
+     * @return static
+     */
     public function notNullable(): static
     {
         $this->nullable(false);
@@ -202,6 +260,11 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Turn off that value is required
+     *
+     * @return static
+     */
     public function notRequired(): static
     {
         $this->required(false);
@@ -210,6 +273,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Define if value is required
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function required(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
@@ -264,37 +333,74 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Check if value is NULL
+     *
+     * @return boolean
+     */
     public function isNull(): bool
     {
         return $this->value === null;
     }
 
+    /**
+     * Check if value is NOT NULL
+     *
+     * @return boolean
+     */
     public function isNotNull(): bool
     {
         return !$this->isNull();
     }
 
+    /**
+     * Check if value is unset/empty
+     *
+     * @return boolean
+     */
     public function isEmpty(): bool
     {
         return empty($this->value);
     }
 
+
+    /**
+     * Check if value is set/populated
+     *
+     * @return boolean
+     */
     public function isNotEmpty(): bool
     {
 
         return !$this->isEmpty();
     }
 
+    /**
+     * Check if value is touched
+     *
+     * @return boolean
+     */
     public function isFilled(): bool
     {
         return (bool)$this->isFilled;
     }
 
+    /**
+     * Check if value is untouched
+     *
+     * @return boolean
+     */
     public function isNotFilled(): bool
     {
         return !$this->isFilled();
     }
 
+    /**
+     * Decide wether this value is allowed in serialization
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function enable(bool $state = true): static
     {
         $this->isEnabled = $state;
@@ -302,6 +408,11 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Disable using this value in serialization
+     *
+     * @return static
+     */
     public function disable(): static
     {
         $this->isEnabled = false;
@@ -309,11 +420,21 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Check if value is allowed to be included in serialization
+     *
+     * @return static
+     */
     public function isEnabled(): bool
     {
         return $this->isEnabled;
     }
 
+    /**
+     * Check if value is required
+     *
+     * @return boolean
+     */
     public function isRequired(): bool
     {
         return $this->getRequiredValidator()->isRequired();
