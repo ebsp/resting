@@ -29,9 +29,14 @@ class ArrayFieldTest extends TestCase
         $this->instance = new ArrayField();
     }
 
-    public function testGetCanReturnNull()
+    public function testGetCanNotReturnNull()
     {
-        $this->assertNull($this->instance->get());
+        $this->assertNotNull($this->instance->get());
+    }
+
+    public function testEmptyGetReturnArray()
+    {
+        $this->assertIsArray($this->instance->get());
     }
 
     public function getGetCanReturnArray()
