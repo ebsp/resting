@@ -99,4 +99,29 @@ class BoolFieldTest extends TestCase
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
     }
+
+    public function testNullIsNotFalseWithStrict()
+    {
+        $this->instance->nullable();
+        $this->instance->set(null);
+
+        $this->assertFalse($this->instance->isFalse());
+    }
+
+    public function testNullIsFalseWithoutStrict()
+    {
+        $this->instance->nullable();
+        $this->instance->set(null);
+
+        $this->assertTrue($this->instance->isFalse(false));
+    }
+
+    public function testNullIsNotTrueWithAndWithoutStrict()
+    {
+        $this->instance->nullable();
+        $this->instance->set(null);
+
+        $this->assertFalse($this->instance->isTrue());
+        $this->assertFalse($this->instance->isTrue(false));
+    }
 }
