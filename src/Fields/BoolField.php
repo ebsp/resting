@@ -45,6 +45,16 @@ class BoolField extends Field
         ];
     }
 
+    public function isTrue(bool $strict = true): bool
+    {
+        return $strict ? $this->value === true : $this->value == true;
+    }
+
+    public function isFalse(bool $strict = true): bool
+    {
+        return $strict ? $this->value === false : $this->value == false;
+    }
+
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
     {
         return $this->validator;
