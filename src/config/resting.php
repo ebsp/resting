@@ -1,8 +1,7 @@
 <?php
 
 return [
-
-    'api_name' => 'Rest API',
+    'api_name' => 'REST API',
 
     'version' => '1',
 
