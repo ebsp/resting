@@ -18,9 +18,15 @@ jobs:
         phpunit-versions: ["latest"]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - uses: shivammathur/setup-php@v2
+      - name: Check if mergeable
+        run: |
+          git merge origin/master --no-commit --ff-only
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, intl
