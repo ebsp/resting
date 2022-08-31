@@ -29,9 +29,6 @@ jobs:
       - name: Update packages to fit PHP Version
         run: composer update --no-install
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
