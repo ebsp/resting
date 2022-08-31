@@ -26,9 +26,6 @@ jobs:
           coverage: xdebug
           tools: phpunit:${{ matrix.phpunit-versions }}
 
-      - name: Update packages to fit PHP Version
-        run: composer update --no-install
-
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
