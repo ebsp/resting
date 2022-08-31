@@ -21,7 +21,7 @@ abstract class Field
     /**
      * Value of this resource
      *
-     * @var mixed
+     * @var mixed Type should be defined in child
      */
     protected mixed $value = null;
 
@@ -43,6 +43,8 @@ abstract class Field
     protected NullableValidator $nullableValidator;
     protected ForbiddenValidator $forbiddenValidator;
 
+    abstract public function type(): array;
+
     public function __construct()
     {
         $this->requiredValidator = new RequiredValidator();
@@ -50,13 +52,19 @@ abstract class Field
         $this->forbiddenValidator = new ForbiddenValidator();
     }
 
+    /**
+     * Statically instanciate current<child> class
+     *
+     * @param mixed ..$arguments
+     * @return static
+     */
     public static function create(...$arguments): static
     {
         return new static(...$arguments);
     }
 
     /**
-     * Returns the current validate if set
+     * Returns the current validator if set
      *
      * @return PrimaryValidator|null
      */
@@ -78,7 +86,7 @@ abstract class Field
     /**
      * Returns formatted value based on Field model
      *
-     * @return mixed
+     * @return mixed Expected Type should be defined in child
      */
     public function formatted(): mixed
     {
@@ -88,7 +96,7 @@ abstract class Field
     /**
      * Returns the raw value as stored
      *
-     * @return mixed
+     * @return mixed Expected Type should be defined in child
      */
     public function get(): mixed
     {
@@ -212,40 +220,6 @@ abstract class Field
         $this->isFilled = true;
 
         return $this;
-    }
-
-    /**
-     * Validate the value between the setter and internal storage
-     *
-     * @param mixed $value
-     * @return void
-     * @throws ValidationException
-     */
-    private function validateValue(mixed $value)
-    {
-        if (is_null($value)) {
-
-            if (
-                !$this->getNullableValidator()->hasPredicates()
-                && !$this->getNullableValidator()->isNullable()
-            ) {
-                throw new ValidationException([
-                    new NullableValidationError,
-                ]);
-            }
-
-            $this->value = null;
-            $this->isFilled = true;
-            return;
-        }
-
-        $validator = $this->getValidator();
-        if ($validator) {
-            $errors = $validator->validate($value);
-            if (count($errors)) {
-                throw new ValidationException($errors);
-            }
-        }
     }
 
     /**
@@ -440,15 +414,55 @@ abstract class Field
         return $this->getRequiredValidator()->isRequired();
     }
 
+    /**
+     * Define if the value has been filled
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function setFilled(bool $state = true)
     {
         $this->isFilled = $state;
-    }
 
-    abstract public function type(): array;
+        return $this;
+    }
 
     public function nestedRefs(): array
     {
         return [];
+    }
+
+    /**
+     * Validate the value between the setter and internal storage
+     *
+     * @param mixed $value
+     * @return void
+     * @throws ValidationException
+     */
+    private function validateValue(mixed $value)
+    {
+        if (is_null($value)) {
+
+            if (
+                !$this->getNullableValidator()->hasPredicates()
+                && !$this->getNullableValidator()->isNullable()
+            ) {
+                throw new ValidationException([
+                    new NullableValidationError,
+                ]);
+            }
+
+            $this->value = null;
+            $this->isFilled = true;
+            return;
+        }
+
+        $validator = $this->getValidator();
+        if ($validator) {
+            $errors = $validator->validate($value);
+            if (count($errors)) {
+                throw new ValidationException($errors);
+            }
+        }
     }
 }
