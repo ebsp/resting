@@ -43,73 +43,73 @@ namespace Seier\Resting\Fields;
 
 abstract class Field
 {
-	// Default Values
-	protected mixed $value = null;
+    // Default Values
+    protected mixed $value = null;
     protected bool $isFilled = false;
     protected bool $isEnabled = true;
 
-	// statically call "new class"
-	public static function new(): static;
+    // statically call "new class"
+    public static function new(): static;
 
-	// Returns the current validator if set
-	public function getValidator(): ?Seier\Resting\Validation\PrimaryValidator;
-	public function getRequiredValidator(): RequiredValidator;
-	public function getNullableValidator(): NullableValidator;
-	public function getForbiddenValidator(): ForbiddenValidator;
-	public function withValidator(SecondaryValidator $secondaryValidator): static;
+    // Returns the current validator if set
+    public function getValidator(): ?Seier\Resting\Validation\PrimaryValidator;
+    public function getRequiredValidator(): RequiredValidator;
+    public function getNullableValidator(): NullableValidator;
+    public function getForbiddenValidator(): ForbiddenValidator;
+    public function withValidator(SecondaryValidator $secondaryValidator): static;
 
-	// Returns the current parser if set
-	public function getParser(): ?Parser;
+    // Returns the current parser if set
+    public function getParser(): ?Parser;
 
-	// Returns formatted value based on Field model (child)
-	// Type should be specified in child
-	public function formatted(): mixed;
+    // Returns formatted value based on Field model (child)
+    // Type should be specified in child
+    public function formatted(): mixed;
 
-	// Returns the raw value as stored
-	// Type should be specified in child
-	public function get(): mixed;
+    // Returns the raw value as stored
+    // Type should be specified in child
+    public function get(): mixed;
 
-	// Define if value of class should be nullable
-	// If predicate is passed that will be set as true
-	public function nullable(bool|Predicate $state = true): static;
-	public function notNullable(): static;
+    // Define if value of class should be nullable
+    // If predicate is passed that will be set as true
+    public function nullable(bool|Predicate $state = true): static;
+    public function notNullable(): static;
 
-	// Read the full description inside class of following
-	public function omittedDefault(mixed $value, Predicate $predicate = null): static;
+    // Read the full description inside class of following
+    public function omittedDefault(mixed $value, Predicate $predicate = null): static;
     public function nullDefault(mixed $value, Predicate $predicate = null): static;
     public function withDefault(mixed $value, Predicate $predicate = null): static;
 
-	// Updates the raw value with validation
-	// Expected Type should be specified in child
-	public function set($value): static;
+    // Updates the raw value with validation
+    // Expected Type should be specified in child
+    public function set($value): static;
 
-	// Define if value is required
-	public function required(bool|Predicate $state = true): static;
-	public function notRequired(): static;
+    // Define if value is required
+    public function required(bool|Predicate $state = true): static;
+    public function notRequired(): static;
 
-	// Decide wether this value is allowed in serialization
-	public function enable(bool $state = true): static;
+    // Decide wether this value is allowed in serialization
+    public function enable(bool $state = true): static;
     public function disable(): static;
 
-	// Specify if the variable have been set
-	public function setFilled(bool $state = true);
+    // Specify if the variable have been set
+    public function setFilled(bool $state = true);
 
-	// Check if current value is NULL
+    // Check if current value is NULL
     public function isNull(): bool;
     public function isNotNull(): bool;
 
-	// Check if current value is EMPTY (0, null, false)
-	public function isEmpty(): bool;
+    // Check if current value is EMPTY (0, null, false)
+    public function isEmpty(): bool;
     public function isNotEmpty(): bool;
 
-	// Check if the value is deemed touched/changed/inserted
-	public function isFilled(): bool;
+    // Check if the value is deemed touched/changed/inserted
+    public function isFilled(): bool;
     public function isNotFilled(): bool;
 
-	// Check if this variable is allowed to be serialized
-	public function isEnabled(): bool;
+    // Check if this variable is allowed to be serialized
+    public function isEnabled(): bool;
 
-	// Check if this variable is required to be filled/set
+    // Check if this variable is required to be filled/set
     public function isRequired(): bool;
 }
 ```
@@ -119,33 +119,33 @@ When extending the class, these are the important variables to update
 ```php
 use Seier\Resting\Fields\Field;
 
-class CustomField extends Field 
-{	
-	// Set expected parameter with expected validator
-	private Validator $validator;
+class CustomField extends Field
+{
+    // Set expected parameter with expected validator
+    private Validator $validator;
 
-	// Set expected parameter with expected parser
-	private Parser $parser;
+    // Set expected parameter with expected parser
+    private Parser $parser;
 
-	public function __construct()
-	{
-		parent::__construct();
+    public function __construct()
+    {
+        parent::__construct();
 
-		// add Validator
-		$this->validator = new Validator();
+        // add Validator
+        $this->validator = new Validator();
 
-		// add Parser
-		$this->parser = new Parser();
-	}
+        // add Parser
+        $this->parser = new Parser();
+    }
 
-	// Example Currency should probably return formatted number while raw is integer or float
-	public function formatted(): mixed;
+    // Example Currency should probably return formatted number while raw is integer or float
+    public function formatted(): mixed;
 
-	// Type of expected raw value, if currency probably "int|float"
-	public function get(): mixed;
+    // Type of expected raw value, if currency probably "int|float"
+    public function get(): mixed;
 
-	// Specift the type of this class
-	// Read full description in Field abstraction class
+    // Specift the type of this class
+    // Read full description in Field abstraction class
     public function type(): array
     {
         return [
@@ -163,13 +163,13 @@ use Seier\Resting;
 
 class Resource extends Resting\Resource
 {
-	public IntField $id;
-	public StringField $name;
+    public IntField $id;
+    public StringField $name;
 
-	public function __construct()
-	{
-		$this->id = new IntField();
-		$this->name = (new StringField())->nullable()->withDefault("John Doe");
-	}
+    public function __construct()
+    {
+        $this->id = new IntField();
+        $this->name = (new StringField())->nullable()->withDefault("John Doe");
+    }
 }
 ```
