@@ -17,9 +17,16 @@ Resources are intermediate data layers for your REST API Interface; making it mo
 A resource is made up of Fields (Type restricted roperties).
 The Field is type aware of the parameter and validation criteria(s).
 
-Resources must extend `Seier\Resting\Resource` to use this package fully as intended.
+* Resources must extend `Seier\Resting\Resource`
+* Fields must extend `Seier\Resting\Fields\Field`
 
-### Field Types
+## Setup
+
+1. Add as service provider in Laravel
+2. Setup routing using middleware `Seier\Resting\Support\Laravel\RestingMiddleware`
+3. Add Trait `Seier\Resting\Support\Laravel\UsesResting` to applicable `Controllers` and `Routes`
+
+## Field Types
 The Resting package comes with a number of predefined field types. The following field types are included:
 
 [![Field](https://shields.io/badge/Field-blue)](src/Fields/Field.php)
@@ -36,7 +43,67 @@ The Resting package comes with a number of predefined field types. The following
 [![ResourceField](https://shields.io/badge/ResourceField-blue)](src/Fields/ResourceField.php)
 [![ResourceArrayField](https://shields.io/badge/ResourceArrayField-blue)](src/Fields/ResourceArrayField.php)
 
-### Field Class Layout
+## Resources
+
+```php
+use Seier\Resting;
+
+class Resource extends Resting\Resource
+{
+    public IntField $id;
+    public StringField $name;
+
+    public function __construct()
+    {
+        $this->id = new IntField();
+        $this->name = (new StringField())->nullable()->withDefault("John Doe");
+    }
+}
+```
+
+## Extending Field Types
+
+```php
+use Seier\Resting\Fields\Field;
+
+class CustomField extends Field
+{
+    // Set expected parameter with expected validator
+    private Validator $validator;
+
+    // Set expected parameter with expected parser
+    private Parser $parser;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // add Validator
+        $this->validator = new Validator();
+
+        // add Parser
+        $this->parser = new Parser();
+    }
+
+    // Example Currency should probably return formatted number while raw is integer or float
+    public function formatted(): mixed;
+
+    // Type of expected raw value, if currency probably "int|float"
+    public function get(): mixed;
+
+    // Specify the type of this class for OpenApi
+    // Read full description in Field abstraction class
+    public function type(): array
+    {
+        return [
+            'type' => '',
+            'format' => '',
+        ];
+    }
+}
+```
+
+## Fields Layout
 
 ```php
 namespace Seier\Resting\Fields;
@@ -111,65 +178,5 @@ abstract class Field
 
     // Check if this variable is required to be filled/set
     public function isRequired(): bool;
-}
-```
-
-When extending the class, these are the important variables to update
-
-```php
-use Seier\Resting\Fields\Field;
-
-class CustomField extends Field
-{
-    // Set expected parameter with expected validator
-    private Validator $validator;
-
-    // Set expected parameter with expected parser
-    private Parser $parser;
-
-    public function __construct()
-    {
-        parent::__construct();
-
-        // add Validator
-        $this->validator = new Validator();
-
-        // add Parser
-        $this->parser = new Parser();
-    }
-
-    // Example Currency should probably return formatted number while raw is integer or float
-    public function formatted(): mixed;
-
-    // Type of expected raw value, if currency probably "int|float"
-    public function get(): mixed;
-
-    // Specify the type of this class for OpenApi
-    // Read full description in Field abstraction class
-    public function type(): array
-    {
-        return [
-            'type' => '',
-            'format' => '',
-        ];
-    }
-}
-```
-
-### Resource Example
-
-```php
-use Seier\Resting;
-
-class Resource extends Resting\Resource
-{
-    public IntField $id;
-    public StringField $name;
-
-    public function __construct()
-    {
-        $this->id = new IntField();
-        $this->name = (new StringField())->nullable()->withDefault("John Doe");
-    }
 }
 ```
