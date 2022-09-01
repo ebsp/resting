@@ -50,6 +50,11 @@ abstract class Field
         $this->forbiddenValidator = new ForbiddenValidator();
     }
 
+    /**
+     * Defines variable for OpenAPI
+     *
+     * @return array
+     */
     abstract public function type(): array;
 
     /**
