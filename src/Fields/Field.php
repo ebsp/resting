@@ -43,14 +43,14 @@ abstract class Field
     protected NullableValidator $nullableValidator;
     protected ForbiddenValidator $forbiddenValidator;
 
-    abstract public function type(): array;
-
     public function __construct()
     {
         $this->requiredValidator = new RequiredValidator();
         $this->nullableValidator = new NullableValidator();
         $this->forbiddenValidator = new ForbiddenValidator();
     }
+
+    abstract public function type(): array;
 
     /**
      * Statically instanciate current<child> class
@@ -110,6 +110,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Define if value of class should be nullable
+     *
+     * @param bool|Predicate $state
+     * @return static
+     */
     public function nullable(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
