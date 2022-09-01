@@ -4,8 +4,8 @@ Helper classes to improve type awareness/restrictions on your REST API in Larave
 The goal is to fail faster when receiving unexpected parameter types with helpful information in the callback.
 
 [![Packagist PHP Version Support](https://img.shields.io/packagist/php-v/ebsp/resting?color=blue&style=for-the-badge)](https://www.php.net/releases/)
-[![GitHub issues](https://img.shields.io/github/issues-raw/ebsp/resting?color=red&style=for-the-badge)](https://github.com/AlexWestergaard/php-ga4/issues)
-[![Packagist Stars](https://img.shields.io/packagist/stars/ebsp/resting?color=yellow&style=for-the-badge)](https://github.com/AlexWestergaard/php-ga4/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues-raw/ebsp/resting?color=red&style=for-the-badge)](https://github.com/ebsp/resting/issues)
+[![Packagist Stars](https://img.shields.io/packagist/stars/ebsp/resting?color=yellow&style=for-the-badge)](https://github.com/ebsp/resting/stargazers)
 
 ## **Notice**
 This codebase is currently developed during personal usage.
