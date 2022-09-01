@@ -4,7 +4,6 @@ namespace Seier\Resting\Fields;
 
 use ArrayAccess;
 use Seier\Resting\Parsing\Parser;
-use Illuminate\Support\Collection;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\TimeParser;
@@ -26,7 +25,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ArrayField extends Field
 {
-
     use ArrayValidation;
 
     private ArrayValidator $validator;
@@ -68,7 +66,7 @@ class ArrayField extends Field
         return parent::set($value);
     }
 
-    public function ofStrings(callable $config = null): static
+    public function ofStrings(?callable $config = null): static
     {
         $validator = new StringValidator();
         $parser = new StringParser();
@@ -80,7 +78,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofIntegers(callable $config = null): static
+    public function ofIntegers(?callable $config = null): static
     {
         $validator = new IntValidator();
         $parser = new IntParser();
@@ -92,7 +90,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofNumbers(callable $config = null): static
+    public function ofNumbers(?callable $config = null): static
     {
         $validator = new NumberValidator();
         $parser = new NumberParser();
@@ -104,7 +102,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofBooleans(callable $config = null): static
+    public function ofBooleans(?callable $config = null): static
     {
         $validator = new BoolValidator();
         $parser = new BoolParser();
@@ -116,7 +114,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofTimes(callable $config = null): static
+    public function ofTimes(?callable $config = null): static
     {
         $validator = new TimeValidator();
         $parser = new TimeParser();
@@ -128,7 +126,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofArrays(callable $config = null): static
+    public function ofArrays(?callable $config = null): static
     {
         $validator = new ArrayValidator();
         $parser = new ArrayParser();
@@ -140,7 +138,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofCarbons(callable $config = null): static
+    public function ofCarbons(?callable $config = null): static
     {
         $validator = new CarbonValidator();
         $parser = new CarbonParser();
