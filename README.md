@@ -144,7 +144,7 @@ class CustomField extends Field
     // Type of expected raw value, if currency probably "int|float"
     public function get(): mixed;
 
-    // Specift the type of this class
+    // Specify the type of this class for OpenApi
     // Read full description in Field abstraction class
     public function type(): array
     {
