@@ -14,6 +14,39 @@ use Seier\Resting\Validation\Secondary\SecondaryValidator;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Secondary\Anonymous\AnonymousValidation;
 
+/**
+ * @param mixed $value
+ * @param bool $isFilled
+ * @param bool $isEnabled
+ * @method mixed get()
+ * @method mixed formatted()
+ * @method static new()
+ * @method static set($value)
+ * @method static withDefault(mixed $value, Predicate $predicate)
+ * @method static nullable(bool|Predicate $state)
+ * @method static notNullable()
+ * @method static nullDefault(mixed $value, Predicate $predicate)
+ * @method static omittedDefault(mixed $value, Predicate $predicate)
+ * @method static required(bool|Predicate $state)
+ * @method static notRequired()
+ * @method static enable(bool $state)
+ * @method static disable()
+ * @method static setFilled(bool $state)
+ * @method static withValidator(SecondaryValidator $secondaryValidator)
+ * @method bool isNull()
+ * @method bool isNotNull()
+ * @method bool isEmpty()
+ * @method bool isNotEmpty()
+ * @method bool isFilled()
+ * @method bool isNotFilled()
+ * @method bool isEnabled()
+ * @method bool isRequired()
+ * @method RequiredValidator getRequiredValidator()
+ * @method NullableValidator getNullableValidator()
+ * @method ForbiddenValidator getForbiddenValidator()
+ * @method Seier\Resting\Validation\PrimaryValidator|null getValidator()
+ * @method Parser|null getParser()
+ */
 abstract class Field
 {
     use AnonymousValidation;
