@@ -22,7 +22,7 @@ The Field is type aware of the parameter and validation criteria(s).
 
 ## Setup
 
-1. Add as service provider in Laravel
+1. Add as service provider in Laravel (Should happen with Laravel Autodiscover)
 2. Setup routing using middleware `Seier\Resting\Support\Laravel\RestingMiddleware`
 3. Add Trait `Seier\Resting\Support\Laravel\UsesResting` to applicable `Controllers` and `Routes`
 
