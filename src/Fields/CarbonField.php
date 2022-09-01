@@ -13,7 +13,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class CarbonField extends Field
 {
-
     use CarbonValidation;
 
     private CarbonValidator $validator;

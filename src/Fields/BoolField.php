@@ -9,7 +9,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class BoolField extends Field
 {
-
     use EnumValidation;
 
     private BoolValidator $validator;
@@ -45,11 +44,23 @@ class BoolField extends Field
         ];
     }
 
+    /**
+     * Validates if the current value it TRUE
+     *
+     * @param boolean $strict If should be "TRUE" or any value representing true, eg. true|1|'not empty string'
+     * @return boolean
+     */
     public function isTrue(bool $strict = true): bool
     {
         return $strict ? $this->value === true : $this->value == true;
     }
 
+    /**
+     * Validates if the current value it FALSE
+     *
+     * @param boolean $strict If should be "FALSE" or any value representing false, eg. false|null|0|''
+     * @return boolean
+     */
     public function isFalse(bool $strict = true): bool
     {
         return $strict ? $this->value === false : $this->value == false;
