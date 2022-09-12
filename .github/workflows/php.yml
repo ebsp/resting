@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check if mergeable
-        run: git merge origin/master --no-commit --stat --verbose
+        run: git merge origin/master --no-commit --ff-only --stat --verbose
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
