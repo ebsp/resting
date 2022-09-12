@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 class NumberParser implements Parser
 {
-
     private string $decimalSeparator = '.';
 
     public function canParse(ParseContext $context): array

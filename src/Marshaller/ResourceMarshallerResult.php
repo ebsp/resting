@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Marshaller;
-
 
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class ResourceMarshallerResult
 {
-
     private array $validationErrors;
     private mixed $result;
 

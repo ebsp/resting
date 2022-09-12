@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\CarbonPeriod;
-
 
 use Carbon\CarbonInterval;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 trait CarbonPeriodValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function minHours(int $hours): static

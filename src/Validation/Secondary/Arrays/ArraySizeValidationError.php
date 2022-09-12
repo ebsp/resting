@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Arrays;
-
 
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class ArraySizeValidationError implements ValidationError
 {
-
     use HasPath;
 
     private int $expectedSize;

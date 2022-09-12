@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Errors;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Support\HasPath;
 
 class CarbonPeriodOrderedRequiredValidationError implements ValidationError
 {
-
     use HasPath;
 
     private Carbon $start;

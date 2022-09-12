@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Predicates\HasPredicates;
 use Seier\Resting\Validation\Predicates\ResourceContext;
 
 class ForbiddenValidator
 {
-
     use HasPredicates;
 
     private bool $isForbidden = false;

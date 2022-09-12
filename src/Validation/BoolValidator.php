@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Errors\NotBoolValidationError;
 
 class BoolValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     public function description(): string
     {
         return "The value must be a boolean value.";

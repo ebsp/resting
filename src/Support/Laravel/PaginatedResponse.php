@@ -7,7 +7,6 @@ use Illuminate\Contracts\Support\Responsable;
 
 class PaginatedResponse implements Responsable
 {
-
     private array $data;
     private int $page;
     private int $limit;

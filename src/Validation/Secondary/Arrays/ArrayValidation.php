@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Arrays;
-
 
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 trait ArrayValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function size(int $expected): static

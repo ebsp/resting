@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\String;
-
 
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 trait StringValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function length(int $expectedLength): static

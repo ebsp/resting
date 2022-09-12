@@ -9,7 +9,6 @@ use Illuminate\Contracts\Support\Responsable;
 
 class RestingResponse implements Responsable
 {
-
     private array $data;
     private int $status;
 

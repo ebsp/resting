@@ -15,10 +15,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class RestingServiceProvider extends ServiceProvider
 {
-
     public function boot()
     {
-
         $this->mergeConfigFrom(
             $configPath = __DIR__ . '/../../config/resting.php', 'resting'
         );

@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Fields\Time;
 use Seier\Resting\Validation\Secondary\TimeValidation;
@@ -11,7 +9,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class TimeValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     use TimeValidation;
 
     public function description(): string

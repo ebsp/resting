@@ -13,7 +13,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class StringField extends Field
 {
-
     use StringValidation;
     use EnumValidation;
 

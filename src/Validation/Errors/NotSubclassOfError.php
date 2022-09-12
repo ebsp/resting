@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Errors;
-
 
 use ReflectionClass;
 use Seier\Resting\Support\HasPath;
 
 class NotSubclassOfError implements ValidationError
 {
-
     use HasPath;
 
     private ReflectionClass $expected;

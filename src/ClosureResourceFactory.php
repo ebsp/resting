@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting;
-
 
 use Closure;
 use Seier\Resting\Resource as RestingResource;
 
 class ClosureResourceFactory implements ResourceFactory
 {
-
     private Closure $factory;
 
     protected function __construct(Closure $factory)

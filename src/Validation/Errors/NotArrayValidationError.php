@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Errors;
 
 use Seier\Resting\Support\HasPath;
@@ -8,7 +7,6 @@ use Seier\Resting\Support\FormatsValues;
 
 class NotArrayValidationError implements ValidationError
 {
-
     use FormatsValues;
     use HasPath;
 

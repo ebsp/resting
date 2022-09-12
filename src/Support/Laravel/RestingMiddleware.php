@@ -19,7 +19,6 @@ use Seier\Resting\Exceptions\RestingDefinitionException;
 
 class RestingMiddleware
 {
-
     protected ?Request $request;
     protected array $bodyErrors = [];
     protected array $queryErrors = [];

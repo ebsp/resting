@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Predicates;
-
 
 use Closure;
 
 class AnonymousPredicate implements Predicate
 {
-
     private Closure $describer;
     private Closure $evaluator;
 

@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Exceptions;
-
 
 use Closure;
 
 class ValidationExceptionHandler
 {
-
     private array $errors = [];
 
     public function suppress(array|string|int $path, Closure $function): mixed

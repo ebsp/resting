@@ -13,7 +13,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class TimeField extends Field
 {
-
     use TimeValidation;
 
     private TimeValidator $validator;

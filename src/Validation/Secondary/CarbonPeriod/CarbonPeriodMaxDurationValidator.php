@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\CarbonPeriod;
-
 
 use Carbon\CarbonPeriod;
 use Carbon\CarbonInterval;
@@ -11,7 +9,6 @@ use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class CarbonPeriodMaxDurationValidator implements SecondaryValidator
 {
-
     use Panics;
 
     private CarbonInterval $max;

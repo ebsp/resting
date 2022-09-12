@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Comparable;
-
 
 use Closure;
 use Seier\Resting\Support\HasPath;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Errors\ValidationError;
 
 class MaxValidationError implements ValidationError
 {
-
     use HasPath;
 
     private mixed $max;

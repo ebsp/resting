@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Errors\NotNumberValidationError;
 use Seier\Resting\Validation\Secondary\Numeric\NumericValidation;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class NumberValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     use NumericValidation;
 
     public function description(): string

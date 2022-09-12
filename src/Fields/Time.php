@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Fields;
-
 
 use Carbon\Carbon;
 
 class Time
 {
-
     public int $hours;
     public int $minutes;
     public int $seconds;

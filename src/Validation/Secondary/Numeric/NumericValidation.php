@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Numeric;
-
 
 use Seier\Resting\Fields\Field;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidator;
@@ -12,7 +10,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 trait NumericValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function positive(): static

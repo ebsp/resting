@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Seier\Resting\Fields\Time;
 use Seier\Resting\Fields\EmptyStringAsNull;
 
 class TimeParser implements Parser
 {
-
     use EmptyStringAsNull;
 
     private string $separator = ':';

@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Fields;
-
 
 trait EmptyStringAsNull
 {
-
     protected bool $emptyStringAsNull = false;
 
     /**

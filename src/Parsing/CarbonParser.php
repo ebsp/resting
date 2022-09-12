@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Fields\EmptyStringAsNull;
@@ -10,7 +8,6 @@ use Carbon\Exceptions\InvalidFormatException;
 
 class CarbonParser implements Parser
 {
-
     use EmptyStringAsNull;
 
     private ?string $format = null;

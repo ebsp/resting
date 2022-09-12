@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Anonymous;
-
 
 use Closure;
 use Seier\Resting\Support\FormatsValues;
@@ -12,7 +10,6 @@ use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class AnonymousSecondaryValidator implements SecondaryValidator
 {
-
     use FormatsValues;
 
     private string $description;

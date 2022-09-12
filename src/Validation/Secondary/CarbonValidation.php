@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Fields\Field;
@@ -13,7 +11,6 @@ use Seier\Resting\Validation\Secondary\Comparable\MaxValidator;
 
 trait CarbonValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function min(Carbon|Field $min): static

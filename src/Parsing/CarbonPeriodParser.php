@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Carbon\CarbonPeriod;
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class CarbonPeriodParser implements Parser
 {
-
     private string $separator = ',';
     private CarbonParser $startParser;
     private CarbonParser $endParser;

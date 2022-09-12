@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 class DefaultParseContext implements ParseContext
 {
-
     private mixed $value;
     private bool $isStringBased;
 

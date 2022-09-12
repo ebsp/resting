@@ -6,7 +6,6 @@ namespace Seier\Resting\Validation\Errors;
 
 interface ValidationError
 {
-
     public function getMessage(): string;
 
     public function getPathComponents(): array;

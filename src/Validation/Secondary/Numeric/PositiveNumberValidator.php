@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Numeric;
-
 
 use Seier\Resting\Validation\Secondary\Panics;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class PositiveNumberValidator implements SecondaryValidator
 {
-
     use Panics;
 
     public function description(): string

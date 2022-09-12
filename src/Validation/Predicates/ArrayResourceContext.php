@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Predicates;
-
 
 use Seier\Resting\Fields\Field;
 use Seier\Resting\Parsing\DefaultParseContext;
 
 class ArrayResourceContext implements ResourceContext
 {
-
     private bool $isStringBased;
     private array $fields;
     private array $data;

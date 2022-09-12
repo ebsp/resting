@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Exceptions;
-
 
 class ValidationException extends RestingRuntimeException
 {
-
     private array $errors;
 
     public function __construct(array $errors)

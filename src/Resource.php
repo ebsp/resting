@@ -17,7 +17,6 @@ use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 
 abstract class Resource implements Arrayable, Jsonable
 {
-
     use Panics;
 
     private bool $removeNulls = true;

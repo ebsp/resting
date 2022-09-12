@@ -23,7 +23,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ResourceArrayField extends Field implements ArrayAccess, Countable, IteratorAggregate
 {
-
     use ArrayValidation;
 
     protected Closure $resourceFactory;

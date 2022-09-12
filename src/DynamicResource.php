@@ -8,7 +8,6 @@ use Seier\Resting\Exceptions\DynamicResourceFieldException;
 
 class DynamicResource extends Resource
 {
-
     protected Collection $fields;
 
     public function __construct()

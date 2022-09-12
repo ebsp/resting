@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Support;
-
 
 trait HasPath
 {
-
     private array $pathComponents = [];
 
     public function prependPath(string|int|array $components): static

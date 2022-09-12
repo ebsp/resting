@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Closure;
 use Seier\Resting\Validation\Predicates\HasPredicates;
 
 class DefaultValue
 {
-
     use HasPredicates;
 
     private mixed $defaultValue;

@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Resolver;
-
 
 use Closure;
 use Seier\Resting\Fields\Field;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Predicates\ResourceContext;
 
 class ClosureValidatorResolver implements ValidatorResolver
 {
-
     private Closure $closure;
 
     public function __construct(Closure $closure)

@@ -16,7 +16,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ResourceField extends Field
 {
-
     private Closure $resourceFactory;
     private RestingResource $resource;
     private ReflectionClass $resourceReflection;

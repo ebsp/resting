@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Exceptions;
-
 
 use ReflectionClass;
 use ReflectionParameter;
@@ -10,7 +8,6 @@ use Illuminate\Routing\Route;
 
 class RestingDefinitionException extends RestingException
 {
-
     public static function cannotResolveParameter(Route $route, ReflectionParameter $parameter): static
     {
         return new static();
