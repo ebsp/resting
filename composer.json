@@ -1,6 +1,7 @@
 {
     "name": "ebsp/resting",
     "description": "Simple REST library for Laravel",
+    "license": "MIT",
     "require": {
         "php": "^8.0",
         "laravel/framework": "^8.0|^9.0",
