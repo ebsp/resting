@@ -1,0 +1,27 @@
+name: Report Bug
+description: The code fails in unintended ways
+title: "BUG | <title>"
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for reporting a bug in this codebase!
+  - type: input
+    attributes:
+      label: What package version have you installed?
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: What PHP version have you installed?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Provide code snippet or explanation of failing situation
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Provide stacktrace relevant to this package
