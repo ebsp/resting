@@ -4,14 +4,15 @@ namespace Seier\Resting\Support\Laravel;
 
 use Closure;
 use ReflectionClass;
-use Seier\Resting\Query;
 use ReflectionNamedType;
 use ReflectionUnionType;
+use Seier\Resting\Query;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Seier\Resting\ClosureResourceFactory;
+use Seier\Resting\Exceptions\EmptyJsonException;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\InvalidJsonException;
 use Seier\Resting\Marshaller\ResourceMarshallerResult;
@@ -172,8 +173,15 @@ class RestingMiddleware
     protected function validateIsJsonBody(): bool
     {
         $body = $this->request->getContent();
-        if (!$this->request->expectsJson() || empty($body)) {
+        if (
+            !$this->request->expectsJson()
+            || $this->request->getMethod() === 'GET' && empty($body)
+        ) {
             return true;
+        }
+
+        if (empty($body)) {
+            throw new EmptyJsonException();
         }
 
         @json_decode($body);
