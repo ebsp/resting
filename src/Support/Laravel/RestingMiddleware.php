@@ -39,7 +39,7 @@ class RestingMiddleware
         $this->createRouteParameters($parameters);
 
         // when the marshalling caused validation errors, respond with 422
-        if ($this->hasValidationErrors()) {
+        if ($this->hasValidationErrors() && !$this->shouldSkipValidationErrorsCallback()) {
             return $this->respondWithValidationErrors();
         }
 
@@ -193,11 +193,17 @@ class RestingMiddleware
 
     private function hasValidationErrors(): bool
     {
-        return (
-            !empty($this->bodyErrors) ||
-            !empty($this->queryErrors) ||
-            !empty($this->paramErrors)
-        );
+        return !empty($this->bodyErrors)
+            || !empty($this->queryErrors)
+            || !empty($this->paramErrors);
+    }
+
+    private function shouldSkipValidationErrorsCallback(): bool
+    {
+        return function_exists('env')
+            && call_user_func('env', 'APP_DEBUG') !== false
+            && call_user_func('env', 'APP_ENV') !== 'production'
+            && isset($this->request->all('skipValidation'));
     }
 
     private function respondWithValidationErrors(): JsonResponse
