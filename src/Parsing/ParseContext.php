@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 interface ParseContext
 {
-
     public function isStringBased(): bool;
 
     public function getValue(): mixed;

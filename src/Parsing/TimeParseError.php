@@ -7,7 +7,6 @@ use Seier\Resting\Validation\Errors\ValidationError;
 
 class TimeParseError implements ValidationError
 {
-
     use HasPath;
 
     private string $actual;

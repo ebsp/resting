@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\String;
-
 
 use Seier\Resting\Validation\Secondary\Panics;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class StringMaxLengthValidator implements SecondaryValidator
 {
-
     use Panics;
 
     private int $maxLength;

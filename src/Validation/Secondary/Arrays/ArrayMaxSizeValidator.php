@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Arrays;
-
 
 use Seier\Resting\Validation\Secondary\Panics;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class ArrayMaxSizeValidator implements SecondaryValidator
 {
-
     use Panics;
 
     private int $maxSize;

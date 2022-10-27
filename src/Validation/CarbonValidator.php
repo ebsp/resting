@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Validation\Secondary\CarbonValidation;
@@ -11,7 +9,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class CarbonValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     use CarbonValidation;
 
     public function description(): string

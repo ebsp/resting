@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Seier\Resting\Fields\EmptyStringAsNull;
 
 class StringParser implements Parser
 {
-
     use EmptyStringAsNull;
 
     public function canParse(ParseContext $context): array

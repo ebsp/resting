@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Predicates;
-
 
 trait HasPredicates
 {
-
     private array $predicates = [];
 
     public function predicatedOn(Predicate $predicate): static

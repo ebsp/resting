@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Secondary\Arrays\ArrayValidation;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ArrayValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     use ArrayValidation;
 
     private ?PrimaryValidator $elementValidator = null;

@@ -1,0 +1,20 @@
+name: Request Feature
+description: Improvement or general situation/case that would be beneficial in-package
+title: "FEAT | <title>"
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for requesting a feature for this codebase!
+  - type: textarea
+    attributes:
+      label: Please explain the feature/improvement in as much detail as possible
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Unique Request
+      options:
+        - label: I have checked open and closed issues that none of them is similar to my request
+          required: true

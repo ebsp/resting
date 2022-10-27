@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Carbon\CarbonPeriod;
 use Seier\Resting\Validation\Errors\ValidationError;
@@ -14,7 +12,6 @@ use Seier\Resting\Validation\Errors\CarbonPeriodOrderedRequiredValidationError;
 
 class CarbonPeriodValidator extends BasePrimaryValidator implements PrimaryValidator
 {
-
     use CarbonPeriodValidation;
 
     private bool $requireEnd = true;

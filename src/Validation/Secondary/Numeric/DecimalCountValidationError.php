@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Numeric;
-
 
 use Exception;
 use Seier\Resting\Support\HasPath;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Errors\ValidationError;
 
 class DecimalCountValidationError implements ValidationError
 {
-
     use HasPath;
 
     private int|float $actual;

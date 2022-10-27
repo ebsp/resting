@@ -2,7 +2,6 @@
 
 namespace Seier\Resting\Support\Laravel;
 
-
 use Illuminate\Support\Collection;
 use Seier\Resting\Support\Resourcable;
 use Seier\Resting\Support\Transformer;
@@ -10,7 +9,6 @@ use Seier\Resting\Support\BaseTransformer;
 
 class ResourceCollection extends Collection
 {
-
     protected Transformer $transformer;
 
     public function __construct($items = [])

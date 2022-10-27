@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Support\FormatsValues;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Errors\ValidationError;
 
 class BoolParseError implements ValidationError
 {
-
     use HasPath;
     use FormatsValues;
 

@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 class IntParser implements Parser
 {
-
     public function canParse(ParseContext $context): array
     {
         $raw = $context->getValue();

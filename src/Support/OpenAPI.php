@@ -21,7 +21,6 @@ use Illuminate\Contracts\Support\Responsable;
 
 class OpenAPI implements Arrayable, Responsable
 {
-
     public $document;
     protected $routes;
     protected $resources = [];

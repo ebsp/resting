@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Resolver\ValidatorResolver;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 abstract class BasePrimaryValidator implements PrimaryValidator
 {
-
     protected array $secondaryValidators = [];
     protected array $secondaryValidatorResolvers = [];
 

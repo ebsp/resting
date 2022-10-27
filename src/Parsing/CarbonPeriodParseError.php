@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class CarbonPeriodParseError implements ValidationError
 {
-
     use HasPath;
 
     private string $message;

@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Marshaller;
-
 
 use Seier\Resting\UnionResource;
 use Seier\Resting\ResourceFactory;
@@ -21,7 +19,6 @@ use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 
 class ResourceMarshaller
 {
-
     private array $validationErrors = [];
     private array $currentPath = [];
     private bool $isStringBased = false;

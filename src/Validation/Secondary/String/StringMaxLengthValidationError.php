@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\String;
-
 
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Validation\Errors\ValidationError;
 
 class StringMaxLengthValidationError implements ValidationError
 {
-
     use HasPath;
 
     private int $maxLength;

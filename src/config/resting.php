@@ -1,8 +1,13 @@
 <?php
 
-return [
+use Seier\Resting\Exceptions\EnvFunctionMissing;
 
-    'api_name' => 'Rest API',
+if (!function_exists('env')) {
+    throw EnvFunctionMissing::cast();
+}
+
+return [
+    'api_name' => 'REST API',
 
     'version' => '1',
 
@@ -11,7 +16,7 @@ return [
     'documentation' => [
         'servers' => [
             [
-                'url' => env('APP_URL', 'http://localhost'),
+                'url' => call_user_func('env', 'APP_URL', 'http://localhost'),
                 'description' => 'Local'
             ]
         ],

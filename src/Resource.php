@@ -17,7 +17,6 @@ use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 
 abstract class Resource implements Arrayable, Jsonable
 {
-
     use Panics;
 
     private bool $removeNulls = true;
@@ -122,8 +121,8 @@ abstract class Resource implements Arrayable, Jsonable
         Collection $fields,
         array $filter = null,
         array $rename = null,
-        bool $requireFilled = false): Collection
-    {
+        bool $requireFilled = false
+    ): Collection {
         if ($requireFilled) {
             $fields = $fields->filter(function (Field $field) {
                 return $field->isFilled();
@@ -192,8 +191,8 @@ abstract class Resource implements Arrayable, Jsonable
         bool $format,
         array $filter = null,
         array $rename = null,
-        bool $requireFilled = false)
-    {
+        bool $requireFilled = false
+    ) {
         if (is_array($this->raw)) {
             return $this->raw;
         }
@@ -289,7 +288,6 @@ abstract class Resource implements Arrayable, Jsonable
      */
     public function prepare(ResourceContext $context)
     {
-
     }
 
     /**
@@ -297,7 +295,6 @@ abstract class Resource implements Arrayable, Jsonable
      */
     public function finish()
     {
-
     }
 
     public function getDependantResources(): array

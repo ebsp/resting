@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting;
-
 
 use Closure;
 use ReflectionClass;
@@ -13,7 +11,6 @@ use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 
 abstract class UnionResource extends Resource
 {
-
     private Closure $_unionResourcesFactory;
     private ?array $_unionResources = null;
     private string $_unionDiscriminatorKey;

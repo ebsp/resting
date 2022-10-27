@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary;
-
 
 use Seier\Resting\Fields\Time;
 use Seier\Resting\Fields\Field;
@@ -13,7 +11,6 @@ use Seier\Resting\Validation\Secondary\Comparable\MaxValidator;
 
 trait TimeValidation
 {
-
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
     public function min(Time|Field $min): static

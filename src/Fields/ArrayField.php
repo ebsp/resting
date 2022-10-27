@@ -4,7 +4,6 @@ namespace Seier\Resting\Fields;
 
 use ArrayAccess;
 use Seier\Resting\Parsing\Parser;
-use Illuminate\Support\Collection;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\TimeParser;
@@ -26,7 +25,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ArrayField extends Field
 {
-
     use ArrayValidation;
 
     private ArrayValidator $validator;
@@ -68,7 +66,13 @@ class ArrayField extends Field
         return parent::set($value);
     }
 
-    public function ofStrings(callable $config = null): static
+    /**
+     * Add insert validator of strings only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofStrings(?callable $config = null): static
     {
         $validator = new StringValidator();
         $parser = new StringParser();
@@ -80,7 +84,13 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofIntegers(callable $config = null): static
+    /**
+     * Add insert validator of integers only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofIntegers(?callable $config = null): static
     {
         $validator = new IntValidator();
         $parser = new IntParser();
@@ -92,7 +102,13 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofNumbers(callable $config = null): static
+    /**
+     * Add insert validator of numbers only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofNumbers(?callable $config = null): static
     {
         $validator = new NumberValidator();
         $parser = new NumberParser();
@@ -104,7 +120,13 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofBooleans(callable $config = null): static
+    /**
+     * Add insert validator of booleans only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofBooleans(?callable $config = null): static
     {
         $validator = new BoolValidator();
         $parser = new BoolParser();
@@ -116,7 +138,14 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofTimes(callable $config = null): static
+    /**
+     * Add insert validator of times only on set/insert \
+     * Seier\Resting\Fields\Time
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofTimes(?callable $config = null): static
     {
         $validator = new TimeValidator();
         $parser = new TimeParser();
@@ -128,7 +157,13 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofArrays(callable $config = null): static
+    /**
+     * Add insert validator of arrays only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     */
+    public function ofArrays(?callable $config = null): static
     {
         $validator = new ArrayValidator();
         $parser = new ArrayParser();
@@ -140,7 +175,14 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofCarbons(callable $config = null): static
+    /**
+     * Add insert validator of Carbon's only on set/insert
+     *
+     * @param callable|null $config
+     * @return static
+     * @link https://packagist.org/packages/nesbot/carbon
+     */
+    public function ofCarbons(?callable $config = null): static
     {
         $validator = new CarbonValidator();
         $parser = new CarbonParser();
@@ -152,6 +194,13 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
+    /**
+     * Structure custom Validator and Parser for array contents
+     *
+     * @param PrimaryValidator $validator
+     * @param Parser $parser
+     * @return static
+     */
     public function of(PrimaryValidator $validator, Parser $parser): static
     {
         $this->setElementValidator($validator);
@@ -160,6 +209,12 @@ class ArrayField extends Field
         return $this;
     }
 
+    /**
+     * Change ElementValidator on the fly
+     *
+     * @param PrimaryValidator $validator
+     * @return static
+     */
     public function setElementValidator(PrimaryValidator $validator): static
     {
         $this->validator->setElementValidator($validator);
@@ -167,6 +222,12 @@ class ArrayField extends Field
         return $this;
     }
 
+    /**
+     * Change the Parser on the fly
+     *
+     * @param Parser $parser
+     * @return static
+     */
     public function setElementParser(Parser $parser): static
     {
         $this->parser->setElementParser($parser);

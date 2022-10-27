@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\CarbonPeriod;
-
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -11,7 +9,6 @@ use Seier\Resting\Validation\Errors\ValidationError;
 
 class CarbonPeriodMaxDurationValidationError implements ValidationError
 {
-
     use HasPath;
 
     private CarbonInterval $max;

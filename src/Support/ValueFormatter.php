@@ -4,7 +4,6 @@ namespace Seier\Resting\Support;
 
 class ValueFormatter
 {
-
     public static function instance(): static
     {
         return new static();

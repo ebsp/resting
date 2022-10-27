@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Formatting;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Validation\Secondary\Panics;
 
 class CarbonFormatter implements Formatter
 {
-
     use Panics;
 
     private ?string $format = null;

@@ -14,14 +14,64 @@ use Seier\Resting\Validation\Secondary\SecondaryValidator;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Secondary\Anonymous\AnonymousValidation;
 
+/**
+ * @param mixed $value
+ * @param bool $isFilled
+ * @param bool $isEnabled
+ * @method mixed get()
+ * @method mixed formatted()
+ * @method static new()
+ * @method static set($value)
+ * @method static withDefault(mixed $value, Predicate $predicate)
+ * @method static nullable(bool|Predicate $state)
+ * @method static notNullable()
+ * @method static nullDefault(mixed $value, Predicate $predicate)
+ * @method static omittedDefault(mixed $value, Predicate $predicate)
+ * @method static required(bool|Predicate $state)
+ * @method static notRequired()
+ * @method static enable(bool $state)
+ * @method static disable()
+ * @method static setFilled(bool $state)
+ * @method static withValidator(SecondaryValidator $secondaryValidator)
+ * @method bool isNull()
+ * @method bool isNotNull()
+ * @method bool isEmpty()
+ * @method bool isNotEmpty()
+ * @method bool isFilled()
+ * @method bool isNotFilled()
+ * @method bool isEnabled()
+ * @method bool isRequired()
+ * @method RequiredValidator getRequiredValidator()
+ * @method NullableValidator getNullableValidator()
+ * @method ForbiddenValidator getForbiddenValidator()
+ * @method Seier\Resting\Validation\PrimaryValidator|null getValidator()
+ * @method Parser|null getParser()
+ */
 abstract class Field
 {
-
     use AnonymousValidation;
 
+    /**
+     * Value of this resource
+     *
+     * @var mixed Type should be defined in child
+     */
     protected mixed $value = null;
+
+    /**
+     * Wether or not this resource value has been set
+     *
+     * @var bool
+     */
     protected bool $isFilled = false;
+
+    /**
+     * Wether or not this resource can be part of serialization
+     *
+     * @var bool
+     */
     protected bool $isEnabled = true;
+
     protected RequiredValidator $requiredValidator;
     protected NullableValidator $nullableValidator;
     protected ForbiddenValidator $forbiddenValidator;
@@ -33,26 +83,59 @@ abstract class Field
         $this->forbiddenValidator = new ForbiddenValidator();
     }
 
+    /**
+     * Defines variable for OpenAPI
+     *
+     * @return array
+     */
+    abstract public function type(): array;
+
+    /**
+     * Statically instanciate current<child> class
+     *
+     * @param mixed ..$arguments
+     * @return static
+     */
     public static function create(...$arguments): static
     {
         return new static(...$arguments);
     }
 
+    /**
+     * Returns the current validator if set
+     *
+     * @return PrimaryValidator|null
+     */
     public function getValidator(): ?PrimaryValidator
     {
         return null;
     }
 
+    /**
+     * Returns the current parser if set
+     *
+     * @return Parser|null
+     */
     public function getParser(): ?Parser
     {
         return null;
     }
 
+    /**
+     * Returns formatted value based on Field model
+     *
+     * @return mixed Expected Type should be defined in child
+     */
     public function formatted(): mixed
     {
         return $this->value;
     }
 
+    /**
+     * Returns the raw value as stored
+     *
+     * @return mixed Expected Type should be defined in child
+     */
     public function get(): mixed
     {
         return $this->value;
@@ -65,6 +148,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Define if value of class should be nullable
+     *
+     * @param bool|Predicate $state
+     * @return static
+     */
     public function nullable(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
@@ -162,6 +251,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Updates the raw value with validation
+     *
+     * @param mixed $value
+     * @return static
+     */
     public function set($value): static
     {
         $this->validateValue($value);
@@ -171,30 +266,11 @@ abstract class Field
         return $this;
     }
 
-    private function validateValue(mixed $value)
-    {
-        if (is_null($value)) {
-
-            if (!$this->getNullableValidator()->hasPredicates() && !$this->getNullableValidator()->isNullable()) {
-                throw new ValidationException([
-                    new NullableValidationError,
-                ]);
-            }
-
-            $this->value = null;
-            $this->isFilled = true;
-            return;
-        }
-
-        $validator = $this->getValidator();
-        if ($validator) {
-            $errors = $validator->validate($value);
-            if (count($errors)) {
-                throw new ValidationException($errors);
-            }
-        }
-    }
-
+    /**
+     * Turn off value being nullable
+     *
+     * @return static
+     */
     public function notNullable(): static
     {
         $this->nullable(false);
@@ -202,6 +278,11 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Turn off that value is required
+     *
+     * @return static
+     */
     public function notRequired(): static
     {
         $this->required(false);
@@ -210,6 +291,12 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Define if value is required
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function required(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
@@ -264,37 +351,74 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Check if value is NULL
+     *
+     * @return boolean
+     */
     public function isNull(): bool
     {
         return $this->value === null;
     }
 
+    /**
+     * Check if value is NOT NULL
+     *
+     * @return boolean
+     */
     public function isNotNull(): bool
     {
         return !$this->isNull();
     }
 
+    /**
+     * Check if value is unset/empty
+     *
+     * @return boolean
+     */
     public function isEmpty(): bool
     {
         return empty($this->value);
     }
 
+
+    /**
+     * Check if value is set/populated
+     *
+     * @return boolean
+     */
     public function isNotEmpty(): bool
     {
 
         return !$this->isEmpty();
     }
 
+    /**
+     * Check if value is touched
+     *
+     * @return boolean
+     */
     public function isFilled(): bool
     {
         return (bool)$this->isFilled;
     }
 
+    /**
+     * Check if value is untouched
+     *
+     * @return boolean
+     */
     public function isNotFilled(): bool
     {
         return !$this->isFilled();
     }
 
+    /**
+     * Decide wether this value is allowed in serialization
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function enable(bool $state = true): static
     {
         $this->isEnabled = $state;
@@ -302,6 +426,11 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Disable using this value in serialization
+     *
+     * @return static
+     */
     public function disable(): static
     {
         $this->isEnabled = false;
@@ -309,25 +438,75 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Check if value is allowed to be included in serialization
+     *
+     * @return static
+     */
     public function isEnabled(): bool
     {
         return $this->isEnabled;
     }
 
+    /**
+     * Check if value is required
+     *
+     * @return boolean
+     */
     public function isRequired(): bool
     {
         return $this->getRequiredValidator()->isRequired();
     }
 
+    /**
+     * Define if the value has been filled
+     *
+     * @param boolean $state
+     * @return static
+     */
     public function setFilled(bool $state = true)
     {
         $this->isFilled = $state;
-    }
 
-    abstract public function type(): array;
+        return $this;
+    }
 
     public function nestedRefs(): array
     {
         return [];
+    }
+
+    /**
+     * Validate the value between the setter and internal storage
+     *
+     * @param mixed $value
+     * @return void
+     * @throws ValidationException
+     */
+    private function validateValue(mixed $value)
+    {
+        if (is_null($value)) {
+
+            if (
+                !$this->getNullableValidator()->hasPredicates()
+                && !$this->getNullableValidator()->isNullable()
+            ) {
+                throw new ValidationException([
+                    new NullableValidationError,
+                ]);
+            }
+
+            $this->value = null;
+            $this->isFilled = true;
+            return;
+        }
+
+        $validator = $this->getValidator();
+        if ($validator) {
+            $errors = $validator->validate($value);
+            if (count($errors)) {
+                throw new ValidationException($errors);
+            }
+        }
     }
 }

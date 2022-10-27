@@ -15,7 +15,6 @@ use Seier\Resting\Validation\Secondary\CarbonPeriod\CarbonPeriodValidation;
 
 class CarbonPeriodField extends Field
 {
-
     use CarbonPeriodValidation;
 
     private CarbonPeriodParser $parser;

@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 trait HasDefaultValues
 {
-
     private array $defaultValues = [];
 
     public function withDefault(DefaultValue $defaultValue): static

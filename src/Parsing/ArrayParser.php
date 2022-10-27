@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 class ArrayParser implements Parser
 {
-
     private string $separator = ',';
     private ?Parser $elementParser = null;
 

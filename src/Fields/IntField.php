@@ -10,7 +10,6 @@ use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class IntField extends Field
 {
-
     use NumericValidation;
     use EnumValidation;
 

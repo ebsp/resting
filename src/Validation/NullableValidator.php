@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Seier\Resting\Validation;
-
 
 use Seier\Resting\Validation\Predicates\HasPredicates;
 
 class NullableValidator
 {
-
     use HasPredicates;
     use HasDefaultValues;
 

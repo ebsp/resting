@@ -1,15 +1,12 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Errors;
-
 
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Support\FormatsValues;
 
 class NotIntValidationError implements ValidationError
 {
-
     use HasPath;
     use FormatsValues;
 

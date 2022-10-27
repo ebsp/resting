@@ -14,7 +14,6 @@ use Seier\Resting\Support\BaseTransformer;
 
 trait UsesResting
 {
-
     protected Request $request;
 
     public function callAction($method, $parameters)

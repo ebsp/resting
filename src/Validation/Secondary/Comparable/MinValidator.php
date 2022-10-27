@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Validation\Secondary\Comparable;
-
 
 use Closure;
 use Seier\Resting\Validation\Secondary\Panics;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
 class MinValidator implements SecondaryValidator
 {
-
     use Panics;
 
     private mixed $min;

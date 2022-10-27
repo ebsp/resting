@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Seier\Resting\Parsing;
-
 
 class BoolParser implements Parser
 {
-
     private array $mappings = [
         '1' => true,
         '0' => false,

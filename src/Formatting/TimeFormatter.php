@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Seier\Resting\Formatting;
-
 
 use Carbon\Carbon;
 use Seier\Resting\Fields\Time;
@@ -10,7 +8,6 @@ use Seier\Resting\Validation\Secondary\Panics;
 
 class TimeFormatter implements Formatter
 {
-
     use Panics;
 
     private ?string $format = null;
