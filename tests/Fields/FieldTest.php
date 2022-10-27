@@ -61,6 +61,13 @@ class FieldTest extends TestCase
         $this->assertFalse($this->instance->isRequired());
     }
 
+    public function testWithDefaultSetsValueIfNotYetSet()
+    {
+        $default = $this->faker->word;
+        $this->instance->withDefault($default);
+        $this->assertEquals($default, $this->instance->get());
+    }
+
     public function testWithDefaultValidatesValue()
     {
         $exception = $this->assertThrowsValidationException(function () {
