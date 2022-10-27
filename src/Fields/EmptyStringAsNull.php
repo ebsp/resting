@@ -7,8 +7,8 @@ trait EmptyStringAsNull
     protected bool $emptyStringAsNull = false;
 
     /**
-     * Instructs the field whether or not to convert any empty strings into null instead. When $state is true,
-     * the field is also marked nullable.
+     * Instructs the field whether or not to convert any empty strings into null instead.
+     * When $state is true, the field is also marked nullable.
      *
      * @param bool $state Whether or not the field should convert empty strings to null.
      * @return $this
