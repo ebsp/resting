@@ -5,11 +5,11 @@ namespace Seier\Resting\Tests\Fields;
 use Seier\Resting\Tests\TestCase;
 use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\PetResource;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 
@@ -139,5 +139,15 @@ class ResourceArrayFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testGetReturnsRawValue()
+    {
+        $this->instance->setRaw($raw = [
+            'a' => 1,
+            'b' => 2,
+        ]);
+
+        $this->assertEquals($raw, $this->instance->get());
     }
 }

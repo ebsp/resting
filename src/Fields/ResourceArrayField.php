@@ -30,6 +30,8 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
     protected RestingResource $resource;
     protected ReflectionClass $reflectionClass;
     protected ArrayValidator $validator;
+    protected mixed $rawValue = null;
+    protected bool $rawValueFilled = false;
 
     public function __construct(Closure $resourceFactory)
     {
@@ -55,6 +57,10 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
     public function get(): ?array
     {
+        if ($this->rawValueFilled) {
+            return $this->rawValue;
+        }
+
         if ($this->value === null) {
             return null;
         }
@@ -79,7 +85,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
             $this->value = [];
         }
 
-        array_push($this->value, $value);
+        $this->value[] = $value;
 
         return $this;
     }
@@ -101,6 +107,9 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
     public function clear()
     {
+        $this->rawValue = null;
+        $this->rawValueFilled = false;
+
         if ($this->value) {
             $this->value = [];
         }
@@ -153,6 +162,14 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
         $this->value = $resources;
         $this->isFilled = true;
+
+        return $this;
+    }
+
+    public function setRaw(array $raw)
+    {
+        $this->rawValue = $raw;
+        $this->rawValueFilled = true;
 
         return $this;
     }

@@ -810,4 +810,20 @@ class ResourceTest extends TestCase
         $this->assertEquals($expected, $resource->toArray());
         $this->assertEquals($expected, $resource->toResponseArray());
     }
+
+    public function testToArrayReturnsRawResourceArrayField()
+    {
+        $resource = new PersonResource();
+        $resource->setRaw($raw = $this->faker->rgbColorAsArray);
+
+        $this->assertEquals($raw, $resource->toArray());
+    }
+
+    public function testToResponseArrayReturnsRawResourceArrayField()
+    {
+        $resource = new PersonResource();
+        $resource->setRaw($raw = $this->faker->rgbColorAsArray);
+
+        $this->assertEquals($raw, $resource->toResponseArray());
+    }
 }
