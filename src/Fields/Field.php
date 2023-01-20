@@ -281,13 +281,12 @@ abstract class Field
 
     public function isNotEmpty(): bool
     {
-
         return !$this->isEmpty();
     }
 
     public function isFilled(): bool
     {
-        return (bool)$this->isFilled;
+        return $this->isFilled;
     }
 
     public function isNotFilled(): bool

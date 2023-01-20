@@ -208,6 +208,10 @@ abstract class Resource implements Arrayable, Jsonable
 
                 if ($field instanceof ResourceArrayField) {
 
+                    if ($field->hasRawValue()) {
+                        return $field->get();
+                    }
+
                     $value = $field->get();
                     if ($value !== null) {
                         return array_map(function (Resource $resource) use ($format) {

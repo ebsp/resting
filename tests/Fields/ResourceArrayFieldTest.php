@@ -150,4 +150,24 @@ class ResourceArrayFieldTest extends TestCase
 
         $this->assertEquals($raw, $this->instance->get());
     }
+
+    public function testSetManyRaw()
+    {
+        $names = [
+            $nameA = $this->faker->name,
+            $nameB = $this->faker->name,
+            $nameC = $this->faker->name,
+        ];
+
+        $this->instance->setManyRaw($names, function (PersonResource $resource, string $name) {
+            $resource->name->set($name);
+            return $resource;
+        });
+
+        $this->assertEquals([
+            ['name' => $nameA],
+            ['name' => $nameB],
+            ['name' => $nameC],
+        ], $this->instance->get());
+    }
 }

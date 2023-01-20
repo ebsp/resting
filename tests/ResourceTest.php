@@ -813,17 +813,38 @@ class ResourceTest extends TestCase
 
     public function testToArrayReturnsRawResourceArrayField()
     {
-        $resource = new PersonResource();
-        $resource->setRaw($raw = $this->faker->rgbColorAsArray);
+        $resource = new ClassResource();
+        $resource->students->setRaw($raw = $this->faker->rgbColorAsArray);
 
-        $this->assertEquals($raw, $resource->toArray());
+        $this->assertEquals(['students' => $raw, 'grade' => null], $resource->toArray());
     }
 
     public function testToResponseArrayReturnsRawResourceArrayField()
     {
-        $resource = new PersonResource();
-        $resource->setRaw($raw = $this->faker->rgbColorAsArray);
+        $resource = new ClassResource();
+        $resource->students->setRaw($raw = $this->faker->rgbColorAsArray);
 
-        $this->assertEquals($raw, $resource->toResponseArray());
+        $this->assertEquals(['students' => $raw], $resource->toResponseArray());
+    }
+
+    public function testToResponseArrayReturnsRawResourceWhenUsingSetManyRaw()
+    {
+        $resource = new ClassResource();
+        $names = [
+            $nameA = $this->faker->name,
+            $nameB = $this->faker->name,
+            $nameC = $this->faker->name,
+        ];
+
+        $resource->students->setManyRaw($names, function (PersonResource $studentResource, string $name) {
+            $studentResource->name->set($name);
+            return $studentResource;
+        });
+
+        $this->assertEquals(['students' => [
+            ['name' => $nameA],
+            ['name' => $nameB],
+            ['name' => $nameC],
+        ]], $resource->toResponseArray());
     }
 }

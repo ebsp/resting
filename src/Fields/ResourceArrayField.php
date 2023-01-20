@@ -166,12 +166,24 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         return $this;
     }
 
-    public function setRaw(array $raw)
+    public function hasRawValue(): bool
+    {
+        return $this->rawValueFilled;
+    }
+
+    public function setRaw(array $raw): static
     {
         $this->rawValue = $raw;
         $this->rawValueFilled = true;
 
         return $this;
+    }
+
+    public function setManyRaw(iterable $items, Closure $mapper): static
+    {
+        $resource = ($this->resourceFactory)();
+
+        return $this->setRaw($resource->mapMany($items, $mapper));
     }
 
     public function resource(): RestingResource
