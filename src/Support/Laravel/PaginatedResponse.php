@@ -8,10 +8,10 @@ use Illuminate\Contracts\Support\Responsable;
 class PaginatedResponse implements Responsable
 {
 
-    private array $data;
-    private int $page;
-    private int $limit;
-    private int $total;
+    protected array $data;
+    protected int $page;
+    protected int $limit;
+    protected int $total;
 
     public function __construct(array $data, int $page, int $limit, int $total)
     {
