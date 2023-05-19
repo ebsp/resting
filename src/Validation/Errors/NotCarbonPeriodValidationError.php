@@ -7,7 +7,7 @@ namespace Seier\Resting\Validation\Errors;
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Support\FormatsValues;
 
-class NotCarbonPeriodValidationError
+class NotCarbonPeriodValidationError implements ValidationError
 {
 
     use HasPath;
