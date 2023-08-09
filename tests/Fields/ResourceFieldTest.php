@@ -46,6 +46,21 @@ class ResourceFieldTest extends TestCase
         });
     }
 
+    public function testSetWhenGivenArrayWithNullValuesCanOverride()
+    {
+        $this->instance = new ResourceField(fn() => PersonResource::nullableName());
+
+        $this->instance->set(['name' => 'A', 'age' => 1]);
+        $this->assertType($this->instance->get(), function (PersonResource $resource) {
+            $this->assertEquals('A', $resource->name->get());
+        });
+
+        $this->instance->set(['name' => null, 'age' => 1]);
+        $this->assertType($this->instance->get(), function (PersonResource $resource) {
+            $this->assertNull($resource->name->get());
+        });
+    }
+
     public function testSetValidationWhenGivenArray()
     {
         $assertion = function (ValidationException $exception) {

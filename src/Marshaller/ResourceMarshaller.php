@@ -176,7 +176,7 @@ class ResourceMarshaller
                 }
             }
 
-            // the default value has already been validated when is was set
+            // the default value has already been validated when it was set
             // we can therefore just set the value and proceed with the other fields
             if (!$isProvided) {
                 $field->set($fieldValue);
@@ -198,6 +198,7 @@ class ResourceMarshaller
                     continue;
                 }
 
+                $field->set(null);
                 continue;
             }
 

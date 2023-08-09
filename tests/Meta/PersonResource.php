@@ -20,6 +20,15 @@ class PersonResource extends Resource
         $this->age = new IntField;
     }
 
+    public static function nullableName(): static
+    {
+        $resource = new static();
+        $resource->name->nullable();
+        $resource->age->notRequired();
+
+        return $resource;
+    }
+
     public function from(Person $person): static
     {
         $this->name->set($person->name);
