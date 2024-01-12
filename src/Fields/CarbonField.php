@@ -65,7 +65,7 @@ class CarbonField extends Field
 
     public function get(): ?Carbon
     {
-        return $this->value;
+        return $this->value?->copy();
     }
 
     public function withFormat(string $format): static

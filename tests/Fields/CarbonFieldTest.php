@@ -32,17 +32,23 @@ class CarbonFieldTest extends TestCase
         $this->assertNull($this->instance->get());
     }
 
-    public function getGetCanReturnCarbonInstance()
+    public function testGetCanReturnCarbonInstance()
     {
         $this->instance->set($now = now());
-        $this->assertSame($now, $this->instance->get());
+        $this->assertSame($now->micro, $this->instance->get()->micro);
+    }
+
+    public function testGetReturnsNewInstanceEveryTime()
+    {
+        $this->instance->set($now = now());
+        $this->assertNotSame($now, $this->instance->get());
     }
 
     public function testSetCarbon()
     {
         $now = now();
         $this->instance->set($now);
-        $this->assertSame($now, $this->instance->get());
+        $this->assertEquals($now->micro, $this->instance->get()->micro);
     }
 
     public function testSetNullWhenNullable()
