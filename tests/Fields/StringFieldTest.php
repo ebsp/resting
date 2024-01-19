@@ -30,6 +30,34 @@ class StringFieldTest extends TestCase
         $this->assertNull($this->instance->get());
     }
 
+    public function testGetNotEmptyReturnsNullWhenEmpty()
+    {
+        $this->instance->set('');
+
+        $this->assertNull($this->instance->getNotEmpty());
+    }
+
+    public function testGetNotEmptyReturnsValueWhenNotEmpty()
+    {
+        $this->instance->set(' ');
+
+        $this->assertEquals(' ', $this->instance->getNotEmpty());
+    }
+
+    public function testGetNotEmptyReturnsValueWhenTrimming()
+    {
+        $this->instance->set(' abc ');
+
+        $this->assertEquals('abc', $this->instance->getNotEmpty(trim: true));
+    }
+
+    public function testGetNotEmptyReturnsNullWhenTrimming()
+    {
+        $this->instance->set("\t\r ");
+
+        $this->assertNull($this->instance->getNotEmpty(trim: true));
+    }
+
     public function testIsNullReturnsTrue()
     {
         $this->assertTrue($this->instance->isNull());

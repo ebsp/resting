@@ -58,11 +58,16 @@ class StringField extends Field
         return $this->value;
     }
 
-    public function getNotEmpty(): ?string
+    public function getNotEmpty(bool $trim = false): ?string
     {
-        return empty($this->value)
+        $value = $this->value;
+        if ($trim && is_string($value)) {
+            $value = trim($value);
+        }
+
+        return empty($value)
             ? null
-            : $this->value;
+            : $value;
     }
 
     public function emptyStringAsNull(bool $state = true): static
