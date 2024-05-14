@@ -6,7 +6,7 @@ namespace Seier\Resting\Fields;
 
 use Seier\Resting\Parsing\NumberParser;
 use Seier\Resting\Validation\NumberValidator;
-use Seier\Resting\Validation\Secondary\Enum\InValidation;
+use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Secondary\Numeric\NumericValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 

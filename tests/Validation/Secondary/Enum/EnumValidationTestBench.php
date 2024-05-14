@@ -5,7 +5,7 @@ namespace Seier\Resting\Tests\Validation\Secondary\Enum;
 
 
 use Seier\Resting\Validation\PrimaryValidator;
-use Seier\Resting\Validation\Secondary\Enum\InValidation;
+use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class EnumValidationTestBench

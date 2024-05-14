@@ -7,7 +7,7 @@ namespace Seier\Resting\Tests\Validation\Secondary\Enum;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
-use Seier\Resting\Validation\Secondary\Enum\InValidationError;
+use Seier\Resting\Validation\Secondary\In\InValidationError;
 
 class EnumValidationTest extends TestCase
 {

@@ -4,7 +4,7 @@ namespace Seier\Resting\Fields;
 
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Validation\BoolValidator;
-use Seier\Resting\Validation\Secondary\Enum\InValidation;
+use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class BoolField extends Field

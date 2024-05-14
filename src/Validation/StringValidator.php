@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation;
 
 
-use Seier\Resting\Validation\Secondary\Enum\InValidation;
+use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Errors\NotStringValidationError;
 use Seier\Resting\Validation\Secondary\String\StringValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;

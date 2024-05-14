@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Seier\Resting\Validation\Secondary\Enum;
+namespace Seier\Resting\Validation\Secondary\In;
 
 
 use Seier\Resting\Support\HasPath;
