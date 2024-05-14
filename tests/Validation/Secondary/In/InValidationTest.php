@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Seier\Resting\Tests\Validation\Secondary\Enum;
+namespace Seier\Resting\Tests\Validation\Secondary\In;
 
 
 use Seier\Resting\Tests\TestCase;
@@ -9,20 +9,20 @@ use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\Secondary\In\InValidationError;
 
-class EnumValidationTest extends TestCase
+class InValidationTest extends TestCase
 {
 
     use AssertsErrors;
 
     private MockPrimaryValidator $validator;
-    private EnumValidationTestBench $instance;
+    private InValidationTestBench $instance;
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->validator = new MockPrimaryValidator();
-        $this->instance = new EnumValidationTestBench($this->validator);
+        $this->instance = new InValidationTestBench($this->validator);
     }
 
     public function testInWhenPasses()

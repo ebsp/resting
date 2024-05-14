@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Seier\Resting\Tests\Validation\Secondary\Enum;
+namespace Seier\Resting\Tests\Validation\Secondary\In;
 
 
 use Seier\Resting\Tests\TestCase;
@@ -9,7 +9,7 @@ use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\Secondary\In\InValidator;
 use Seier\Resting\Validation\Secondary\In\InValidationError;
 
-class EnumValidatorTest extends TestCase
+class InValidatorTest extends TestCase
 {
 
     use AssertsErrors;
