@@ -6,7 +6,7 @@ namespace Seier\Resting\Validation\Secondary\Enum;
 
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
-trait EnumValidation
+trait InValidation
 {
 
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
@@ -14,7 +14,7 @@ trait EnumValidation
     public function in(array $options): static
     {
         $this->getSupportsSecondaryValidation()->withValidator(
-            new EnumValidator($options)
+            new InValidator($options)
         );
 
         return $this;

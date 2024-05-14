@@ -8,7 +8,7 @@ use Seier\Resting\Support\HasPath;
 use Seier\Resting\Support\FormatsValues;
 use Seier\Resting\Validation\Errors\ValidationError;
 
-class EnumValidationError implements ValidationError
+class InValidationError implements ValidationError
 {
 
     use HasPath;

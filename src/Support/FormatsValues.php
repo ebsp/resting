@@ -19,4 +19,9 @@ trait FormatsValues
             $showType
         );
     }
+
+    protected function formatType($value): string
+    {
+        return ValueFormatter::instance()->formatType($value);
+    }
 }

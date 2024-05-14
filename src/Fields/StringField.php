@@ -7,7 +7,7 @@ use Seier\Resting\Parsing\StringParser;
 use Seier\Resting\Validation\StringValidator;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Exceptions\ValidationException;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\Enum\InValidation;
 use Seier\Resting\Validation\Secondary\String\StringValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
@@ -15,7 +15,7 @@ class StringField extends Field
 {
 
     use StringValidation;
-    use EnumValidation;
+    use InValidation;
 
     private StringValidator $validator;
     private StringParser $parser;
