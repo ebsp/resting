@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Seier\Resting\Tests\Validation\Secondary\Enum;
+namespace Seier\Resting\Tests\Validation\Secondary\In;
 
 
 use Seier\Resting\Validation\PrimaryValidator;
 use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
-class EnumValidationTestBench
+class InValidationTestBench
 {
 
     use InValidation;
