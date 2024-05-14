@@ -8,8 +8,4 @@ enum SuiteEnum: string
     case Diamonds = 'diamonds';
     case Clubs = 'clubs';
     case Spades = 'spades';
-
-    public function proof(){
-        return 1;
-    }
 }
