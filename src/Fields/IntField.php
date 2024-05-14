@@ -4,7 +4,7 @@ namespace Seier\Resting\Fields;
 
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Validation\IntValidator;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\Enum\InValidation;
 use Seier\Resting\Validation\Secondary\Numeric\NumericValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
@@ -12,7 +12,7 @@ class IntField extends Field
 {
 
     use NumericValidation;
-    use EnumValidation;
+    use InValidation;
 
     private IntValidator $validator;
     private IntParser $parser;

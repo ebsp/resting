@@ -6,8 +6,8 @@ namespace Seier\Resting\Tests\Validation\Secondary\Enum;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\AssertsErrors;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidator;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidationError;
+use Seier\Resting\Validation\Secondary\Enum\InValidator;
+use Seier\Resting\Validation\Secondary\Enum\InValidationError;
 
 class EnumValidatorTest extends TestCase
 {
@@ -16,7 +16,7 @@ class EnumValidatorTest extends TestCase
 
     public function testValidateUsingIntegers()
     {
-        $instance = new EnumValidator([1, 3]);
+        $instance = new InValidator([1, 3]);
 
         $this->assertEmpty($instance->validate(1));
         $this->assertNotEmpty($instance->validate(2));
@@ -25,7 +25,7 @@ class EnumValidatorTest extends TestCase
 
     public function testValidateUsingStrings()
     {
-        $instance = new EnumValidator(['a', 'c']);
+        $instance = new InValidator(['a', 'c']);
 
         $this->assertEmpty($instance->validate('a'));
         $this->assertNotEmpty($instance->validate('b'));
@@ -34,7 +34,7 @@ class EnumValidatorTest extends TestCase
 
     public function testValidateUsingFloats()
     {
-        $instance = new EnumValidator([1.0, 1.2]);
+        $instance = new InValidator([1.0, 1.2]);
 
         $this->assertEmpty($instance->validate(1.0));
         $this->assertNotEmpty($instance->validate(1.1));
@@ -43,7 +43,7 @@ class EnumValidatorTest extends TestCase
 
     public function testValidateUsingBooleans()
     {
-        $instance = new EnumValidator([true]);
+        $instance = new InValidator([true]);
 
         $this->assertEmpty($instance->validate(true));
         $this->assertNotEmpty($instance->validate(false));
@@ -51,17 +51,17 @@ class EnumValidatorTest extends TestCase
 
     public function testUsesStrictComparison()
     {
-        $instance = new EnumValidator([1]);
+        $instance = new InValidator([1]);
 
         $this->assertNotEmpty($errors = $instance->validate('1'));
-        $this->assertHasError($errors, EnumValidationError::class);
+        $this->assertHasError($errors, InValidationError::class);
     }
 
     public function testWhenThereAreNoOptions()
     {
-        $instance = new EnumValidator([]);
+        $instance = new InValidator([]);
 
         $this->assertNotEmpty($errors = $instance->validate('1'));
-        $this->assertHasError($errors, EnumValidationError::class);
+        $this->assertHasError($errors, InValidationError::class);
     }
 }

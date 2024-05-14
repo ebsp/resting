@@ -7,7 +7,7 @@ namespace Seier\Resting\Validation\Secondary\Enum;
 use Seier\Resting\Support\FormatsValues;
 use Seier\Resting\Validation\Secondary\SecondaryValidator;
 
-class EnumValidator implements SecondaryValidator
+class InValidator implements SecondaryValidator
 {
 
     use FormatsValues;
@@ -30,7 +30,7 @@ class EnumValidator implements SecondaryValidator
     {
         return in_array($value, $this->options, strict: true)
             ? []
-            : [new EnumValidationError($this->options, $value)];
+            : [new InValidationError($this->options, $value)];
     }
 
     public function isUnique(): bool

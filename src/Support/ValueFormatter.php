@@ -10,6 +10,15 @@ class ValueFormatter
         return new static();
     }
 
+    public function formatType($value): string
+    {
+        if (is_object($value)) {
+            return get_class($value);
+        }
+
+        return $this->format($value, showType: true);
+    }
+
     public function format($value, bool $showType = true): string
     {
         if (is_array($value) && !$this->isAssociativeArray($value)) {

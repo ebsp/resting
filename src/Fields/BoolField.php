@@ -4,13 +4,13 @@ namespace Seier\Resting\Fields;
 
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Validation\BoolValidator;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\Enum\InValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class BoolField extends Field
 {
 
-    use EnumValidation;
+    use InValidation;
 
     private BoolValidator $validator;
     private BoolParser $parser;

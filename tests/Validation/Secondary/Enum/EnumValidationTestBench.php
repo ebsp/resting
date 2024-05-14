@@ -5,13 +5,13 @@ namespace Seier\Resting\Tests\Validation\Secondary\Enum;
 
 
 use Seier\Resting\Validation\PrimaryValidator;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidation;
+use Seier\Resting\Validation\Secondary\Enum\InValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class EnumValidationTestBench
 {
 
-    use EnumValidation;
+    use InValidation;
 
     private PrimaryValidator $primaryValidator;
 

@@ -7,7 +7,7 @@ namespace Seier\Resting\Tests\Validation\Secondary\Enum;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
-use Seier\Resting\Validation\Secondary\Enum\EnumValidationError;
+use Seier\Resting\Validation\Secondary\Enum\InValidationError;
 
 class EnumValidationTest extends TestCase
 {
@@ -37,6 +37,6 @@ class EnumValidationTest extends TestCase
         $this->instance->in([1, 2, 3]);
 
         $this->assertNotEmpty($errors = $this->validator->validate(4));
-        $this->assertHasError($errors, EnumValidationError::class);
+        $this->assertHasError($errors, InValidationError::class);
     }
 }
