@@ -10,7 +10,12 @@ use Seier\Resting\Fields\BoolField;
 use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Fields\StringField;
 use Seier\Resting\Tests\Meta\SuiteEnum;
+use Seier\Resting\Validation\Predicates\Predicate;
+use Seier\Resting\Validation\Predicates\ResourceContext;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
+use function Seier\Resting\Validation\Predicates\any;
+use function Seier\Resting\Validation\Predicates\all;
+use function Seier\Resting\Validation\Predicates\none;
 use function Seier\Resting\Validation\Predicates\whenIn;
 use function Seier\Resting\Validation\Predicates\whenNull;
 use function Seier\Resting\Validation\Predicates\whenNotIn;
@@ -459,5 +464,61 @@ class FactoriesTest extends TestCase
         $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Diamonds])));
         $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Hearts])));
         $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Spades])));
+    }
+
+    public function testAny()
+    {
+        $context = $this->context([]);
+
+        $this->assertFalse(any([])->passes($context));
+        $this->assertFalse(any([$this->boolPredicate(false)])->passes($context));
+        $this->assertTrue(any([$this->boolPredicate(true)])->passes($context));
+        $this->assertTrue(any([$this->boolPredicate(false), $this->boolPredicate(true), $this->boolPredicate(false)])->passes($context));
+    }
+
+    public function testAll()
+    {
+        $context = $this->context([]);
+
+        $this->assertTrue(all([])->passes($context));
+        $this->assertTrue(all([$this->boolPredicate(true)])->passes($context));
+        $this->assertTrue(all([$this->boolPredicate(true), $this->boolPredicate(true)])->passes($context));
+        $this->assertFalse(all([$this->boolPredicate(false)])->passes($context));
+        $this->assertFalse(all([$this->boolPredicate(false), $this->boolPredicate(true)])->passes($context));
+    }
+
+    public function testNone()
+    {
+        $context = $this->context([]);
+
+        $this->assertTrue(none([])->passes($context));
+        $this->assertTrue(none([$this->boolPredicate(false)])->passes($context));
+        $this->assertTrue(none([$this->boolPredicate(false), $this->boolPredicate(false)])->passes($context));
+
+        $this->assertFalse(none([$this->boolPredicate(true)])->passes($context));
+        $this->assertFalse(none([$this->boolPredicate(false), $this->boolPredicate(true)])->passes($context));
+        $this->assertFalse(none([$this->boolPredicate(true), $this->boolPredicate(false)])->passes($context));
+    }
+
+    private function boolPredicate(bool $passes): Predicate
+    {
+        return new class(value: $passes) implements Predicate {
+
+            public function __construct(private bool $value)
+            {
+                //
+            }
+
+            public function description(ResourceContext $context): string
+            {
+                return '';
+            }
+
+            public function passes(ResourceContext $context): bool
+            {
+                return $this->value;
+            }
+
+        };
     }
 }

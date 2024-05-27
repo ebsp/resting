@@ -163,3 +163,72 @@ function whenPasses(Field $field, Closure $closure): Predicate
         },
     );
 }
+
+function any(array $predicates): Predicate
+{
+    return AnonymousPredicate::of(
+        function (ResourceContext $context) use ($predicates) {
+            $message = "True when any of the following are true:";
+            foreach ($predicates as $predicate) {
+                $message .= " - " . $predicate->description($context);
+            }
+
+            return $message;
+        },
+        function (ResourceContext $context) use ($predicates) {
+            foreach ($predicates as $predicate) {
+                if ($predicate->passes($context)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    );
+}
+
+function all(array $predicates): Predicate
+{
+    return AnonymousPredicate::of(
+        function (ResourceContext $context) use ($predicates) {
+            $message = "True when all of the following are true:";
+            foreach ($predicates as $predicate) {
+                $message .= " - " . $predicate->description($context);
+            }
+
+            return $message;
+        },
+        function (ResourceContext $context) use ($predicates) {
+            foreach ($predicates as $predicate) {
+                if (!$predicate->passes($context)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    );
+}
+
+function none(array $predicates): Predicate
+{
+    return AnonymousPredicate::of(
+        function (ResourceContext $context) use ($predicates) {
+            $message = "True when all of the following are true:";
+            foreach ($predicates as $predicate) {
+                $message .= " - " . $predicate->description($context);
+            }
+
+            return $message;
+        },
+        function (ResourceContext $context) use ($predicates) {
+            foreach ($predicates as $predicate) {
+                if ($predicate->passes($context)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    );
+}
