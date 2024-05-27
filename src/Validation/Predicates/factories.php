@@ -151,7 +151,7 @@ function whenNotIn(Field $field, array $oneOf): Predicate
         });
 }
 
-function whenPasses(Field $field, Closure $closure): Predicate
+function when(Field $field, Closure $closure): Predicate
 {
     return AnonymousPredicate::of(
         function (ResourceContext $context) use ($field) {
@@ -159,7 +159,7 @@ function whenPasses(Field $field, Closure $closure): Predicate
             return "True when value provided to $fieldName passes a custom closure validator.";
         },
         function (ResourceContext $context) use ($closure, $field) {
-            return $closure($context->getValue($field), $context);
+            return (bool)$closure($context->getValue($field), $context);
         },
     );
 }

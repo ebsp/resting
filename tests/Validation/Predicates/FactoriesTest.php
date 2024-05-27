@@ -20,7 +20,7 @@ use function Seier\Resting\Validation\Predicates\whenIn;
 use function Seier\Resting\Validation\Predicates\whenNull;
 use function Seier\Resting\Validation\Predicates\whenNotIn;
 use function Seier\Resting\Validation\Predicates\whenEquals;
-use function Seier\Resting\Validation\Predicates\whenPasses;
+use function Seier\Resting\Validation\Predicates\when;
 use function Seier\Resting\Validation\Predicates\whenNotNull;
 use function Seier\Resting\Validation\Predicates\whenProvided;
 use function Seier\Resting\Validation\Predicates\whenNotEquals;
@@ -432,7 +432,7 @@ class FactoriesTest extends TestCase
 
     public function testWhenPassesForInt()
     {
-        $instance = whenPasses($this->int, function (int $value) {
+        $instance = when($this->int, function (int $value) {
             return $value === 5;
         });
 
@@ -444,7 +444,7 @@ class FactoriesTest extends TestCase
 
     public function testWhenPassesForParsableEnum()
     {
-        $instance = whenPasses($this->enum, function (SuiteEnum $value) {
+        $instance = when($this->enum, function (SuiteEnum $value) {
             return $value === SuiteEnum::Clubs;
         });
 
@@ -456,7 +456,7 @@ class FactoriesTest extends TestCase
 
     public function testWhenPassesForActualEnumValue()
     {
-        $instance = whenPasses($this->enum, function (SuiteEnum $value) {
+        $instance = when($this->enum, function (SuiteEnum $value) {
             return $value === SuiteEnum::Clubs;
         });
 
