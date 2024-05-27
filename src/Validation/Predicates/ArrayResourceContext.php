@@ -59,7 +59,6 @@ class ArrayResourceContext implements ResourceContext
         $parser = $field->getParser();
 
         if (is_string($value) && $parser) {
-
             return $parser->parse(new DefaultParseContext($value, $this->isStringBased));
         }
 

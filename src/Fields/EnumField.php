@@ -6,7 +6,7 @@ use Throwable;
 use BackedEnum;
 use ReflectionEnum;
 use Seier\Resting\Parsing\Parser;
-use Seier\Resting\Parsing\StringParser;
+use Seier\Resting\Parsing\EnumParser;
 use Seier\Resting\Validation\EnumValidator;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Exceptions\ValidationException;
@@ -27,7 +27,7 @@ class EnumField extends Field
     use StringValidation;
 
     private EnumValidator $validator;
-    private StringParser $parser;
+    private EnumParser $parser;
 
     private ReflectionEnum $reflectionEnum;
     private string $enum;
@@ -44,7 +44,7 @@ class EnumField extends Field
         $this->reflectionEnum = new ReflectionEnum($enum);
 
         $this->validator = new EnumValidator($this->reflectionEnum);
-        $this->parser = new StringParser();
+        $this->parser = new EnumParser($this->reflectionEnum);
 
         $reflectionEnum = new ReflectionEnum($enum);
 

@@ -7,12 +7,15 @@ namespace Seier\Resting\Tests\Validation\Predicates;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\IntField;
 use Seier\Resting\Fields\BoolField;
+use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Fields\StringField;
+use Seier\Resting\Tests\Meta\SuiteEnum;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 use function Seier\Resting\Validation\Predicates\whenIn;
 use function Seier\Resting\Validation\Predicates\whenNull;
 use function Seier\Resting\Validation\Predicates\whenNotIn;
 use function Seier\Resting\Validation\Predicates\whenEquals;
+use function Seier\Resting\Validation\Predicates\whenPasses;
 use function Seier\Resting\Validation\Predicates\whenNotNull;
 use function Seier\Resting\Validation\Predicates\whenProvided;
 use function Seier\Resting\Validation\Predicates\whenNotEquals;
@@ -24,6 +27,7 @@ class FactoriesTest extends TestCase
     private StringField $string;
     private IntField $int;
     private BoolField $bool;
+    private EnumField $enum;
 
     public function setUp(): void
     {
@@ -32,6 +36,7 @@ class FactoriesTest extends TestCase
         $this->string = new StringField();
         $this->int = new IntField();
         $this->bool = new BoolField();
+        $this->enum = new EnumField(SuiteEnum::class);
     }
 
     private function fields(): array
@@ -40,6 +45,7 @@ class FactoriesTest extends TestCase
             'string' => $this->string,
             'int' => $this->int,
             'bool' => $this->bool,
+            'enum' => $this->enum,
         ];
     }
 
@@ -414,8 +420,44 @@ class FactoriesTest extends TestCase
     public function testWhenNotInReturnsFalseWhenCannotBeParsed()
     {
         $context = $this->context(['int' => 'not parsable']);
-        $instance = whenNotIn($this->int, ['not parable']);
+        $instance = whenNotIn($this->int, ['not parsable']);
 
         $this->assertTrue($instance->passes($context));
+    }
+
+    public function testWhenPassesForInt()
+    {
+        $instance = whenPasses($this->int, function (int $value) {
+            return $value === 5;
+        });
+
+        $this->assertTrue($instance->passes($this->context(['int' => '5'])));
+        $this->assertTrue($instance->passes($this->context(['int' => 5])));
+        $this->assertFalse($instance->passes($this->context(['int' => 1])));
+        $this->assertFalse($instance->passes($this->context(['int' => 'not parsable'])));
+    }
+
+    public function testWhenPassesForParsableEnum()
+    {
+        $instance = whenPasses($this->enum, function (SuiteEnum $value) {
+            return $value === SuiteEnum::Clubs;
+        });
+
+        $this->assertTrue($instance->passes($this->context(['enum' => SuiteEnum::Clubs->value])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Diamonds->value])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Hearts->value])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Spades->value])));
+    }
+
+    public function testWhenPassesForActualEnumValue()
+    {
+        $instance = whenPasses($this->enum, function (SuiteEnum $value) {
+            return $value === SuiteEnum::Clubs;
+        });
+
+        $this->assertTrue($instance->passes($this->context(['enum' => SuiteEnum::Clubs])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Diamonds])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Hearts])));
+        $this->assertFalse($instance->passes($this->context(['enum' => SuiteEnum::Spades])));
     }
 }

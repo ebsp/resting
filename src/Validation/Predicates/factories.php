@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Validation\Predicates;
 
+use Closure;
 use Seier\Resting\Fields\Field;
 use Seier\Resting\Support\ValueFormatter;
 
@@ -148,4 +149,17 @@ function whenNotIn(Field $field, array $oneOf): Predicate
 
             return !in_array($context->getValue($field), $oneOf, strict: true);
         });
+}
+
+function whenPasses(Field $field, Closure $closure): Predicate
+{
+    return AnonymousPredicate::of(
+        function (ResourceContext $context) use ($field) {
+            $fieldName = $context->getName($field);
+            return "True when value provided to $fieldName passes a custom closure validator.";
+        },
+        function (ResourceContext $context) use ($closure, $field) {
+            return $closure($context->getValue($field), $context);
+        },
+    );
 }
