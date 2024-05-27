@@ -20,7 +20,8 @@ class EnumParser implements Parser
         $raw = $context->getValue();
 
         try {
-            return $this->reflectionEnum->getName()::from($raw);
+            $this->reflectionEnum->getName()::from($raw);
+            return [];
         } catch (Exception) {
             return [
                 new EnumParseError($raw, $this->reflectionEnum),
