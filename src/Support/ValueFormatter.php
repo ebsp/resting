@@ -21,6 +21,11 @@ class ValueFormatter
 
     public function format($value, bool $showType = true): string
     {
+        if ($value instanceof \BackedEnum) {
+            $reflectionClass = new \ReflectionClass($value);
+            return $reflectionClass->getShortName() . '::' . $value->name;
+        }
+
         if (is_array($value) && !$this->isAssociativeArray($value)) {
             $content = array_map(fn($element) => $this->format($element), $value);
             $joined = join(', ', $content);
