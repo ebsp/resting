@@ -4,10 +4,14 @@ namespace Seier\Resting\Validation;
 
 use ReflectionEnum;
 use Seier\Resting\Support\FormatsValues;
+use Seier\Resting\Validation\Secondary\In\InValidation;
+use Seier\Resting\Validation\Errors\EnumValidationError;
+use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class EnumValidator extends BasePrimaryValidator implements PrimaryValidator
 {
     use FormatsValues;
+    use InValidation;
 
     private ReflectionEnum $reflectionEnum;
 
@@ -30,8 +34,17 @@ class EnumValidator extends BasePrimaryValidator implements PrimaryValidator
 
     public function validate(mixed $value): array
     {
-        // Done in EnumField
+        foreach ($this->reflectionEnum->getCases() as $case) {
+            if ($value === $case->getValue()) {
+                return $this->runValidators($value);
+            }
+        }
 
-        return [];
+        return [new EnumValidationError($this->reflectionEnum, $value)];
+    }
+
+    protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
+    {
+        return $this;
     }
 }

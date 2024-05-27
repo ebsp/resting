@@ -10,6 +10,7 @@ use Seier\Resting\Parsing\EnumParser;
 use Seier\Resting\Validation\EnumValidator;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Errors\EnumValidationError;
 use Seier\Resting\Validation\Secondary\String\StringValidation;
@@ -25,6 +26,7 @@ class EnumField extends Field
 {
 
     use StringValidation;
+    use InValidation;
 
     private EnumValidator $validator;
     private EnumParser $parser;
