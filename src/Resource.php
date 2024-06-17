@@ -57,9 +57,14 @@ abstract class Resource implements Arrayable, Jsonable
 
     public function mapMany(iterable $values, callable $mapper): array
     {
+        $reflectionFunction = new \ReflectionFunction($mapper);
+        $oneArgument = $reflectionFunction->getNumberOfParameters() === 1;
+
         $mapped = [];
         foreach ($values as $value) {
-            $mapped[] = $mapper($this, $value)->toResponseArray();
+            $mapped[] = $oneArgument
+                ? $mapper($value)->toResponseArray()
+                : $mapper($this, $value)->toResponseArray();
         }
 
         return $mapped;

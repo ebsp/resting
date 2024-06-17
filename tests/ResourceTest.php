@@ -244,6 +244,27 @@ class ResourceTest extends TestCase
         ], $result);
     }
 
+    public function testMapManySupportsMapperWithSingleParameter()
+    {
+        $persons = [
+            Person::from('A', 1),
+            Person::from('C', 2),
+            Person::from('B', 5),
+        ];
+
+        $resource = new PersonResource();
+        $result = $resource->mapMany($persons, function (Person $person) use ($resource) {
+            return $resource->from($person);
+        });
+
+        $this->assertIsArray($result);
+        $this->assertEquals([
+            ['name' => 'A', 'age' => 1],
+            ['name' => 'C', 'age' => 2],
+            ['name' => 'B', 'age' => 5],
+        ], $result);
+    }
+
     public function testToArray()
     {
         $resource = new PersonResource();
