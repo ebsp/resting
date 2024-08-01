@@ -6,6 +6,7 @@ namespace Seier\Resting\Tests\Marshaller;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\DynamicResource;
+use Seier\Resting\Fields\RawField;
 use Seier\Resting\Fields\TimeField;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Fields\StringField;
@@ -1033,6 +1034,52 @@ class ResourceMarshallerTest extends TestCase
 
             $this->assertTrue($resource->string->isFilled());
             $this->assertNull($resource->string->get());
+
+        });
+    }
+
+    public function testRawFieldWhenProvidedArray()
+    {
+        $factory = $this->resourceFactory(function () {
+            $dynamic = new DynamicResource();
+            $dynamic->withField('raw_array', (new RawField));
+            $dynamic->withField('raw_int', (new RawField));
+            $dynamic->withField('raw_string', (new RawField));
+            $dynamic->withField('raw_float', (new RawField));
+            $dynamic->withField('raw_false', (new RawField));
+            $dynamic->withField('raw_true', (new RawField));
+            return $dynamic;
+        });
+
+        $result = $this->instance->marshalResource($factory, [
+            'raw_array' => [],
+            'raw_int' => 1,
+            'raw_string' => "raw",
+            'raw_float' => 1.2,
+            'raw_false' => false,
+            'raw_true' => true,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (DynamicResource $resource) {
+
+            $this->assertTrue($resource->raw_array->isFilled());
+            $this->assertSame([], $resource->raw_array->get());
+
+            $this->assertTrue($resource->raw_int->isFilled());
+            $this->assertSame(1, $resource->raw_int->get());
+
+            $this->assertTrue($resource->raw_string->isFilled());
+            $this->assertSame('raw', $resource->raw_string->get());
+
+            $this->assertTrue($resource->raw_float->isFilled());
+            $this->assertSame(1.2, $resource->raw_float->get());
+
+            $this->assertTrue($resource->raw_false->isFilled());
+            $this->assertFalse($resource->raw_false->get());
+
+            $this->assertTrue($resource->raw_true->isFilled());
+            $this->assertTrue($resource->raw_true->get());
 
         });
     }
