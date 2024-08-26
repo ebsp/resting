@@ -30,6 +30,19 @@ trait UsesResting
         }
 
         if (is_array($result)) {
+
+            $hasIntegerKey = false;
+            foreach (array_keys($result) as $key) {
+                if (is_int($key)) {
+                    $hasIntegerKey = true;
+                    break;
+                }
+            }
+
+            if ($hasIntegerKey) {
+                $result = array_values($result);
+            }
+
             $result = RestingResponse::fromResources($result);
         }
 
