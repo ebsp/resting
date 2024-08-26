@@ -31,15 +31,15 @@ trait UsesResting
 
         if (is_array($result)) {
 
-            $hasIntegerKey = false;
+            $hasStringKey = false;
             foreach (array_keys($result) as $key) {
-                if (is_int($key)) {
-                    $hasIntegerKey = true;
+                if (is_string($key)) {
+                    $hasStringKey = true;
                     break;
                 }
             }
 
-            if ($hasIntegerKey) {
+            if (!$hasStringKey) {
                 $result = array_values($result);
             }
 
