@@ -140,12 +140,16 @@ abstract class Resource implements Arrayable, Jsonable
             $fieldsByHash = [];
             $fieldsByName = [];
 
-            foreach ($filter as $renameKey => $field) {
+            foreach ($filter as $key => $field) {
                 if ($field instanceof Field) {
-                    $fieldsByHash[spl_object_hash($field)] = $renameKey;
+                    $fieldsByHash[spl_object_hash($field)] = true;
                 }
                 if (is_string($field)) {
-                    $fieldsByName[$field] = $renameKey;
+                    $fieldsByName[$field] = true;
+                }
+
+                if (is_string($key)) {
+                    $fieldsByName[$key] = (bool)$field;
                 }
             }
 
@@ -153,13 +157,10 @@ abstract class Resource implements Arrayable, Jsonable
                 ->filter(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
                     return array_key_exists($fieldName, $fieldsByName) || array_key_exists(spl_object_hash($field), $fieldsByHash);
                 })
-                ->mapWithKeys(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
-                    $renameKey = array_key_exists($fieldName, $fieldsByName)
+                ->filter(function (Field $field, string $fieldName) use ($fieldsByHash, $fieldsByName) {
+                    return array_key_exists($fieldName, $fieldsByName)
                         ? $fieldsByName[$fieldName]
                         : $fieldsByHash[spl_object_hash($field)];
-
-                    $name = is_string($renameKey) ? $renameKey : $fieldName;
-                    return [$name => $field];
                 });
         }
 

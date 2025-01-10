@@ -387,27 +387,66 @@ class ResourceTest extends TestCase
         );
     }
 
-    public function testToArrayCanRenameWhenFilteringReturnedValuesByFieldName()
+    public function testToArrayFilterByFieldName()
     {
         $resource = new PersonResource();
         $resource->name->set($expectedName = $this->faker->name);
-        $resource->age->set($this->faker->randomNumber(2));
-
-        $this->assertEquals(
-            ['name_alias' => $expectedName],
-            $resource->toArray(filter: ['name_alias' => 'name'])
-        );
-    }
-
-    public function testToArrayCanRenameWhenFilteringReturnedValuesByFieldInstance()
-    {
-        $resource = new PersonResource();
-        $resource->name->set($this->faker->name);
         $resource->age->set($expectedAge = $this->faker->randomNumber(2));
 
         $this->assertEquals(
-            ['age_alias' => $expectedAge],
-            $resource->toArray(filter: ['age_alias' => $resource->age])
+            ['name' => $expectedName],
+            $resource->toArray(filter: ['name'])
+        );
+
+        $this->assertEquals(
+            ['age' => $expectedAge],
+            $resource->toArray(filter: ['age'])
+        );
+    }
+
+    public function testToArrayFilterByFieldInstance()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($expectedName = $this->faker->name);
+        $resource->age->set($expectedAge = $this->faker->randomNumber(2));
+
+        $this->assertEquals(
+            ['name' => $expectedName],
+            $resource->toArray(filter: [$resource->name])
+        );
+
+        $this->assertEquals(
+            ['age' => $expectedAge],
+            $resource->toArray(filter: [$resource->age])
+        );
+    }
+
+    public function testToArrayFilterUsingCustomBooleans()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($expectedName = $this->faker->name);
+        $resource->age->set($expectedAge = $this->faker->randomNumber(2));
+
+        $this->assertEquals(
+            ['name' => $expectedName],
+            $resource->toArray(filter: ['name' => true, 'age' => false])
+        );
+
+        $this->assertEquals(
+            ['age' => $expectedAge],
+            $resource->toArray(filter: ['name' => false, 'age' => true])
+        );
+    }
+
+    public function testToArrayCanRenameReturnedValuesByFieldInstance()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($expectedName = $this->faker->name);
+        $resource->age->set($expectedAge = $this->faker->randomNumber(2));
+
+        $this->assertEquals(
+            ['name' => $expectedName, 'age_alias' => $expectedAge],
+            $resource->toArray(rename: ['age_alias' => $resource->age])
         );
     }
 
@@ -593,27 +632,27 @@ class ResourceTest extends TestCase
         );
     }
 
-    public function testToResponseArrayCanRenameWhenFilteringReturnedValuesByFieldName()
+    public function testToResponseArrayCanRenameReturnedValuesByFieldName()
     {
         $resource = new PersonResource();
         $resource->name->set($expectedName = $this->faker->name);
-        $resource->age->set($this->faker->randomNumber(2));
-
-        $this->assertEquals(
-            ['name_alias' => $expectedName],
-            $resource->toResponseArray(filter: ['name_alias' => 'name'])
-        );
-    }
-
-    public function testToResponseArrayCanRenameWhenFilteringReturnedValuesByFieldInstance()
-    {
-        $resource = new PersonResource();
-        $resource->name->set($this->faker->name);
         $resource->age->set($expectedAge = $this->faker->randomNumber(2));
 
         $this->assertEquals(
-            ['age_alias' => $expectedAge],
-            $resource->toResponseArray(filter: ['age_alias' => $resource->age])
+            ['name_alias' => $expectedName, 'age' => $expectedAge],
+            $resource->toResponseArray(rename: ['name_alias' => 'name'])
+        );
+    }
+
+    public function testToResponseArrayCanRenameReturnedValuesByFieldInstance()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($expectedName = $this->faker->name);
+        $resource->age->set($expectedAge = $this->faker->randomNumber(2));
+
+        $this->assertEquals(
+            ['name' => $expectedName, 'age_alias' => $expectedAge],
+            $resource->toResponseArray(rename: ['age_alias' => $resource->age])
         );
     }
 
@@ -676,27 +715,27 @@ class ResourceTest extends TestCase
         );
     }
 
-    public function testFieldsCanRenameWhenFilteringReturnedValuesByFieldName()
+    public function testFieldsCanRenameReturnedValuesByFieldName()
     {
         $resource = new PersonResource();
         $resource->name->set($this->faker->name);
         $resource->age->set($this->faker->randomNumber(2));
 
         $this->assertEquals(
-            ['name_alias' => $resource->name],
-            $resource->fields(filter: ['name_alias' => 'name'])->toArray()
+            ['name_alias' => $resource->name, 'age' => $resource->age],
+            $resource->fields(rename: ['name_alias' => 'name'])->toArray()
         );
     }
 
-    public function testFieldsCanRenameWhenFilteringReturnedValuesByFieldInstance()
+    public function testFieldsCanRenameReturnedValuesByFieldInstance()
     {
         $resource = new PersonResource();
         $resource->name->set($this->faker->name);
         $resource->age->set($this->faker->randomNumber(2));
 
         $this->assertEquals(
-            ['age_alias' => $resource->age],
-            $resource->fields(filter: ['age_alias' => $resource->age])->toArray()
+            ['name' => $resource->name, 'age_alias' => $resource->age],
+            $resource->fields(rename: ['age_alias' => $resource->age])->toArray()
         );
     }
 
