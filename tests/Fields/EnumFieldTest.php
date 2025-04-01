@@ -6,6 +6,7 @@ use stdClass;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\EnumField;
 use Seier\Resting\Tests\Meta\SuiteEnum;
+use Seier\Resting\Parsing\EnumParseError;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\Errors\InValidation;
 use Seier\Resting\Exceptions\ValidationException;

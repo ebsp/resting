@@ -25,7 +25,7 @@ class ArrayValidator extends BasePrimaryValidator implements PrimaryValidator
         if (!is_array($value)) {
             return [new NotArrayValidationError($value)];
         }
-
+        
         $errors = $this->runValidators($value);
         if ($this->elementValidator) {
             foreach ($value as $elementIndex => $elementValue) {

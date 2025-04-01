@@ -10,9 +10,11 @@ use Seier\Resting\Fields\RawField;
 use Seier\Resting\Fields\TimeField;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Fields\StringField;
+use Seier\Resting\Tests\Meta\SuiteEnum;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\ClassResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\SuiteResource;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
@@ -312,6 +314,29 @@ class ResourceMarshallerTest extends TestCase
             $this->assertEquals($ageA, $students[0]->age->get());
             $this->assertEquals($nameB, $students[1]->name->get());
             $this->assertEquals($ageB, $students[1]->age->get());
+        });
+    }
+
+    public function testMarshalResourceArrayFieldOfEnums()
+    {
+        $factory = $this->resourceFactory(SuiteResource::class);
+        $result = $this->instance->marshalResource($factory, [
+            'suites' => [
+                SuiteEnum::Diamonds->value,
+                SuiteEnum::Clubs->value,
+                SuiteEnum::Spades->value,
+                SuiteEnum::Hearts->value,
+            ],
+        ]);
+        
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (SuiteResource $enumResource) {
+            $this->assertSame([
+                SuiteEnum::Diamonds,
+                SuiteEnum::Clubs,
+                SuiteEnum::Spades,
+                SuiteEnum::Hearts,
+            ], $enumResource->suites->get());
         });
     }
 

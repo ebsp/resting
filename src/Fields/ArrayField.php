@@ -3,11 +3,12 @@
 namespace Seier\Resting\Fields;
 
 use ArrayAccess;
+use ReflectionEnum;
 use Seier\Resting\Parsing\Parser;
-use Illuminate\Support\Collection;
 use Seier\Resting\Parsing\IntParser;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\TimeParser;
+use Seier\Resting\Parsing\EnumParser;
 use Seier\Resting\Parsing\ArrayParser;
 use Seier\Resting\Parsing\StringParser;
 use Seier\Resting\Parsing\CarbonParser;
@@ -16,6 +17,7 @@ use Seier\Resting\Validation\IntValidator;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Validation\BoolValidator;
 use Seier\Resting\Validation\TimeValidator;
+use Seier\Resting\Validation\EnumValidator;
 use Seier\Resting\Validation\ArrayValidator;
 use Seier\Resting\Validation\StringValidator;
 use Seier\Resting\Validation\CarbonValidator;
@@ -148,6 +150,18 @@ class ArrayField extends Field
         if ($config) {
             $config($validator, $parser);
         }
+
+        return $this->of($validator, $parser);
+    }
+
+    public function ofEnums(string|ReflectionEnum $enumType): static
+    {
+        if (is_string($enumType)) {
+            $enumType = new ReflectionEnum($enumType);
+        }
+
+        $validator = new EnumValidator($enumType);
+        $parser = new EnumParser($enumType);
 
         return $this->of($validator, $parser);
     }

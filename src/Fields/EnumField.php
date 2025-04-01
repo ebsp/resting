@@ -77,6 +77,10 @@ class EnumField extends Field
             return parent::set($value);
         }
 
+        if (is_object($value) && $this->reflectionEnum->isInstance($value)) {
+            return parent::set($value);
+        }
+
         if (is_string($value)) {
 
             $rawValue = $value;
@@ -85,10 +89,17 @@ class EnumField extends Field
             if ($this->parser->shouldParse($parseContext)) {
                 $errors = $this->parser->canParse($parseContext);
                 if ($errors) {
-                    throw new ValidationException($errors);
+                    throw new ValidationException([
+                        new EnumValidationError($this->reflectionEnum, $rawValue)
+                    ]);
                 }
 
                 $value = $this->parser->parse($parseContext);
+            }
+
+
+            if (is_object($value) && $this->reflectionEnum->isInstance($value)) {
+                return parent::set($value);
             }
 
             try {

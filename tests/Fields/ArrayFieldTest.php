@@ -4,10 +4,10 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\ArrayField;
+use Seier\Resting\Tests\Meta\SuiteEnum;
+use Seier\Resting\Tests\Support\TestEnum;
 use Seier\Resting\Validation\IntValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
-use Seier\Resting\Validation\ArrayValidator;
-use Seier\Resting\Validation\StringValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
@@ -140,5 +140,29 @@ class ArrayFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testOfEnums()
+    {
+        $field = new ArrayField();
+        $field->ofEnums(SuiteEnum::class);
+
+        $field->set([SuiteEnum::Spades, SuiteEnum::Clubs, SuiteEnum::Diamonds]);
+        $this->assertSame(
+            [SuiteEnum::Spades, SuiteEnum::Clubs, SuiteEnum::Diamonds],
+            $field->get()
+        );
+
+        $field->set([SuiteEnum::Spades, SuiteEnum::Diamonds]);
+        $this->assertSame(
+            [SuiteEnum::Spades, SuiteEnum::Diamonds],
+            $field->get()
+        );
+
+        $field->set([SuiteEnum::Diamonds]);
+        $this->assertSame(
+            [SuiteEnum::Diamonds],
+            $field->get()
+        );
     }
 }

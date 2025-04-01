@@ -6,6 +6,7 @@ use ReflectionEnum;
 use Seier\Resting\Support\FormatsValues;
 use Seier\Resting\Validation\Secondary\In\InValidation;
 use Seier\Resting\Validation\Errors\EnumValidationError;
+use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class EnumValidator extends BasePrimaryValidator implements PrimaryValidator
@@ -18,6 +19,16 @@ class EnumValidator extends BasePrimaryValidator implements PrimaryValidator
     public function __construct(ReflectionEnum $reflectionEnum)
     {
         $this->reflectionEnum = $reflectionEnum;
+
+        if (!$reflectionEnum->isBacked()) {
+            throw new RestingDefinitionException("EnumValidator only supports enums backed by strings.");
+        }
+
+        foreach ($reflectionEnum->getCases() as $case) {
+            if (!is_string($case->getBackingValue())) {
+                throw new RestingDefinitionException("EnumValidator only supports enums backed by strings.");
+            }
+        }
     }
 
     public function description(): string

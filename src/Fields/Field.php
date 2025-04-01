@@ -187,6 +187,7 @@ abstract class Field
         }
 
         $validator = $this->getValidator();
+        
         if ($validator) {
             $errors = $validator->validate($value);
             if (count($errors)) {

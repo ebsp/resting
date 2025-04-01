@@ -3,6 +3,7 @@
 namespace Seier\Resting\Parsing;
 
 use Exception;
+use Throwable;
 use BackedEnum;
 use ReflectionEnum;
 
@@ -22,7 +23,7 @@ class EnumParser implements Parser
         try {
             $this->reflectionEnum->getName()::from($raw);
             return [];
-        } catch (Exception) {
+        } catch (Throwable) {
             return [
                 new EnumParseError($raw, $this->reflectionEnum),
             ];
@@ -36,6 +37,10 @@ class EnumParser implements Parser
 
     public function shouldParse(ParseContext $context): bool
     {
+        if (is_string($context->getValue())) {
+            return true;
+        }
+
         return $context->isStringBased() && $context->isNotNull();
     }
 }
