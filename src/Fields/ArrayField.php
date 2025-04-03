@@ -193,6 +193,20 @@ class ArrayField extends Field
         return $this->validator;
     }
 
+    public function formatted(): ?array
+    {
+        if ($this->value === null) {
+            return null;
+        }
+
+        return array_map(
+            fn(mixed $value) => $value instanceof \BackedEnum
+                ? $value->value
+                : $value,
+            $this->value,
+        );
+    }
+
     public function type(): array
     {
         return [

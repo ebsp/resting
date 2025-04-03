@@ -8,6 +8,7 @@ use Seier\Resting\Tests\Meta\SuiteEnum;
 use Seier\Resting\Tests\Support\TestEnum;
 use Seier\Resting\Validation\IntValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\SuiteResource;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
@@ -142,7 +143,7 @@ class ArrayFieldTest extends TestCase
         $this->assertHasError($exception, MockSecondaryValidationError::class);
     }
 
-    public function testOfEnums()
+    public function testArrayFieldOfEnums()
     {
         $field = new ArrayField();
         $field->ofEnums(SuiteEnum::class);
@@ -163,6 +164,29 @@ class ArrayFieldTest extends TestCase
         $this->assertSame(
             [SuiteEnum::Diamonds],
             $field->get()
+        );
+    }
+
+    public function testArrayFieldOfEnumsSerializesEnumBackedValues()
+    {
+        $resource = new SuiteResource();
+
+        $resource->suites->set([SuiteEnum::Spades, SuiteEnum::Clubs, SuiteEnum::Diamonds]);
+        $this->assertSame(
+            ['suites' => [SuiteEnum::Spades->value, SuiteEnum::Clubs->value, SuiteEnum::Diamonds->value]],
+            $resource->toResponseArray()
+        );
+
+        $resource->suites->set([SuiteEnum::Spades, SuiteEnum::Diamonds]);
+        $this->assertSame(
+            ['suites' => [SuiteEnum::Spades->value, SuiteEnum::Diamonds->value]],
+            $resource->toResponseArray()
+        );
+
+        $resource->suites->set([SuiteEnum::Diamonds]);
+        $this->assertSame(
+            ['suites' => [SuiteEnum::Diamonds->value]],
+            $resource->toResponseArray()
         );
     }
 }
