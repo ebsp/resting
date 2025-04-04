@@ -159,6 +159,10 @@ abstract class Field
         $this->validateValue($value);
         $this->nullDefault($value, $predicate);
 
+        if ($this->value === null && $value !== null) {
+            $this->value = $value;
+        }
+
         return $this;
     }
 
