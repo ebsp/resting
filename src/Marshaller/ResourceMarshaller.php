@@ -11,6 +11,7 @@ use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Validation\Errors\ValidationError;
+use Seier\Resting\ResourceValidation\ResourceValidator;
 use Seier\Resting\Exceptions\ValidationExceptionHandler;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
@@ -273,6 +274,13 @@ class ResourceMarshaller
         }
 
         $resource->finish();
+
+        $resourceValidators = $resource->getResourceValidators();
+        foreach ($resourceValidators as $resourceValidator) {
+            foreach ($resourceValidator->validate() as $resourceValidationError) {
+                $this->pushError($resourceValidationError);
+            }
+        }
     }
 
     private function marshalResourceArrayField(ResourceArrayField $field, $values)

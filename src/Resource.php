@@ -13,12 +13,14 @@ use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Exceptions\RestingRuntimeException;
 use Seier\Resting\Validation\Predicates\ResourceContext;
+use Seier\Resting\ResourceValidation\ResourceValidation;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 
 abstract class Resource implements Arrayable, Jsonable
 {
 
     use Panics;
+    use ResourceValidation;
 
     private bool $removeNulls = true;
     private bool $removeEmptyArrays = true;
