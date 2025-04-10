@@ -74,6 +74,10 @@ class ResourceAttributeComparisonValidator implements ResourceValidator
 
     public function validate(): array
     {
+        if ($this->skip()) {
+            return [];
+        }
+
         $realizedLeftOperands = $this->formatOperands($this->leftOperands);
         $realizedRightOperands = $this->formatOperands($this->rightOperands);
 
@@ -184,5 +188,22 @@ class ResourceAttributeComparisonValidator implements ResourceValidator
         }
 
         return $this->format($description->value);
+    }
+
+    private function skip(): bool
+    {
+        $hasField = false;
+        $hasNonNullField = false;
+
+        foreach ([...$this->leftOperands, ...$this->rightOperands] as $operand) {
+            if ($operand instanceof Field) {
+                $hasField = true;
+                if ($operand->isNotNull()) {
+                    $hasNonNullField = true;
+                }
+            }
+        }
+
+        return $hasField && !$hasNonNullField;
     }
 }

@@ -418,6 +418,23 @@ class ResourceMarshallerTest extends TestCase
         $this->assertHasError($errors, ResourceAttributeComparisonValidationError::class);
     }
 
+    public function testMarshalResourceWithResourceValidationWhenFieldsAreNull()
+    {
+        $resource = new ResourceAttributeComparisonTestResource();
+        $resource->only($resource->int_field_a, $resource->int_field_b);
+        $resource->int_field_a->nullable();
+        $resource->int_field_b->nullable();
+        $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
+        $factory = $this->resourceFactory(fn() => $resource);
+
+        $result = $this->instance->marshalResource($factory, [
+            'int_field_a' => null,
+            'int_field_b' => null,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+    }
+
     public function testMarshalResourceArray()
     {
         $factory = $this->resourceFactory(PersonResource::class);
