@@ -30,6 +30,8 @@ use Seier\Resting\Validation\Errors\NotStringValidationError;
 use Seier\Resting\Validation\Errors\ForbiddenValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
+use Seier\Resting\ResourceValidation\ResourceAttributeComparisonValidationError;
+use Seier\Resting\Tests\ResourceValidation\ResourceAttributeComparisonTestResource;
 use function Seier\Resting\Validation\Predicates\whenNull;
 use function Seier\Resting\Validation\Predicates\whenEquals;
 use function Seier\Resting\Validation\Predicates\whenProvided;
@@ -328,7 +330,7 @@ class ResourceMarshallerTest extends TestCase
                 SuiteEnum::Hearts->value,
             ],
         ]);
-        
+
         $this->assertFalse($result->hasErrors());
         $this->assertType($result->getValue(), function (SuiteResource $enumResource) {
             $this->assertSame([
@@ -378,6 +380,59 @@ class ResourceMarshallerTest extends TestCase
                 $this->assertEquals($b, $resource->b->get());
             });
         });
+    }
+
+    public function testMarshalResourceWithResourcePassingValidation()
+    {
+        $resource = new ResourceAttributeComparisonTestResource();
+        $resource->only($resource->int_field_a, $resource->int_field_b);
+        $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
+        $factory = $this->resourceFactory(fn() => $resource);
+
+        $result = $this->instance->marshalResource($factory, [
+            'int_field_a' => 1,
+            'int_field_b' => 0,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (ResourceAttributeComparisonTestResource $resource) {
+            $this->assertSame(1, $resource->int_field_a->get());
+            $this->assertSame(0, $resource->int_field_b->get());
+        });
+    }
+
+    public function testMarshalResourceWithResourceFailingValidation()
+    {
+        $resource = new ResourceAttributeComparisonTestResource();
+        $resource->only($resource->int_field_a, $resource->int_field_b);
+        $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
+        $factory = $this->resourceFactory(fn() => $resource);
+
+        $result = $this->instance->marshalResource($factory, [
+            'int_field_a' => 1,
+            'int_field_b' => 1,
+        ]);
+
+        $this->assertTrue($result->hasErrors());
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ResourceAttributeComparisonValidationError::class);
+    }
+
+    public function testMarshalResourceWithResourceValidationWhenFieldsAreNull()
+    {
+        $resource = new ResourceAttributeComparisonTestResource();
+        $resource->only($resource->int_field_a, $resource->int_field_b);
+        $resource->int_field_a->nullable();
+        $resource->int_field_b->nullable();
+        $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
+        $factory = $this->resourceFactory(fn() => $resource);
+
+        $result = $this->instance->marshalResource($factory, [
+            'int_field_a' => null,
+            'int_field_b' => null,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
     }
 
     public function testMarshalResourceArray()

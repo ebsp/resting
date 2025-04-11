@@ -26,7 +26,7 @@ trait AssertsErrors
         }
     }
 
-    protected function assertHasError(ValidationException|array $exception, string $class, string $path = '')
+    protected function assertHasError(ValidationException|array $exception, string $class, string $path = ''): void
     {
         $errors = is_array($exception) ? $exception : $exception->getErrors();
         foreach ($errors as $error) {
