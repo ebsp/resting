@@ -12,6 +12,7 @@ use Seier\Resting\Tests\Meta\EventResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Fields\ResourceArrayField;
+use Seier\Resting\ResourceValidation\ResourceValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
@@ -906,5 +907,25 @@ class ResourceTest extends TestCase
             ['name' => $nameB],
             ['name' => $nameC],
         ]], $resource->toResponseArray());
+    }
+
+    public function testAddValidatorCanAddResourceValidator()
+    {
+        $resource = new ClassResource();
+        $resource->addResourceValidator(new class implements ResourceValidator {
+
+            public function description(): string
+            {
+                return true;
+            }
+
+            public function validate(): array
+            {
+                return [];
+            }
+
+        });
+
+        $this->assertCount(1, $resource->getResourceValidators());
     }
 }

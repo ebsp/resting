@@ -14,6 +14,13 @@ trait ResourceValidation
         return $this->validators;
     }
 
+    public function addResourceValidator(ResourceValidator $validator): static
+    {
+        $this->validators[] = $validator;
+
+        return $this;
+    }
+
     public function lessThan(
         Field|int|string|bool|float|array $left,
         Field|int|string|bool|float|array $right,
