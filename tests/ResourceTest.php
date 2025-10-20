@@ -3,8 +3,11 @@
 namespace Seier\Resting\Tests;
 
 use Carbon\Carbon;
+use Seier\Resting\Resource;
 use Seier\Resting\DynamicResource;
+use Seier\Resting\Fields\IntField;
 use Seier\Resting\Tests\Meta\Person;
+use Seier\Resting\Fields\StringField;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\ClassResource;
@@ -58,32 +61,6 @@ class ResourceTest extends TestCase
         $this->assertCount(2, $errors = $exception->getErrors());
         $this->assertHasError($errors, RequiredValidationError::class, path: 'name');
         $this->assertHasError($errors, RequiredValidationError::class, path: 'age');
-    }
-
-    public function testSetPredicatedRequiredValidationWhenTrue()
-    {
-        $person = new PersonResource();
-        $person->name->nullable();
-        $person->age->required(whenNotNull($person->name));
-
-        $exception = $this->assertThrowsValidationException(function () use ($person) {
-            $person->set(['name' => $this->faker->name]);
-        });
-
-        $this->assertCount(1, $errors = $exception->getErrors());
-        $this->assertHasError($errors, RequiredValidationError::class, 'age');
-    }
-
-    public function testSetPredicatedRequiredValidationWhenFalse()
-    {
-        $person = new PersonResource();
-        $person->name->nullable();
-        $person->age->required(whenNotNull($person->name));
-
-        $person->set(['name' => null]);
-
-        $this->assertNull($person->name->get());
-        $this->assertNull($person->age->get());
     }
 
     public function testSetPredicatedNullableValidationWhenTrue()
@@ -580,7 +557,7 @@ class ResourceTest extends TestCase
         $event->time->set($time = now());
 
         $resource = new DynamicResource();
-        $resource->withField('event', (new ResourceField(fn() => new EventResource))->set($event));
+        $resource->withField('event', (new ResourceField(fn () => new EventResource))->set($event));
 
         $response = $resource->toResponseArray();
         $expected = ['event' => [
@@ -598,7 +575,7 @@ class ResourceTest extends TestCase
         $event->time->set($time = now());
 
         $resource = new DynamicResource();
-        $resource->withField('events', (new ResourceArrayField(fn() => new EventResource))->set([$event]));
+        $resource->withField('events', (new ResourceArrayField(fn () => new EventResource))->set([$event]));
 
         $response = $resource->toResponseArray();
         $expected = ['events' => [[

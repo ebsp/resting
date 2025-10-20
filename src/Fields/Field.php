@@ -65,15 +65,20 @@ abstract class Field
         return $this;
     }
 
+    /**
+     * Set the nullability of the field.
+     */
     public function nullable(bool|Predicate $state = true): static
     {
+        $validator = $this->getNullableValidator();
+
         if ($state instanceof Predicate) {
-            $this->getNullableValidator()->setNullable(true);
-            $this->getNullableValidator()->predicatedOn($state);
+            $validator->setNullable(true);
+            $validator->predicatedOn($state);
             return $this;
         }
 
-        $this->getNullableValidator()->setNullable($state);
+        $validator->setNullable($state);
 
         return $this;
     }
@@ -187,7 +192,7 @@ abstract class Field
         }
 
         $validator = $this->getValidator();
-        
+
         if ($validator) {
             $errors = $validator->validate($value);
             if (count($errors)) {
@@ -206,7 +211,6 @@ abstract class Field
     public function notRequired(): static
     {
         $this->required(false);
-        $this->nullable();
 
         return $this;
     }
@@ -216,14 +220,10 @@ abstract class Field
         if ($state instanceof Predicate) {
             $this->requiredValidator->setRequired(true);
             $this->requiredValidator->predicatedOn($state);
-            $this->nullableValidator->setNullable(true);
             return $this;
         }
 
         $this->requiredValidator->setRequired($state);
-        if ($state === false) {
-            $this->nullableValidator->setNullable(true);
-        }
 
         return $this;
     }

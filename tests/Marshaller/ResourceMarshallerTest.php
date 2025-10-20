@@ -387,7 +387,7 @@ class ResourceMarshallerTest extends TestCase
         $resource = new ResourceAttributeComparisonTestResource();
         $resource->only($resource->int_field_a, $resource->int_field_b);
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
         $result = $this->instance->marshalResource($factory, [
             'int_field_a' => 1,
@@ -406,7 +406,7 @@ class ResourceMarshallerTest extends TestCase
         $resource = new ResourceAttributeComparisonTestResource();
         $resource->only($resource->int_field_a, $resource->int_field_b);
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
         $result = $this->instance->marshalResource($factory, [
             'int_field_a' => 1,
@@ -425,7 +425,7 @@ class ResourceMarshallerTest extends TestCase
         $resource->int_field_a->nullable();
         $resource->int_field_b->nullable();
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
         $result = $this->instance->marshalResource($factory, [
             'int_field_a' => null,
@@ -1066,6 +1066,31 @@ class ResourceMarshallerTest extends TestCase
         assert($resource instanceof PetResource);
         $this->assertNull($resource->getOwner()->name->get());
         $this->assertNull($resource->getOwner()->age->get());
+    }
+
+    public function testMarshalResourceFieldDoesNotAllowNullsWhenRequiredFalseButNullableFalse()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->notRequired();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->instance->marshalResource($factory, []);
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertFalse($resource->name->isFilled());
+        
+        $result = $this->instance->marshalResource($factory, ['name' => null]);
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), NullableValidationError::class, 'name');
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertTrue($resource->name->isFilled());
     }
 
     public function testCanParseIntegersWhenAllowsParsing()
