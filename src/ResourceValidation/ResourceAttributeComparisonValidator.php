@@ -99,16 +99,11 @@ class ResourceAttributeComparisonValidator implements ResourceValidator
 
     private function createOperandDescriptions(array $operands, ?array $realizedOperands = null): array
     {
-        $fieldNameByObjectHash = [];
-        foreach ($this->resource->fields() as $fieldName => $field) {
-            $fieldNameByObjectHash[spl_object_hash($field)] = $fieldName;
-        }
-
         $descriptions = [];
         foreach ($operands as $index => $leftOperand) {
             $descriptions[] = new ResourceAttributeComparisonOperandDescription(
                 field: $field = ($leftOperand instanceof Field ? $leftOperand : null),
-                fieldName: $field ? $fieldNameByObjectHash[spl_object_hash($field)] : $field,
+                fieldName: $field ? $this->resource->getFieldNameFromFieldObject($field) : null,
                 value: $field
                     ? $realizedOperands !== null ? $realizedOperands[$index] : null
                     : $leftOperand,
@@ -168,7 +163,7 @@ class ResourceAttributeComparisonValidator implements ResourceValidator
         return join(' ', [
             '[',
             join(', ', array_map(
-                fn(ResourceAttributeComparisonOperandDescription $operandDescription) => $this->formatOperandDescription($operandDescription),
+                fn (ResourceAttributeComparisonOperandDescription $operandDescription) => $this->formatOperandDescription($operandDescription),
                 $operandDescriptions
             )),
             ']'
