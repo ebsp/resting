@@ -131,24 +131,24 @@ class ResourceMarshaller
         $resourceContext = new ArrayResourceContext($fields, (array)$content, $this->isStringBased);
         $resource->prepare($resourceContext);
 
-        foreach ($fields as $key => $field) {
+        foreach ($fields as $fieldName => $field) {
 
             $requiredValidator = $field->getRequiredValidator();
             $nullableValidator = $field->getNullableValidator();
             $forbiddenValidator = $field->getForbiddenValidator();
-            $isProvided = property_exists($content, $key);
+            $isProvided = property_exists($content, $fieldName);
             $field->setFilled($isProvided);
 
             if (!$isProvided) {
 
                 if ($requiredValidator->hasPredicates() && $requiredValidator->passes($resourceContext)) {
-                    $path = $this->getCurrentPath($key);
+                    $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new RequiredValidationError());
                     continue;
                 }
 
                 if (!$requiredValidator->hasPredicates() && $requiredValidator->isRequired()) {
-                    $path = $this->getCurrentPath($key);
+                    $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new RequiredValidationError());
                     continue;
                 }
@@ -163,14 +163,14 @@ class ResourceMarshaller
             } else {
 
                 if ($forbiddenValidator->isForbidden($resourceContext)) {
-                    $path = $this->getCurrentPath($key);
+                    $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new ForbiddenValidationError());
                     continue;
                 }
 
             }
 
-            $fieldValue = $isProvided ? $content->{$key} : $defaultValue;
+            $fieldValue = $isProvided ? $content->{$fieldName} : $defaultValue;
 
             if ($fieldValue === null) {
                 foreach ($nullableValidator->getDefaultValues() as $possibleDefault) {
@@ -184,21 +184,21 @@ class ResourceMarshaller
             // the default value has already been validated when it was set
             // we can therefore just set the value and proceed with the other fields
             if (!$isProvided) {
-                $field->set($fieldValue);
+                $fieldValue !== null && $field->set($fieldValue);
                 $field->setFilled(false);
                 continue;
             }
-
+            
             if ($fieldValue === null) {
 
                 if ($nullableValidator->hasPredicates() && !$nullableValidator->passes($resourceContext)) {
-                    $path = $this->getCurrentPath($key);
+                    $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new NullableValidationError());
                     continue;
                 }
 
                 if (!$nullableValidator->hasPredicates() && !$nullableValidator->isNullable()) {
-                    $path = $this->getCurrentPath($key);
+                    $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new NullableValidationError());
                     continue;
                 }
@@ -209,7 +209,7 @@ class ResourceMarshaller
 
             if ($field instanceof ResourceField) {
 
-                $this->pushPath($key);
+                $this->pushPath($fieldName);
 
                 if (!is_object($fieldValue) && !is_array($fieldValue)) {
                     $this->pushPathError($this->getCurrentPath(), new NotObjectValidationError($fieldValue));
@@ -233,7 +233,7 @@ class ResourceMarshaller
             }
 
             if ($field instanceof ResourceArrayField) {
-                $this->pushPath($key);
+                $this->pushPath($fieldName);
                 $this->marshalResourceArrayField($field, $fieldValue);
                 $this->popPath();
                 continue;
@@ -245,7 +245,7 @@ class ResourceMarshaller
             if ($parser->shouldParse($parseContext)) {
                 if ($parseErrors = $parser->canParse($parseContext)) {
                     foreach ($parseErrors as $parseError) {
-                        $this->pushError($parseError->prependPath($this->getCurrentPath($key)));
+                        $this->pushError($parseError->prependPath($this->getCurrentPath($fieldName)));
                     }
 
                     continue;
@@ -262,8 +262,8 @@ class ResourceMarshaller
                 foreach ($resolvers as $resolver) {
                     $validators = $resolver->resolve($resourceContext);
                     foreach ($validators as $validator) {
-                        $errors = array_merge($errors, array_map(function (ValidationError $error) use ($key) {
-                            return $error->prependPath($key);
+                        $errors = array_merge($errors, array_map(function (ValidationError $error) use ($fieldName) {
+                            return $error->prependPath($fieldName);
                         }, $validator->validate($fieldValue)));
                     }
                 }
@@ -277,7 +277,7 @@ class ResourceMarshaller
                 continue;
             }
 
-            $exceptionHandler->suppress($this->getCurrentPath($key), fn () => $field->set($fieldValue));
+            $exceptionHandler->suppress($this->getCurrentPath($fieldName), fn () => $field->set($fieldValue));
             foreach ($exceptionHandler->getErrors() as $validationError) {
                 $this->pushError($validationError);
             }

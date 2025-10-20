@@ -1083,6 +1083,31 @@ class ResourceMarshallerTest extends TestCase
         $this->assertNull($resource->getOwner()->age->get());
     }
 
+    public function testMarshalResourceFieldDoesNotAllowNullsWhenRequiredFalseButNullableFalse()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->notRequired();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertFalse($resource->name->isFilled());
+
+        $result = $this->runMarshalResource($factory, ['name' => null]);
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), NullableValidationError::class, 'name');
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertTrue($resource->name->isFilled());
+    }
+
     public function testCanParseIntegersWhenAllowsParsing()
     {
         $this->instance->isStringBased();
