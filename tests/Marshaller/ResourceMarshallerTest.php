@@ -965,7 +965,7 @@ class ResourceMarshallerTest extends TestCase
         $factory = $this->resourceFactory(function () {
             $person = new PersonResource();
             $person->name->notRequired();
-            $person->age->notRequired()->omittedDefault(5);
+            $person->age->notRequired()->omittedDefault(5)->nullable();
             return $person;
         });
 

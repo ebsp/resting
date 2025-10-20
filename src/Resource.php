@@ -9,6 +9,7 @@ use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Validation\Secondary\Panics;
+use Seier\Resting\Exceptions\RestingException;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Exceptions\RestingRuntimeException;
@@ -315,5 +316,24 @@ abstract class Resource implements Arrayable, Jsonable
     public function getDependantResources(): array
     {
         return [];
+    }
+
+    public function getFieldByName(string $fieldName): ?Field
+    {
+        return $this->fields()[$fieldName] ?? null;
+    }
+
+    public function getFieldNameFromFieldObject(Field $field): ?string
+    {
+        static $fieldNameByObjectHash = null;
+
+        if ($fieldNameByObjectHash === null) {
+            $fieldNameByObjectHash = [];
+            foreach ($this->fields() as $fieldName => $fieldObject) {
+                $fieldNameByObjectHash[spl_object_hash($fieldObject)] = $fieldName;
+            }
+        }
+
+        return $fieldNameByObjectHash[spl_object_hash($field)] ?? null;
     }
 }
