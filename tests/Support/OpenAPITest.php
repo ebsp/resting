@@ -115,7 +115,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceListInheritance()
     {
         \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
-            $this->_lists = $resource;
+            $this->defaults['_lists'] = $resource;
             return $this;
         });
 
@@ -133,7 +133,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceListInheritanceCombination()
     {
         \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
-            $this->_lists = $resource;
+            $this->defaults['_lists'] = $resource;
             return $this;
         });
 
