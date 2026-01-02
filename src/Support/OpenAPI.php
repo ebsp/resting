@@ -2,10 +2,13 @@
 
 namespace Seier\Resting\Support;
 
+use ArrayObject;
+use ReflectionType;
 use ReflectionClass;
 use ReflectionParameter;
 use Seier\Resting\Query;
 use ReflectionNamedType;
+use ReflectionUnionType;
 use Seier\Resting\Params;
 use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
@@ -355,7 +358,7 @@ class OpenAPI implements Arrayable, Responsable
 
     protected function describeResponse(Route $route)
     {
-        $classes = [];
+        $resourceClassesSeen = new ArrayObject();
         $responseType = [];
         $returnType = null;
 
@@ -369,76 +372,89 @@ class OpenAPI implements Arrayable, Responsable
         }
 
         foreach ((array)$route->_lists as $type) {
-            $classes[] = $type;
+            $resourceClassesSeen[] = $type;
         }
 
-        if ($returnType && $returnType->isBuiltin()) {
-            $responseType = ['schema' => [
-                'nullable' => $returnType->allowsNull(),
-                'description' => '',
-                ...(match ($returnType->getName()) {
-                    'string' => ['type' => 'string'],
-                    'float' => [
-                        'type' => 'number',
-                        'format' => 'double',
-                    ],
-                    'bool' => ['type' => 'boolean'],
-                    'array' => ['type' => 'array', 'items' => []],
-                    'object' => ['type' => 'object'],
-                    'int' => [
-                        'type' => 'integer',
-                        'format' => 'int64'
-                    ],
-                    default => [],
-                })
-            ]];
-        } else if ($returnType instanceof ReflectionNamedType && (new ReflectionClass($returnType->getName()))->isSubclassOf(Resource::class)) {
-            $classes[] = $returnType->getName();
+        if ($returnType instanceof ReflectionType) {
+            $responseType = $this->createTypeFromReflectionType($returnType, $resourceClassesSeen);
         }
 
-        $transform = $classes;
-        $classes = [];
-
-        foreach ($transform as $class) {
-            if ($this->isUnionSubclass($class)) {
-                foreach ($this->getDependantResources($class) as $dependantResource) {
-                    $classes[] = $dependantResource;
+        foreach ($resourceClassesSeen as $resourceClass) {
+            if ($this->isUnionSubclass($resourceClass)) {
+                foreach ($this->getDependantResources($resourceClass) as $dependantResource) {
+                    $this->addResource($dependantResource);
                 }
             } else {
-                $classes[] = $class;
+                $this->addResource($resourceClass);
+
             }
         }
 
-        $lists = count($classes) > 1;
-
-        if (count($classes)) {
-            foreach ($classes as $className) {
-                $this->addResource($className);
-            }
-
-            $refs = array_map(function ($_className) {
-                return ['$ref' => static::componentPath(static::resourceRefName($_className))];
-            }, array_unique($classes));
-
-            $responseType = [
-                'schema' => $lists ? [
-                    'type' => 'array',
-                    'items' => [
-                        'oneOf' => $refs
-                    ],
-                ] : $refs[0],
-            ];
-        }
-
-        return $responseType;
+        return ['schema' => $responseType];
     }
 
-    protected function isUnionSubclass($className)
+    protected function createTypeFromReflectionType(ReflectionType $type, ArrayObject $resourceClassesSeen): array
+    {
+        if ($type instanceof ReflectionUnionType) {
+            return array(
+                'nullable' => $type->allowsNull(),
+                'oneOf' => array_map(
+                    fn (ReflectionType $reflectionType) => $this->createTypeFromReflectionType($reflectionType, $resourceClassesSeen),
+                    array_filter(
+                        $type->getTypes(),
+                        function (ReflectionType $type) {
+                            
+                            if ($type instanceof ReflectionNamedType && $type->getName() === 'null') {
+                                return false;
+                            }
+
+                            return true;
+                        },
+                    ),
+                )
+            );
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            if ($type->isBuiltin()) {
+                return [
+                    'type' => 'object',
+                    'nullable' => $type->allowsNull(),
+                    'description' => '',
+                    ...(match ($type->getName()) {
+                        'string' => ['type' => 'string'],
+                        'float' => [
+                            'type' => 'number',
+                            'format' => 'double',
+                        ],
+                        'bool' => ['type' => 'boolean'],
+                        'array' => ['type' => 'array', 'items' => []],
+                        'object' => ['type' => 'object'],
+                        'int' => [
+                            'type' => 'integer',
+                            'format' => 'int64'
+                        ],
+                        default => [],
+                    })
+                ];
+            } else if ((new ReflectionClass($className = $type->getName()))->isSubclassOf(Resource::class)) {
+                $resourceClassesSeen[] = $className;
+                return [
+                    'type' => 'object',
+                    '$ref' => static::componentPath(static::resourceRefName($className)),
+                ];
+            }
+        }
+
+        return [];
+    }
+
+    protected function isUnionSubclass($className): bool
     {
         return (new ReflectionClass($className))->isSubclassOf(UnionResource::class);
     }
 
-    protected function createOneOfArray($className)
+    protected function createOneOfArray($className): array
     {
         return array_values(array_map(function (string $dependant) {
             return ['$ref' => static::componentPath(static::resourceRefName($dependant))];

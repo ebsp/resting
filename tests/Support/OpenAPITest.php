@@ -8,6 +8,7 @@ use Illuminate\Routing\Route;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Support\OpenAPI;
 use Illuminate\Routing\RouteCollection;
+use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
 use Seier\Resting\Tests\Meta\PersonResource;
@@ -318,11 +319,6 @@ class OpenAPITest extends TestCase
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
 
-        file_put_contents(
-            'aids.json',
-            json_encode($schema, JSON_PRETTY_PRINT)
-        );
-
         $this->assertArraySubset(
             ['type' => 'array', 'nullable' => false, 'items' => []],
             $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
@@ -371,6 +367,86 @@ class OpenAPITest extends TestCase
         $this->assertArraySubset(
             ['type' => 'number', 'nullable' => true, 'format' => 'double'],
             $schema['paths']['/j']['get']['responses']['200']['content']['application/json']['schema']
+        );
+    }
+
+    public function testOutputSupportsResourceUnionResponseTypes()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['GET'], 'a', fn (): PersonResource|PetResource => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertArraySubset(
+            [
+                'nullable' => false,
+                'oneOf' => [
+                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
+                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
+                ]
+            ],
+            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
+        );
+    }
+
+    public function testOutputSupportsNullableResourceUnionResponseTypes()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['GET'], 'a', fn (): PersonResource|PetResource|null => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertArraySubset(
+            [
+                'nullable' => true,
+                'oneOf' => [
+                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
+                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
+                ]
+            ],
+            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
+        );
+    }
+
+    public function testOutputSupportsResourceUnionScalarResponseTypes()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['GET'], 'a', fn (): int|string => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertArraySubset(
+            [
+                'nullable' => false,
+                'oneOf' => [
+                    ['type' => 'string'],
+                    ['type' => 'integer'],
+                ]
+            ],
+            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
+        );
+    }
+
+    public function testOutputSupportsNullableResourceUnionScalarResponseTypes()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['GET'], 'a', fn (): int|string|null => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $this->assertArraySubset(
+            [
+                'nullable' => true,
+                'oneOf' => [
+                    ['type' => 'string'],
+                    ['type' => 'integer'],
+                ]
+            ],
+            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
         );
     }
 
