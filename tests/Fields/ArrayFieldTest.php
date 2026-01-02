@@ -200,6 +200,7 @@ class ArrayFieldTest extends TestCase
 
         $this->assertHasError($exception, NullableValidationError::class, path: '3');
         $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
     }
 
     public function testCanAllowNullElements()
@@ -213,6 +214,8 @@ class ArrayFieldTest extends TestCase
             [1, 2, 3, null],
             $this->instance->get()
         );
+
+        $this->assertTrue($this->instance->allowsNullElements());
     }
 
     public function testAllowNullsCanDisallowNullAfterBeingAllowed()
@@ -227,5 +230,6 @@ class ArrayFieldTest extends TestCase
 
         $this->assertHasError($exception, NullableValidationError::class, path: '3');
         $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
     }
 }
