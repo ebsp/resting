@@ -25,7 +25,7 @@ class ResourceArrayFieldTest extends TestCase
     {
         parent::setUp();
 
-        $this->instance = new ResourceArrayField(fn() => new PersonResource);
+        $this->instance = new ResourceArrayField(fn () => new PersonResource);
     }
 
     public function testGetEmptyReturnsNull()
@@ -169,5 +169,55 @@ class ResourceArrayFieldTest extends TestCase
             ['name' => $nameB],
             ['name' => $nameC],
         ], $this->instance->get());
+    }
+
+    public function testDoesNotAllowNullElementsByDefault()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([
+                null,
+                new PersonResource(),
+            ]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '0');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testCanAllowNullElements()
+    {
+        $this->instance->allowNullElements();
+
+        $this->instance->set([
+            new PersonResource(),
+            null,
+            new PersonResource(),
+        ]);
+
+        $this->assertTrue($this->instance->allowsNullElements());
+        $this->assertCount(3, $elements = $this->instance->get());
+
+        $this->assertInstanceOf(PersonResource::class, $elements[0]);
+        $this->assertNull($elements[1]);
+        $this->assertInstanceOf(PersonResource::class, $elements[2]);
+    }
+
+    public function testAllowNullsCanDisallowNullAfterBeingAllowed()
+    {
+        $this->instance->allowNullElements(true);
+        $this->instance->allowNullElements(false);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([
+                new PersonResource(),
+                new PersonResource(),
+                null,
+            ]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '2');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
     }
 }

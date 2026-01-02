@@ -18,6 +18,7 @@ use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Exceptions\ValidationExceptionHandler;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
+use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Secondary\Arrays\ArrayValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
@@ -134,6 +135,16 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
         foreach ($value as $index => $element) {
 
+            if ($element === null) {
+                if ($this->allowsNullElements()) {
+                    $resources[] = null;
+                } else {
+                    $errors[] = (new NullableValidationError)->prependPath($index);
+                }
+
+                continue;
+            }
+
             if ($element instanceof Resource && $this->reflectionClass->isInstance($element)) {
                 $resources[] = $element;
                 continue;
@@ -150,7 +161,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
             }
 
             $exceptionHandler = new ValidationExceptionHandler();
-            $exceptionHandler->suppress($index, fn() => $resource->set($element));
+            $exceptionHandler->suppress($index, fn () => $resource->set($element));
             $exceptionHandler->moveErrors($errors);
         }
 
@@ -191,23 +202,54 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         return $this->resource;
     }
 
+    public function allowNullElements(bool $state = true): static
+    {
+        $this->validator->allowNullElements(state: $state);
+
+        return $this;
+    }
+
+    public function allowsNullElements(): bool
+    {
+        return $this->validator->allowsNullElements();
+    }
+
     public function type(): array
     {
         if ($this->resource instanceof UnionResource) {
             return [
                 'type' => 'array',
-                'items' => ['oneOf' => array_map(function ($resource) {
-                    return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
-                }, $this->resource->getDependantResources())],
+                'items' => [
+                    'oneOf' => array_map(fn ($resource) => [
+                        'nullable' => $this->allowsNullElements(),
+                        '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))
+                    ], $this->resource->getDependantResources())
+                ],
+            ];
+        }
+
+        if ($this->allowsNullElements()) {
+            return [
+                'type' => 'array',
+                'items' => [
+                    'oneOf' => [
+                        ['type' => 'null'],
+                        [
+                            'type' => 'object',
+                            '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(get_class($this->resource)))
+                        ]
+                    ]
+                ]
             ];
         }
 
         return [
             'type' => 'array',
             'items' => [
+                'type' => 'object',
                 '$ref' => OpenAPI::componentPath(
                     OpenAPI::resourceRefName(get_class($this->resource))
-                ),
+                )
             ]
         ];
     }

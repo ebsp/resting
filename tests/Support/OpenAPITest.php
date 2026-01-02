@@ -10,11 +10,13 @@ use Seier\Resting\Support\OpenAPI;
 use Illuminate\Routing\RouteCollection;
 use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
+use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Tests\Meta\UnionParentResource;
 use Seier\Resting\Tests\Meta\ArrayFieldsResource;
 use Seier\Resting\Tests\Meta\UnionListParentResource;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
+use Seier\Resting\Tests\Meta\ArrayResourceFieldsResource;
 
 class OpenAPITest extends TestCase
 {
@@ -260,6 +262,41 @@ class OpenAPITest extends TestCase
                 ]
             ],
             $component['properties']['with_nullable_booleans']
+        );
+    }
+
+    public function testOutputSupportsResourceArrayFieldElementValidation()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn (ArrayResourceFieldsResource $r) => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $component = $this->assertComponentExists($schema, ArrayResourceFieldsResource::class);
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class)),
+                ]
+            ],
+            $component['properties']['persons']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'oneOf' => [
+                        ['type' => 'null'],
+                        ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))]
+                    ]
+                ]
+            ],
+            $component['properties']['nullable_persons']
         );
     }
 
