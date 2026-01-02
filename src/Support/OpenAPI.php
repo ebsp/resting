@@ -5,6 +5,7 @@ namespace Seier\Resting\Support;
 use ReflectionClass;
 use ReflectionParameter;
 use Seier\Resting\Query;
+use ReflectionNamedType;
 use Seier\Resting\Params;
 use Illuminate\Support\Arr;
 use Seier\Resting\Resource;
@@ -189,7 +190,7 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeEndpoint(Route $route, $method): array
     {
         $endpoint = [
-            'description' => $route->_docs ?? null,
+            'description' => $route->_docs ?? '',
             'responses' => [
                 '200' => [
                     "content" => [
@@ -354,25 +355,45 @@ class OpenAPI implements Arrayable, Responsable
 
     protected function describeResponse(Route $route)
     {
-        $response = [];
-        $type = null;
         $classes = [];
+        $responseType = [];
+        $returnType = null;
 
         if ($type = $route->action['controller'] ?? null) {
             list($_class, $_method) = explode('@', $type);
             $reflectionClass = new ReflectionClass($_class);
-            $return = $reflectionClass->getMethod($_method)->getReturnType();
-            if ($return && ($return instanceof \ReflectionNamedType) && (new ReflectionClass($return->getName()))->isSubclassOf(Resource::class))
-                $classes[] = $return->getName();
+            $returnType = $reflectionClass->getMethod($_method)->getReturnType();
         } elseif ($route->action['uses'] instanceof \Closure) {
             $reflectionFunction = new \ReflectionFunction($route->action['uses']);
-            $return = $reflectionFunction->getReturnType();
-            if ($return && ($return instanceof \ReflectionNamedType) && (new ReflectionClass($return->getName()))->isSubclassOf(Resource::class))
-                $classes[] = $return->getName();
+            $returnType = $reflectionFunction->getReturnType();
         }
 
         foreach ((array)$route->_lists as $type) {
             $classes[] = $type;
+        }
+
+        if ($returnType && $returnType->isBuiltin()) {
+            $responseType = ['schema' => [
+                'nullable' => $returnType->allowsNull(),
+                'description' => '',
+                ...(match ($returnType->getName()) {
+                    'string' => ['type' => 'string'],
+                    'float' => [
+                        'type' => 'number',
+                        'format' => 'double',
+                    ],
+                    'bool' => ['type' => 'boolean'],
+                    'array' => ['type' => 'array', 'items' => []],
+                    'object' => ['type' => 'object'],
+                    'int' => [
+                        'type' => 'integer',
+                        'format' => 'int64'
+                    ],
+                    default => [],
+                })
+            ]];
+        } else if ($returnType instanceof ReflectionNamedType && (new ReflectionClass($returnType->getName()))->isSubclassOf(Resource::class)) {
+            $classes[] = $returnType->getName();
         }
 
         $transform = $classes;
@@ -399,7 +420,7 @@ class OpenAPI implements Arrayable, Responsable
                 return ['$ref' => static::componentPath(static::resourceRefName($_className))];
             }, array_unique($classes));
 
-            $response = [
+            $responseType = [
                 'schema' => $lists ? [
                     'type' => 'array',
                     'items' => [
@@ -409,7 +430,7 @@ class OpenAPI implements Arrayable, Responsable
             ];
         }
 
-        return $response;
+        return $responseType;
     }
 
     protected function isUnionSubclass($className)

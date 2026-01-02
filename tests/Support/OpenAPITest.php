@@ -157,7 +157,7 @@ class OpenAPITest extends TestCase
     public function testOutputSupportsArrayFieldElementValidation()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn (ArrayFieldsResource $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'x', fn (ArrayFieldsResource $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -268,7 +268,7 @@ class OpenAPITest extends TestCase
     public function testOutputSupportsResourceArrayFieldElementValidation()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn (ArrayResourceFieldsResource $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'x', fn (ArrayResourceFieldsResource $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -280,6 +280,7 @@ class OpenAPITest extends TestCase
                 'type' => 'array',
                 'items' => [
                     'type' => 'object',
+                    'nullable' => false,
                     '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class)),
                 ]
             ],
@@ -290,13 +291,86 @@ class OpenAPITest extends TestCase
             [
                 'type' => 'array',
                 'items' => [
-                    'oneOf' => [
-                        ['type' => 'null'],
-                        ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))]
-                    ]
+                    'type' => 'object',
+                    'nullable' => true,
+                    '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class)),
                 ]
             ],
             $component['properties']['nullable_persons']
+        );
+    }
+
+    public function testOutputSupportsScalarReturnValues()
+    {
+        $routeCollection = new RouteCollection();
+
+        $routeCollection->add((new Route(['GET'], 'a', fn (): array => null)));
+        $routeCollection->add((new Route(['GET'], 'b', fn (): bool => null)));
+        $routeCollection->add((new Route(['GET'], 'c', fn (): int => null)));
+        $routeCollection->add((new Route(['GET'], 'd', fn (): string => null)));
+        $routeCollection->add((new Route(['GET'], 'e', fn (): float => null)));
+        $routeCollection->add((new Route(['GET'], 'f', fn (): ?array => null)));
+        $routeCollection->add((new Route(['GET'], 'g', fn (): ?bool => null)));
+        $routeCollection->add((new Route(['GET'], 'h', fn (): ?int => null)));
+        $routeCollection->add((new Route(['GET'], 'i', fn (): ?string => null)));
+        $routeCollection->add((new Route(['GET'], 'j', fn (): ?float => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        file_put_contents(
+            'aids.json',
+            json_encode($schema, JSON_PRETTY_PRINT)
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'array', 'nullable' => false, 'items' => []],
+            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'boolean', 'nullable' => false],
+            $schema['paths']['/b']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'integer', 'nullable' => false, 'format' => 'int64'],
+            $schema['paths']['/c']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'string', 'nullable' => false],
+            $schema['paths']['/d']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'number', 'nullable' => false, 'format' => 'double'],
+            $schema['paths']['/e']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'array', 'nullable' => true, 'items' => []],
+            $schema['paths']['/f']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'boolean', 'nullable' => true],
+            $schema['paths']['/g']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'integer', 'nullable' => true, 'format' => 'int64'],
+            $schema['paths']['/h']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'string', 'nullable' => true],
+            $schema['paths']['/i']['get']['responses']['200']['content']['application/json']['schema']
+        );
+
+        $this->assertArraySubset(
+            ['type' => 'number', 'nullable' => true, 'format' => 'double'],
+            $schema['paths']['/j']['get']['responses']['200']['content']['application/json']['schema']
         );
     }
 
