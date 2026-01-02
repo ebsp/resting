@@ -4,11 +4,13 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\ArrayField;
+use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Tests\Meta\SuiteEnum;
 use Seier\Resting\Tests\Support\TestEnum;
 use Seier\Resting\Validation\IntValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\SuiteResource;
+use Seier\Resting\Validation\BoolValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
@@ -231,5 +233,35 @@ class ArrayFieldTest extends TestCase
         $this->assertHasError($exception, NullableValidationError::class, path: '3');
         $this->assertNull($this->instance->get());
         $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testOfMethodsCanSetNullability()
+    {
+        $this->instance->ofIntegers(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofStrings(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofNumbers(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofBooleans(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofTimes(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofArrays(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofCarbons(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofEnums(SuiteEnum::class, nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->of(validator: new BoolValidator(), parser: new BoolParser(), nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
     }
 }

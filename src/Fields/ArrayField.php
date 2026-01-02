@@ -70,8 +70,12 @@ class ArrayField extends Field
         return parent::set($value);
     }
 
-    public function ofStrings(callable $config = null): static
+    public function ofStrings(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new StringValidator();
         $parser = new StringParser();
 
@@ -82,8 +86,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofIntegers(callable $config = null): static
+    public function ofIntegers(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new IntValidator();
         $parser = new IntParser();
 
@@ -94,8 +102,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofNumbers(callable $config = null): static
+    public function ofNumbers(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new NumberValidator();
         $parser = new NumberParser();
 
@@ -106,8 +118,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofBooleans(callable $config = null): static
+    public function ofBooleans(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new BoolValidator();
         $parser = new BoolParser();
 
@@ -118,8 +134,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofTimes(callable $config = null): static
+    public function ofTimes(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new TimeValidator();
         $parser = new TimeParser();
 
@@ -130,8 +150,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofArrays(callable $config = null): static
+    public function ofArrays(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new ArrayValidator();
         $parser = new ArrayParser();
 
@@ -142,8 +166,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofCarbons(callable $config = null): static
+    public function ofCarbons(callable $config = null, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         $validator = new CarbonValidator();
         $parser = new CarbonParser();
 
@@ -154,8 +182,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofEnums(string|ReflectionEnum $enumType): static
+    public function ofEnums(string|ReflectionEnum $enumType, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+
         if (is_string($enumType)) {
             $enumType = new ReflectionEnum($enumType);
         }
@@ -166,8 +198,12 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function of(PrimaryValidator $validator, Parser $parser): static
+    public function of(PrimaryValidator $validator, Parser $parser, ?bool $nullable = null): static
     {
+        if ($nullable !== null) {
+            $this->validator->allowNullElements(state: $nullable);
+        }
+        
         $this->setElementValidator($validator);
         $this->setElementParser($parser);
 
