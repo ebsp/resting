@@ -174,6 +174,13 @@ class ArrayField extends Field
         return $this;
     }
 
+    public function allowNulls(bool $state = true): static
+    {
+        $this->validator->allowNulls(state: $state);
+
+        return $this;
+    }
+
     public function setElementValidator(PrimaryValidator $validator): static
     {
         $this->validator->setElementValidator($validator);
@@ -200,7 +207,7 @@ class ArrayField extends Field
         }
 
         return array_map(
-            fn(mixed $value) => $value instanceof \BackedEnum
+            fn (mixed $value) => $value instanceof \BackedEnum
                 ? $value->value
                 : $value,
             $this->value,

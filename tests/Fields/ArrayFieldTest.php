@@ -189,4 +189,43 @@ class ArrayFieldTest extends TestCase
             $resource->toResponseArray()
         );
     }
+
+    public function testDoesNotAllowNullElementsByDefault()
+    {
+        $this->instance->ofIntegers();
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([1, 2, 3, null]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '3');
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testCanAllowNullElements()
+    {
+        $this->instance->ofIntegers();
+        $this->instance->allowNulls();
+
+        $this->instance->set([1, 2, 3, null]);
+
+        $this->assertSame(
+            [1, 2, 3, null],
+            $this->instance->get()
+        );
+    }
+
+    public function testAllowNullsCanDisallowNullAfterBeingAllowed()
+    {
+        $this->instance->ofIntegers();
+        $this->instance->allowNulls(true);
+        $this->instance->allowNulls(false);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([1, 2, 3, null]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '3');
+        $this->assertNull($this->instance->get());
+    }
 }
