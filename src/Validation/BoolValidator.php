@@ -22,4 +22,11 @@ class BoolValidator extends BasePrimaryValidator implements PrimaryValidator
 
         return $this->runValidators($value);
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'boolean',
+        ];
+    }
 }

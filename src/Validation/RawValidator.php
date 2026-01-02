@@ -13,4 +13,11 @@ class RawValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return [];
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'any'
+        ];
+    }
 }

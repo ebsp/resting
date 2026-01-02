@@ -53,8 +53,8 @@ class CarbonPeriodValidator extends BasePrimaryValidator implements PrimaryValid
         }
 
         $errors = [];
-        $errors = array_merge($errors, array_map(fn(ValidationError $e) => $e->prependPath('start'), $this->startValidator->validate($value->start)));
-        $errors = array_merge($errors, array_map(fn(ValidationError $e) => $e->prependPath('end'), $value->end ? $this->endValidator->validate($value->end) : []));
+        $errors = array_merge($errors, array_map(fn (ValidationError $e) => $e->prependPath('start'), $this->startValidator->validate($value->start)));
+        $errors = array_merge($errors, array_map(fn (ValidationError $e) => $e->prependPath('end'), $value->end ? $this->endValidator->validate($value->end) : []));
         $errors = array_merge($errors, $this->runValidators($value));
 
         return $errors;
@@ -105,5 +105,16 @@ class CarbonPeriodValidator extends BasePrimaryValidator implements PrimaryValid
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
     {
         return $this;
+    }
+    
+    public function type(): array
+    {
+        return [
+            'type' => 'array',
+            'items' => [
+                'type' => 'string',
+                'format' => 'date-time',
+            ]
+        ];
     }
 }

@@ -125,9 +125,6 @@ class TimeField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'string',
-            'format' => 'time',
-        ];
+        return $this->validator->type();
     }
 }

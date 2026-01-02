@@ -12,10 +12,13 @@ use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Tests\Meta\UnionParentResource;
+use Seier\Resting\Tests\Meta\ArrayFieldsResource;
 use Seier\Resting\Tests\Meta\UnionListParentResource;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 
 class OpenAPITest extends TestCase
 {
+    use ArraySubsetAsserts;
 
     public function testConstructor()
     {
@@ -32,7 +35,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceCompositionHasSchemaResources()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/composition', fn(UnionParentResource $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/composition', fn (UnionParentResource $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -45,7 +48,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceInheritance()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn(UnionResourceBase $r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn (UnionResourceBase $r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -58,7 +61,7 @@ class OpenAPITest extends TestCase
     public function testInputUnionResourceVariadic()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn(UnionResourceBase ...$r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn (UnionResourceBase ...$r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -71,7 +74,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceHasLiteralDiscriminatorKey()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn(UnionResourceBase ...$r) => null)));
+        $routeCollection->add((new Route(['POST'], 'input/union/variadic', fn (UnionResourceBase ...$r) => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -89,7 +92,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceComposition()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/variadic', fn(): UnionParentResource => null)));
+        $routeCollection->add((new Route(['POST'], 'output/union/variadic', fn (): UnionParentResource => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -102,7 +105,7 @@ class OpenAPITest extends TestCase
     public function testOutputUnionResourceInheritance()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn(): UnionResourceBase => null)));
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn (): UnionResourceBase => null)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -120,7 +123,7 @@ class OpenAPITest extends TestCase
         });
 
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn() => null))->lists(UnionResourceBase::class));
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn () => null))->lists(UnionResourceBase::class));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -138,7 +141,7 @@ class OpenAPITest extends TestCase
         });
 
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn(): UnionResourceBase => null))->lists([UnionParentResource::class, UnionResourceBase::class]));
+        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn (): UnionResourceBase => null))->lists([UnionParentResource::class, UnionResourceBase::class]));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -149,10 +152,121 @@ class OpenAPITest extends TestCase
         $this->assertComponentExists($schema, UnionResourceB::class);
     }
 
+    public function testOutputSupportsArrayFieldElementValidation()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add((new Route(['POST'], 'input/union/inheritance', fn (ArrayFieldsResource $r) => null)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $component = $this->assertComponentExists($schema, ArrayFieldsResource::class);
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'nullable' => false,
+                ]
+            ],
+            $component['properties']['with_strings']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer',
+                    'nullable' => false,
+                ]
+            ],
+            $component['properties']['with_integers']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'nullable' => false,
+                    'enum' => [
+                        'hearts',
+                        'diamonds',
+                        'clubs',
+                        'spades',
+                    ]
+                ]
+            ],
+            $component['properties']['with_enums']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'boolean',
+                    'nullable' => false,
+                ]
+            ],
+            $component['properties']['with_booleans']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'nullable' => true,
+                ]
+            ],
+            $component['properties']['with_nullable_strings']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer',
+                    'nullable' => true,
+                ]
+            ],
+            $component['properties']['with_nullable_integers']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'nullable' => true,
+                    'enum' => [
+                        'hearts',
+                        'diamonds',
+                        'clubs',
+                        'spades',
+                    ]
+                ]
+            ],
+            $component['properties']['with_nullable_enums']
+        );
+
+        $this->assertArraySubset(
+            [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'boolean',
+                    'nullable' => true,
+                ]
+            ],
+            $component['properties']['with_nullable_booleans']
+        );
+    }
+
     public function testInputOutputUnionListParentResource()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add(new Route(['POST'], 'output/union/list', fn(UnionListParentResource $resource) => null));
+        $routeCollection->add(new Route(['POST'], 'output/union/list', fn (UnionListParentResource $resource) => null));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -166,7 +280,7 @@ class OpenAPITest extends TestCase
     public function testInputHandleScalarParameters()
     {
         $routeCollection = new RouteCollection();
-        $routeCollection->add(new Route(['POST'], 'scalar_parameters', fn(string $string) => null));
+        $routeCollection->add(new Route(['POST'], 'scalar_parameters', fn (string $string) => null));
 
         $openAPI = new OpenAPI($routeCollection);
         $openAPI->toArray();

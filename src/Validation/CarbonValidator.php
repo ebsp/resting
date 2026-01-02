@@ -30,4 +30,12 @@ class CarbonValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return $this;
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'string',
+            'format' => 'date-time',
+        ];
+    }
 }

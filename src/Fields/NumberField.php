@@ -44,9 +44,7 @@ class NumberField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'number',
-        ];
+        return $this->validator->type();
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation

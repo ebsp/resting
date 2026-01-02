@@ -56,9 +56,6 @@ class IntField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'integer',
-            'format' => 'int64',
-        ];
+        return $this->validator->type();
     }
 }

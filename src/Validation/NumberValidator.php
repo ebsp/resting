@@ -31,4 +31,11 @@ class NumberValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return $this;
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'number',
+        ];
+    }
 }

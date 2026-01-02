@@ -130,15 +130,7 @@ class EnumField extends Field
 
     public function type(): array
     {
-        $options = [];
-        foreach ($this->reflectionEnum->getCases() as $case) {
-            $options[] = $case->getBackingValue();
-        }
-
-        return [
-            'type' => 'string',
-            'enum' => $options,
-        ];
+        return $this->validator->type();
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation

@@ -40,9 +40,7 @@ class BoolField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'boolean',
-        ];
+        return $this->validator->type();
     }
 
     public function isTrue(bool $strict = true): bool

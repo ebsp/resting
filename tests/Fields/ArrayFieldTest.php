@@ -205,7 +205,7 @@ class ArrayFieldTest extends TestCase
     public function testCanAllowNullElements()
     {
         $this->instance->ofIntegers();
-        $this->instance->allowNulls();
+        $this->instance->allowNullElements();
 
         $this->instance->set([1, 2, 3, null]);
 
@@ -218,8 +218,8 @@ class ArrayFieldTest extends TestCase
     public function testAllowNullsCanDisallowNullAfterBeingAllowed()
     {
         $this->instance->ofIntegers();
-        $this->instance->allowNulls(true);
-        $this->instance->allowNulls(false);
+        $this->instance->allowNullElements(true);
+        $this->instance->allowNullElements(false);
 
         $exception = $this->assertThrowsValidationException(function () {
             $this->instance->set([1, 2, 3, null]);

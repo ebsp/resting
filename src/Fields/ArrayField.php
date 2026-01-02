@@ -174,11 +174,16 @@ class ArrayField extends Field
         return $this;
     }
 
-    public function allowNulls(bool $state = true): static
+    public function allowNullElements(bool $state = true): static
     {
-        $this->validator->allowNulls(state: $state);
+        $this->validator->allowNullElements(state: $state);
 
         return $this;
+    }
+
+    public function allowsNullElements(): bool
+    {
+        return $this->validator->allowsNullElements();
     }
 
     public function setElementValidator(PrimaryValidator $validator): static
@@ -216,9 +221,6 @@ class ArrayField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'array',
-            'items' => [],
-        ];
+        return $this->validator->type();
     }
 }

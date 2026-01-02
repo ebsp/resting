@@ -125,9 +125,7 @@ class CarbonPeriodField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'array',
-        ];
+        return $this->validator->type();
     }
 
     private function fromArray(array $values): CarbonPeriod

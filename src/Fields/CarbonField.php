@@ -110,10 +110,7 @@ class CarbonField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'string',
-            'format' => 'date-time',
-        ];
+        return $this->validator->type();
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation

@@ -39,8 +39,6 @@ class RawField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'any'
-        ];
+        return $this->validator->type();
     }
 }

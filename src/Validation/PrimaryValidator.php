@@ -18,4 +18,6 @@ interface PrimaryValidator extends Validator, SupportsSecondaryValidation
     public function withValidator(SecondaryValidator $validator): static;
 
     public function withLateBoundValidator(ValidatorResolver $resolver): static;
+    
+    public function type(): array;
 }

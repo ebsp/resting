@@ -15,11 +15,26 @@ class ArrayValidator extends BasePrimaryValidator implements PrimaryValidator
     use ArrayValidation;
 
     private ?PrimaryValidator $elementValidator = null;
-    private bool $allowNulls = false;
+    private bool $allowsNullElements = false;
 
     public function description(): string
     {
-        return "The value must be an array";
+        $result = "The value must be an array.";
+
+        if ($this->elementValidator !== null) {
+            $result .= " ";
+            $result .= "The following must hold for the elements: ";
+            $result .= $this->elementValidator->description();
+        }
+
+        $result .= " ";
+        if ($this->allowsNullElements) {
+            $result .= "The elements can be null.";
+        } else {
+            $result .= "The elements must not be null.";
+        }
+
+        return $result;
     }
 
     public function validate(mixed $value): array
@@ -31,9 +46,9 @@ class ArrayValidator extends BasePrimaryValidator implements PrimaryValidator
         $errors = $this->runValidators($value);
         foreach ($value as $elementIndex => $elementValue) {
 
-            if (!$this->allowNulls && $elementValue === null) {
+            if (!$this->allowsNullElements && $elementValue === null) {
                 $errors[] = (new NullableValidationError)->prependPath($elementIndex);
-            } else if ($this->allowNulls && $elementValue === null) {
+            } else if ($this->allowsNullElements && $elementValue === null) {
                 continue;
             } else if ($this->elementValidator) {
                 $elementErrors = $this->elementValidator->validate($elementValue);
@@ -52,15 +67,51 @@ class ArrayValidator extends BasePrimaryValidator implements PrimaryValidator
         $this->elementValidator = $validator;
     }
 
-    public function allowNulls(bool $state = true): static
+    public function getElementValidator(): ?PrimaryValidator
     {
-        $this->allowNulls = $state;
+        return $this->elementValidator;
+    }
+
+    public function allowNullElements(bool $state = true): static
+    {
+        $this->allowsNullElements = $state;
 
         return $this;
+    }
+
+    public function allowsNullElements(): bool
+    {
+        return $this->allowsNullElements;
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation
     {
         return $this;
+    }
+
+    public function type(): array
+    {
+        $elementsAreNullable = $this->allowsNullElements();
+        $elementValidator = $this->getElementValidator();
+
+        $items = match ($elementValidator ? $elementValidator::class : null) {
+            IntValidator::class,
+            StringValidator::class,
+            NumberValidator::class,
+            ArrayValidation::class,
+            EnumValidator::class,
+            BoolValidator::class,
+            CarbonValidator::class,
+            CarbonPeriodValidator::class,
+            TimeValidator::class => $elementValidator->type(),
+            default => [],
+        };
+
+        $items['nullable'] = $elementsAreNullable;
+
+        return [
+            'type' => 'array',
+            'items' => $items,
+        ];
     }
 }
