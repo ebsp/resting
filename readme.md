@@ -48,9 +48,3 @@ class UserResource extends \Seier\Resting\Resource
 	}
 }
 ```
-
-## Todo
-
-- [ ] Achieve 100% test coverage
-- [ ] Clean up and finalize OAPI specs
-- [ ] Add more documentation
