@@ -29,15 +29,15 @@ class RestingMiddleware
     {
         $this->request = $request;
 
-        // validate that we received json
+        // validate that we received JSON
         $this->validateIsJsonBody();
 
         // clear all parameters for the route, so we can create our own
         $parameters = $this->clearRouteParameters();
-
+        
         // fills the route parameters array with resources and inputs from the request
         $this->createRouteParameters($parameters);
-
+        
         // when the marshalling caused validation errors, respond with 422
         if ($this->hasValidationErrors()) {
             return $this->respondWithValidationErrors();
@@ -156,7 +156,7 @@ class RestingMiddleware
 
     protected function resolveResource(string $resourceName, bool $nullable, bool $isVariadic = false)
     {
-        $content = json_decode($this->request->getContent(), true);
+        $content = json_decode($this->request->getContent());
 
         $marshaller = new ResourceMarshaller();
         $factory = ClosureResourceFactory::from($resourceName);

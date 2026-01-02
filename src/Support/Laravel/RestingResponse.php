@@ -10,10 +10,10 @@ use Illuminate\Contracts\Support\Responsable;
 class RestingResponse implements Responsable
 {
 
-    private array $data;
+    private mixed $data;
     private int $status;
 
-    public function __construct(array $data, int $status = 200)
+    public function __construct(mixed $data, int $status = 200)
     {
         $this->data = $data;
         $this->status = $status;
@@ -24,14 +24,14 @@ class RestingResponse implements Responsable
         $resources = $resources instanceof Collection ? $resources->toArray() : $resources;
 
         return new static(array_map(function ($resource) {
-            return $resource instanceof RestingResource ? $resource->toResponseArray() : $resource;
+            return $resource instanceof RestingResource ? $resource->toResponseObject() : $resource;
         }, $resources), $status);
     }
 
     public static function fromResource(RestingResource $resource, int $status = 200): static
     {
         return new static(
-            $resource->toResponseArray(),
+            $resource->toResponseObject(),
             $status
         );
     }

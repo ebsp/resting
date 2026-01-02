@@ -4,9 +4,11 @@
 namespace Seier\Resting\Tests\Marshaller;
 
 
+use stdClass;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\DynamicResource;
 use Seier\Resting\Fields\RawField;
+use Seier\Resting\ResourceFactory;
 use Seier\Resting\Fields\TimeField;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Fields\StringField;
@@ -22,12 +24,14 @@ use Seier\Resting\Tests\Meta\ActivityResource;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Tests\Meta\UnionParentResource;
+use Seier\Resting\Marshaller\ResourceMarshallerResult;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Errors\NotStringValidationError;
 use Seier\Resting\Validation\Errors\ForbiddenValidationError;
+use Seier\Resting\Validation\Errors\NotObjectValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 use Seier\Resting\ResourceValidation\ResourceAttributeComparisonValidationError;
@@ -53,7 +57,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResource()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $name = $this->faker->name,
             'age' => $age = $this->faker->randomNumber(2),
         ]);
@@ -73,7 +77,7 @@ class ResourceMarshallerTest extends TestCase
             return $resource;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $name = $this->faker->name,
             'age' => $this->faker->randomNumber(2),
         ]);
@@ -89,7 +93,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalNullableResourceWhenNull()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalNullableResource($factory, null);
+        $result = $this->runMarshalNullableResource($factory, null);
 
         $this->assertFalse($result->hasErrors());
         $this->assertNull($result->getValue());
@@ -98,7 +102,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalNullableResourceWhenNotNull()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalNullableResource($factory, [
+        $result = $this->runMarshalNullableResource($factory, [
             'name' => $name = $this->faker->name,
             'age' => $age = $this->faker->randomNumber(2),
         ]);
@@ -119,7 +123,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'age' => $this->faker->randomNumber(2),
         ]);
 
@@ -136,7 +140,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $this->assertFalse($result->hasErrors());
         $this->assertType($result->getValue(), function (PersonResource $person) {
@@ -154,7 +158,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
             'age' => $this->faker->randomNumber(2),
         ]);
@@ -172,7 +176,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $name = $this->faker->name,
         ]);
 
@@ -192,7 +196,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => null,
             'age' => null,
         ]);
@@ -213,7 +217,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => null,
             'age' => $this->faker->randomNumber(2),
         ]);
@@ -230,7 +234,7 @@ class ResourceMarshallerTest extends TestCase
             return $activity;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'start' => $start = now(),
             'end' => null,
         ]);
@@ -250,7 +254,7 @@ class ResourceMarshallerTest extends TestCase
             return $activity;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'start' => $start = now(),
             'end' => $end = $start->copy()->addSecond(),
         ]);
@@ -270,7 +274,7 @@ class ResourceMarshallerTest extends TestCase
             return $activity;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'start' => $start = now(),
             'end' => $end = $start->copy(),
         ]);
@@ -282,7 +286,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceField()
     {
         $factory = $this->resourceFactory(PetResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $petName = $this->faker->name,
             'owner' => [
                 'name' => $ownerName = $this->faker->name,
@@ -301,7 +305,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayField()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $grade = $this->faker->randomNumber(1),
             'students' => [
                 ['name' => $nameA = $this->faker->name, 'age' => $ageA = $this->faker->randomNumber(2)],
@@ -322,7 +326,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayFieldOfEnums()
     {
         $factory = $this->resourceFactory(SuiteResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'suites' => [
                 SuiteEnum::Diamonds->value,
                 SuiteEnum::Clubs->value,
@@ -345,7 +349,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalUnionResource()
     {
         $factory = $this->resourceFactory(UnionResourceBase::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'discriminator' => $discriminator = 'b',
             'value' => $value = $this->faker->word,
             'b' => $b = $this->faker->word,
@@ -362,7 +366,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceWithUnionResource()
     {
         $factory = $this->resourceFactory(UnionParentResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'other' => $other = $this->faker->word,
             'union' => [
                 'discriminator' => 'b',
@@ -387,9 +391,9 @@ class ResourceMarshallerTest extends TestCase
         $resource = new ResourceAttributeComparisonTestResource();
         $resource->only($resource->int_field_a, $resource->int_field_b);
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'int_field_a' => 1,
             'int_field_b' => 0,
         ]);
@@ -406,9 +410,9 @@ class ResourceMarshallerTest extends TestCase
         $resource = new ResourceAttributeComparisonTestResource();
         $resource->only($resource->int_field_a, $resource->int_field_b);
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'int_field_a' => 1,
             'int_field_b' => 1,
         ]);
@@ -425,9 +429,9 @@ class ResourceMarshallerTest extends TestCase
         $resource->int_field_a->nullable();
         $resource->int_field_b->nullable();
         $resource->greaterThan($resource->int_field_a, $resource->int_field_b);
-        $factory = $this->resourceFactory(fn() => $resource);
+        $factory = $this->resourceFactory(fn () => $resource);
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'int_field_a' => null,
             'int_field_b' => null,
         ]);
@@ -438,7 +442,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArray()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResources($factory, [
+        $result = $this->runMarshalResources($factory, [
             ['name' => $nameA = $this->faker->name, 'age' => $ageA = $this->faker->randomNumber(2)],
             ['name' => $nameB = $this->faker->name, 'age' => $ageB = $this->faker->randomNumber(2)],
         ]);
@@ -452,20 +456,31 @@ class ResourceMarshallerTest extends TestCase
         $this->assertEquals($ageB, $persons[1]->age->get());
     }
 
-    public function testMarshalResourceArrayEmpty()
+    public function testMarshalResourceWhenProvidedEmptyObject()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResources($factory, []);
+        $result = $this->runMarshalResources($factory, new stdClass);
+
+        $this->assertTrue($result->hasErrors());
+        $this->assertSame([], $result->getValue());
+        $this->assertCount(0, $result->getValue());
+
+        $this->assertHasError($result->getErrors(), NotArrayValidationError::class, path: '');
+    }
+
+    public function testMarshalResourceWhenProvidedEmptyArray()
+    {
+        $factory = $this->resourceFactory(PersonResource::class);
+        $result = $this->runMarshalResources($factory, []);
 
         $this->assertFalse($result->hasErrors());
-        $this->assertIsArray($result->getValue());
-        $this->assertCount(0, $result->getValue());
+        $this->assertSame([], $result->getValue());
     }
 
     public function testMarshalUnionResourceArray()
     {
         $factory = $this->resourceFactory(UnionResourceBase::class);
-        $result = $this->instance->marshalResources($factory, [
+        $result = $this->runMarshalResources($factory, [
             ['discriminator' => 'a', 'a' => $a = $this->faker->word, 'value' => $valueA = $this->faker->word],
             ['discriminator' => 'b', 'b' => $b = $this->faker->word, 'value' => $valueB = $this->faker->word],
         ]);
@@ -484,7 +499,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayWithUnionResource()
     {
         $factory = $this->resourceFactory(UnionParentResource::class);
-        $result = $this->instance->marshalResources($factory, [
+        $result = $this->runMarshalResources($factory, [
             [
                 'other' => $otherA = $this->faker->word,
                 'union' => ['discriminator' => 'a', 'a' => $a = $this->faker->word, 'value' => $valueA = $this->faker->word],
@@ -514,7 +529,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayWithResourceField()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResources($factory, [[
+        $result = $this->runMarshalResources($factory, [[
             'grade' => $grade = $this->faker->randomNumber(1),
             'students' => [
                 ['name' => $nameA = $this->faker->name, 'age' => $ageA = $this->faker->randomNumber(2)],
@@ -541,7 +556,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayWhenProvidedJsonObject()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResources($factory, [
+        $result = $this->runMarshalResources($factory, [
             'name' => $this->faker->name,
             'age' => $this->faker->randomNumber(2),
         ]);
@@ -553,7 +568,7 @@ class ResourceMarshallerTest extends TestCase
     public function testMarshalResourceArrayFieldWhenProvidedJsonObject()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->randomNumber(1),
             'students' => [
                 'name' => $this->faker->name,
@@ -568,7 +583,7 @@ class ResourceMarshallerTest extends TestCase
     public function testRequiredValidationOnFields()
     {
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'age' => 0,
         ]);
 
@@ -579,7 +594,7 @@ class ResourceMarshallerTest extends TestCase
     public function testRequiredValidationOnNestedFields()
     {
         $factory = $this->resourceFactory(PetResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
             'owner' => [
                 'name' => $this->faker->name,
@@ -593,7 +608,7 @@ class ResourceMarshallerTest extends TestCase
     public function testRequiredValidationOnResourceArrayField()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [[
                 'name' => $this->faker->name,
@@ -607,7 +622,7 @@ class ResourceMarshallerTest extends TestCase
     public function testRequiredValidationOnManyResourcesInResourceArrayField()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [
                 ['name' => $this->faker->name],
@@ -623,10 +638,10 @@ class ResourceMarshallerTest extends TestCase
     public function testRequiredValidationManyOnSameResourceInResourceArrayField()
     {
         $factory = $this->resourceFactory(ClassResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [
-                [],
+                new stdClass,
             ]
         ]);
 
@@ -644,7 +659,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
         ]);
 
@@ -665,7 +680,7 @@ class ResourceMarshallerTest extends TestCase
             });
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
             'owner' => [
                 'name' => $this->faker->name,
@@ -689,7 +704,7 @@ class ResourceMarshallerTest extends TestCase
             });
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [[
                 'name' => $this->faker->name,
@@ -713,7 +728,7 @@ class ResourceMarshallerTest extends TestCase
             });
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [
                 ['name' => $this->faker->name],
@@ -739,7 +754,7 @@ class ResourceMarshallerTest extends TestCase
             });
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'grade' => $this->faker->numberBetween(0, 9),
             'students' => [
                 ['name' => $this->faker->name, 'age' => $this->faker->randomNumber(2)],
@@ -754,7 +769,7 @@ class ResourceMarshallerTest extends TestCase
     public function testNullableWhenProvidedNull()
     {
         $factory = $this->personNullable();
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => null,
             'age' => null,
         ]);
@@ -769,7 +784,7 @@ class ResourceMarshallerTest extends TestCase
     public function testNullableWhenProvidedValue()
     {
         $factory = $this->personNullable();
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $name = $this->faker->name,
             'age' => $age = $this->faker->randomNumber(2),
         ]);
@@ -784,7 +799,7 @@ class ResourceMarshallerTest extends TestCase
     public function testNullableValidationWhenNotProvided()
     {
         $factory = $this->personNullable();
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $this->assertCount(1, $result->getErrorsForPath('name'));
         $this->assertCount(1, $result->getErrorsForPath('age'));
@@ -800,7 +815,7 @@ class ResourceMarshallerTest extends TestCase
     public function testNullableResourceField()
     {
         $factory = $this->petWithNullableOwner();
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
             'owner' => null,
         ]);
@@ -814,7 +829,7 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationWhenUnionResourceDiscriminatorIsMissing()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(UnionResourceBase::class), [
+        $result = $this->runMarshalResource($this->resourceFactory(UnionResourceBase::class), [
             'value' => 'value'
         ]);
 
@@ -824,7 +839,7 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationWhenUnionResourceDiscriminatorIsUnknown()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(UnionResourceBase::class), [
+        $result = $this->runMarshalResource($this->resourceFactory(UnionResourceBase::class), [
             'discriminator' => 'unknown'
         ]);
 
@@ -834,7 +849,7 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationWhenFieldValidationFails()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(PersonResource::class), [
+        $result = $this->runMarshalResource($this->resourceFactory(PersonResource::class), [
             'name' => 0,
             'age' => 1,
         ]);
@@ -845,7 +860,7 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationWhenThereAreManyErrorsOnSameResource()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(PersonResource::class), [
+        $result = $this->runMarshalResource($this->resourceFactory(PersonResource::class), [
             'name' => 0,
             'age' => '',
         ]);
@@ -857,7 +872,7 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationOnNestedResourceFields()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(PetResource::class), [
+        $result = $this->runMarshalResource($this->resourceFactory(PetResource::class), [
             'name' => $this->faker->name,
             'owner' => [
                 'name' => 0,
@@ -871,18 +886,18 @@ class ResourceMarshallerTest extends TestCase
 
     public function testValidationWhenRootResourceProvidedString()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(PersonResource::class), '');
+        $result = $this->runMarshalResource($this->resourceFactory(PersonResource::class), '');
 
         $this->assertCount(1, $errors = $result->getErrors());
-        $this->assertHasError($errors, NotArrayValidationError::class);
+        $this->assertHasError($errors, NotObjectValidationError::class);
     }
 
     public function testValidationWhenRootResourceProvidedInteger()
     {
-        $result = $this->instance->marshalResource($this->resourceFactory(PersonResource::class), 0);
+        $result = $this->runMarshalResource($this->resourceFactory(PersonResource::class), 0);
 
         $this->assertCount(1, $errors = $result->getErrors());
-        $this->assertHasError($errors, NotArrayValidationError::class);
+        $this->assertHasError($errors, NotObjectValidationError::class);
     }
 
     public function testMarshalResourceFieldSetsFilledTrueWhenProvided()
@@ -894,7 +909,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $this->faker->name,
             'age' => $this->faker->randomNumber(2)
         ]);
@@ -914,7 +929,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => null,
             'age' => null
         ]);
@@ -934,7 +949,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $resource = $result->getValue();
         assert($resource instanceof PersonResource);
@@ -951,7 +966,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -969,7 +984,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, ['age' => null]);
+        $result = $this->runMarshalResource($factory, ['age' => null]);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -987,7 +1002,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -1005,7 +1020,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, ['age' => null]);
+        $result = $this->runMarshalResource($factory, ['age' => null]);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -1024,7 +1039,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, ['name' => '..']);
+        $result = $this->runMarshalResource($factory, ['name' => '..']);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -1042,7 +1057,7 @@ class ResourceMarshallerTest extends TestCase
             return $person;
         });
 
-        $result = $this->instance->marshalResource($factory, ['name' => '..']);
+        $result = $this->runMarshalResource($factory, ['name' => '..']);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -1059,7 +1074,7 @@ class ResourceMarshallerTest extends TestCase
             return $pet;
         });
 
-        $result = $this->instance->marshalResource($factory, []);
+        $result = $this->runMarshalResource($factory, new stdClass);
 
         $this->assertFalse($result->hasErrors());
         $resource = $result->getValue();
@@ -1073,7 +1088,7 @@ class ResourceMarshallerTest extends TestCase
         $this->instance->isStringBased();
 
         $factory = $this->resourceFactory(PersonResource::class);
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'name' => $name = $this->faker->name,
             'age' => $age = '1',
         ]);
@@ -1097,7 +1112,7 @@ class ResourceMarshallerTest extends TestCase
             return $dynamic;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'time' => '',
             'carbon' => '',
             'string' => '',
@@ -1131,7 +1146,7 @@ class ResourceMarshallerTest extends TestCase
             return $dynamic;
         });
 
-        $result = $this->instance->marshalResource($factory, [
+        $result = $this->runMarshalResource($factory, [
             'raw_array' => [],
             'raw_int' => 1,
             'raw_string' => "raw",
@@ -1162,5 +1177,32 @@ class ResourceMarshallerTest extends TestCase
             $this->assertTrue($resource->raw_true->get());
 
         });
+    }
+
+    private function runMarshalResource(ResourceFactory $factory, mixed $data): ResourceMarshallerResult
+    {
+        if (is_array($data)) {
+            $data = json_decode(json_encode($data));
+        }
+
+        return $this->instance->marshalResource($factory, $data);
+    }
+
+    private function runMarshalNullableResource(ResourceFactory $factory, mixed $data): ResourceMarshallerResult
+    {
+        if (is_array($data)) {
+            $data = json_decode(json_encode($data));
+        }
+
+        return $this->instance->marshalNullableResource($factory, $data);
+    }
+
+    private function runMarshalResources(ResourceFactory $factory, mixed $data): ResourceMarshallerResult
+    {
+        if (is_array($data)) {
+            $data = json_decode(json_encode($data));
+        }
+
+        return $this->instance->marshalResources($factory, $data);
     }
 }

@@ -4,22 +4,25 @@ namespace Seier\Resting\Support\Laravel;
 
 use Exception;
 use ReflectionClass;
-use ReflectionMethod;
+use ReflectionNamedType;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
+use ReflectionFunctionAbstract;
 use Illuminate\Support\Collection;
 use Seier\Resting\Support\Transformer;
 use Seier\Resting\Support\Resourcable;
 use Seier\Resting\Support\BaseTransformer;
+use Symfony\Component\HttpFoundation\Response;
 
 trait UsesResting
 {
-
     protected Request $request;
+
+    public abstract function resolveReflectionFunction(string $methodName): ReflectionFunctionAbstract;
 
     public function callAction($method, $parameters)
     {
-        $this->request = request();
+        $this->request = $this->request ?? request();
 
         $result = $this->{$method}(...$this->handleVariadicParameters($method, $parameters));
 
@@ -46,7 +49,7 @@ trait UsesResting
             $result = RestingResponse::fromResources($result);
         }
 
-        if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+        if ($result instanceof Response) {
             return $result;
         }
 
@@ -55,7 +58,7 @@ trait UsesResting
         }
 
         if ($result instanceof Resource) {
-            return new RestingResponse($result->toResponseArray());
+            return new RestingResponse($result->toResponseObject());
         }
 
         return $result;
@@ -63,7 +66,7 @@ trait UsesResting
 
     private function handleVariadicParameters(string $method, array $parameters): array
     {
-        $methodReflection = new ReflectionMethod($this, $method);
+        $methodReflection = $this->resolveReflectionFunction($method);
         $reflectionParameters = [];
         foreach ($methodReflection->getParameters() as $reflectionParameter) {
             $reflectionParameters[$reflectionParameter->getName()] = $reflectionParameter;
@@ -78,7 +81,7 @@ trait UsesResting
                     $reflectionParameter = $reflectionParameters[$parameterName];
                     if ($reflectionParameter->isVariadic()) {
                         $type = $reflectionParameters[$parameterName]->getType();
-                        if ($type instanceof \ReflectionNamedType) {
+                        if ($type instanceof ReflectionNamedType) {
                             $resourceName = $type->getName();
                             if ((new ReflectionClass($resourceName))->isSubclassOf(Resource::class)) {
                                 array_pop($values);
