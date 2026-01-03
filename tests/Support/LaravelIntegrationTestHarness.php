@@ -4,6 +4,7 @@ namespace Seier\Resting\Tests\Support;
 
 use Closure;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use ReflectionFunctionAbstract;
@@ -18,7 +19,7 @@ class LaravelIntegrationTestHarness
     use UsesResting;
 
     private RestingMiddleware $restingMiddleware;
-    private string $url;
+    private string $path;
     private Closure $actionClosure;
     private Route $route;
 
@@ -31,30 +32,38 @@ class LaravelIntegrationTestHarness
     public function __construct(
         array $methods,
         Closure $action,
+        ?string $path = null,
     )
     {
         $this->restingMiddleware = new RestingMiddleware();
-        $this->url = Str::random();
+        $this->path = trim($path ?? Str::random(), '/');
         $this->actionClosure = $action;
         $this->route = new Route(
             methods: $methods,
-            uri: $this->url,
+            uri: $this->path,
             action: $this->actionClosure,
         );
     }
 
-    public function request(string $content): LaravelIntegrationTestHarnessRunResult
+    public function request(?string $url = null, string $content = '', array $query = []): LaravelIntegrationTestHarnessRunResult
     {
+        $url ??= $this->path;
+        $url = trim($url, '/');
+
         $this->response = null;
         $this->actionCallArguments = null;
         $this->wasActionCalled = false;
 
-        $this->request = new Request(content: $content);
+        $server = $this->createFakeServerEnvironments(
+            requestPath: $url,
+            queryParameters: $query,
+        );
+
+        $this->request = new Request(query: $query, server: $server, content: $content);
         $this->request->setRouteResolver(fn () => $this->route);
         $this->route->bind($this->request);
-
         $this->response = $this->restingMiddleware->handle($this->request, function (Request $request) {
-            return $this->callAction('controllerMethod', $this->route->parameters());
+            return $this->callAction([$this, 'controllerMethod'][1], $this->route->parameters());
         });
 
         return new LaravelIntegrationTestHarnessRunResult(
@@ -76,5 +85,30 @@ class LaravelIntegrationTestHarness
         $this->wasActionCalled = true;
 
         return ($this->actionClosure)(...$this->actionCallArguments);
+    }
+
+    private function createFakeServerEnvironments(string $requestPath, array $queryParameters): array
+    {
+        $queryPath = "";
+        foreach ($queryParameters as $queryKey => $queryValue) {
+            $queryPath .= $queryPath === '' ? '?' : '&';
+            $queryPath .= "$queryKey=$queryValue";
+        }
+
+        return [
+            "DOCUMENT_ROOT" => "/api/public",
+            "REMOTE_ADDR" => "127.0.0.1",
+            "SERVER_SOFTWARE" => "PHP 8.2.29 Development Server",
+            "SERVER_PROTOCOL" => "HTTP/1.1",
+            "SERVER_NAME" => "127.0.0.1",
+            "SERVER_PORT" => "9000",
+            "REQUEST_URI" => "/$requestPath",
+            "REQUEST_METHOD" => Arr::random($this->route->methods()),
+            "SCRIPT_NAME" => "/index.php",
+            "SCRIPT_FILENAME" => "/api/public/index.php",
+            "PATH_INFO" => "/$requestPath",
+            "PHP_SELF" => "/index.php/$requestPath",
+            "HTTP_HOST" => "localhost:9000",
+        ];
     }
 }

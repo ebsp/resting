@@ -3,8 +3,11 @@
 namespace Seier\Resting\Tests\Support;
 
 use stdClass;
+use Illuminate\Http\Request;
 use Seier\Resting\Tests\TestCase;
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\Tests\Meta\PersonQuery;
+use Seier\Resting\Tests\Meta\PersonParams;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
@@ -111,5 +114,71 @@ class LaravelIntegrationTest extends TestCase
         $this->assertTrue($harnessRun->wasActionCalled());
         $this->assertInstanceOf(RestingResponse::class, $response = $harnessRun->getResponse());
         $this->assertSame(['data' => []], $response->toArray());
+    }
+
+    public function testCanParseContentIntoResource()
+    {
+        $name = $this->faker->uuid();
+        $age = 18;
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonResource $r) => $r,
+        );
+
+        $harnessRun = $harness->request(content: json_encode([
+            'name' => $name,
+            'age' => $age,
+        ]));
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+        $this->assertCount(1, $harnessRun->getActionCallArguments());
+
+        $this->assertInstanceOf(PersonResource::class, $person = $harnessRun->getActionCallArguments()[0]);
+        $this->assertSame($name, $person->name->get());
+        $this->assertSame($age, $person->age->get());
+    }
+
+    public function testCanParseQueryContentIntoResource()
+    {
+        $name = $this->faker->uuid();
+        $age = 18;
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonQuery $q) => $q,
+        );
+
+        $harnessRun = $harness->request(query: [
+            'name' => $name,
+            'age' => $age,
+        ]);
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+        $this->assertCount(1, $harnessRun->getActionCallArguments());
+
+        $this->assertInstanceOf(PersonQuery::class, $person = $harnessRun->getActionCallArguments()[0]);
+        $this->assertSame($name, $person->name->get());
+        $this->assertSame($age, $person->age->get());
+    }
+
+    public function testCanParseParamContentIntoResource()
+    {
+        $name = $this->faker->uuid();
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonParams $p) => $p,
+            path: '/create-person/{name}'
+        );
+
+        $harnessRun = $harness->request(url: "/create-person/$name");
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+        $this->assertCount(1, $harnessRun->getActionCallArguments());
+
+        $this->assertInstanceOf(PersonParams::class, $person = $harnessRun->getActionCallArguments()[0]);
+        $this->assertSame($name, $person->name->get());
+        $this->assertNull($person->age->get());
     }
 }
