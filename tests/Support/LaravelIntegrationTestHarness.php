@@ -45,7 +45,7 @@ class LaravelIntegrationTestHarness
         );
     }
 
-    public function request(?string $url = null, string $content = '', array $query = []): LaravelIntegrationTestHarnessRunResult
+    public function request(?string $url = null, string $content = null, array $query = []): LaravelIntegrationTestHarnessRunResult
     {
         $url ??= $this->path;
         $url = trim($url, '/');

@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support\Laravel;
 
 use Closure;
+use stdClass;
 use ReflectionClass;
 use Seier\Resting\Query;
 use ReflectionNamedType;
@@ -162,7 +163,7 @@ class RestingMiddleware
         $factory = ClosureResourceFactory::from($resourceName);
         $result = $isVariadic
             ? $marshaller->marshalResources($factory, $content)
-            : ($nullable ? $marshaller->marshalNullableResource($factory, $content) : $marshaller->marshalResource($factory, $content));
+            : ($nullable ? $marshaller->marshalNullableResource($factory, $content) : $marshaller->marshalResource($factory, $content ?? new stdClass));
 
         $this->appendErrors($result, $this->bodyErrors);
 

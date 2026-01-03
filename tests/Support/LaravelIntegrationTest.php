@@ -11,6 +11,7 @@ use Seier\Resting\Tests\Meta\PersonParams;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
+use Seier\Resting\Tests\Meta\NotRequiredPersonResource;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 
 class LaravelIntegrationTest extends TestCase
@@ -56,14 +57,21 @@ class LaravelIntegrationTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response = $harnessRun->getResponse());
 
         $this->assertSame(422, $response->getStatusCode());
+
         $this->assertArraySubset(
             [
                 'message' => 'One or more errors prevented the request from being fulfilled.',
                 'errors' => [
-                    'body' => [[
-                        'path' => '',
-                        'message' => 'The value was expected to be an object, null received instead.'
-                    ]]
+                    'body' => [
+                        [
+                            'path' => 'name',
+                            'message' => 'Value is required, but was not received.'
+                        ],
+                        [
+                            'path' => 'age',
+                            'message' => 'Value is required, but was not received.'
+                        ]
+                    ]
                 ]
             ],
             json_decode($response->getContent(), JSON_OBJECT_AS_ARRAY)
@@ -179,6 +187,41 @@ class LaravelIntegrationTest extends TestCase
 
         $this->assertInstanceOf(PersonParams::class, $person = $harnessRun->getActionCallArguments()[0]);
         $this->assertSame($name, $person->name->get());
+        $this->assertNull($person->age->get());
+    }
+
+    public function testWhenContentNotProvidedAndNothingExpected()
+    {
+        $name = $this->faker->uuid();
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['GET'],
+            action: fn (PersonParams $p) => $p,
+            path: '/search/{name}'
+        );
+
+        $harnessRun = $harness->request(url: "/search/$name", content: null);
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+
+        $this->assertInstanceOf(PersonParams::class, $person = $harnessRun->getActionCallArguments()[0]);
+        $this->assertSame($name, $person->name->get());
+    }
+
+    public function testContentCanBeNullWhenThereAreOnlyNonRequiredFields()
+    {
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['GET'],
+            action: fn (NotRequiredPersonResource $p) => $p,
+            path: '/search'
+        );
+
+        $harnessRun = $harness->request(url: "/search", content: null);
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+
+        $this->assertInstanceOf(NotRequiredPersonResource::class, $person = $harnessRun->getActionCallArguments()[0]);
+        $this->assertNull($person->name->get());
         $this->assertNull($person->age->get());
     }
 }
