@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Seier\Resting\Tests\Meta\PersonQuery;
 use Seier\Resting\Tests\Meta\PersonParams;
 use Seier\Resting\Tests\Meta\PersonResource;
+use Seier\Resting\Tests\Meta\CarbonPeriodQuery;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
 use Seier\Resting\Tests\Meta\NotRequiredPersonResource;
@@ -226,7 +227,7 @@ class LaravelIntegrationTest extends TestCase
     public function testWhenExpectingOneResourceButProvidedArrayOfObjects()
     {
         $harness = new LaravelIntegrationTestHarness(
-            methods: ['POST'],
+            methods: ['POST'], 
             action: fn (PersonResource $p) => $p,
         );
 
@@ -238,5 +239,23 @@ class LaravelIntegrationTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $response = $harnessRun->getResponse());
         $this->assertStringContainsString('The value was expected to be an object, array [object] received instead.', $response->getContent());
+    }
+
+    public function testWhenExpectingCarbonPeriodFieldInQuery()
+    {
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (CarbonPeriodQuery $p) => $p,
+            path: '/search'
+        );
+
+        $harnessRun = $harness->request(url: '/search', query: ['period' => '2025-01-01,2025-01-01']);
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+        $this->assertInstanceOf(RestingResponse::class, $harnessRun->getResponse());
+        $this->assertCount(1, $harnessRun->getActionCallArguments());
+        $this->assertInstanceOf(CarbonPeriodQuery::class, $query = $harnessRun->getActionCallArguments()[0]);
+        $this->assertSame('2025-01-01', $query->period->start()->toDateString());
+        $this->assertSame('2025-01-01', $query->period->end()->toDateString());
     }
 }
