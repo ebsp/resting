@@ -6,8 +6,8 @@ namespace Seier\Resting\Tests\Validation;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Validation\BoolValidator;
-use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NotBoolValidationError;
 

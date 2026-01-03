@@ -5,8 +5,8 @@ namespace Seier\Resting\Tests\Validation\Secondary\String;
 
 
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Validation\Secondary\String\StringRegexValidationError;
 use Seier\Resting\Validation\Secondary\String\StringLengthValidationError;
 use Seier\Resting\Validation\Secondary\String\StringMinLengthValidationError;

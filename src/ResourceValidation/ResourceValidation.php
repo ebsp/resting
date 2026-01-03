@@ -3,7 +3,6 @@
 namespace Seier\Resting\ResourceValidation;
 
 use Seier\Resting\Fields\Field;
-use Seier\Resting\Validation\Predicates\Predicate;
 
 trait ResourceValidation
 {

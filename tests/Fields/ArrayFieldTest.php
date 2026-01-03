@@ -37,7 +37,7 @@ class ArrayFieldTest extends TestCase
         $this->assertNull($this->instance->get());
     }
 
-    public function getGetCanReturnArray()
+    public function getGetCanReturnArray(): void
     {
         $this->instance->set([]);
         $this->assertEquals([], $this->instance->get());

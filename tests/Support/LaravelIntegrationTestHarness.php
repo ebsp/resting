@@ -9,10 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use ReflectionFunctionAbstract;
 use Seier\Resting\Support\Laravel\UsesResting;
+use Symfony\Component\HttpFoundation\Response;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
-use Symfony\Component\HttpFoundation\Response;
 
 class LaravelIntegrationTestHarness
 {

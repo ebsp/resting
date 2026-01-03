@@ -3,7 +3,6 @@
 namespace Seier\Resting\Tests\Support;
 
 use stdClass;
-use Illuminate\Http\Request;
 use Seier\Resting\Tests\TestCase;
 use Illuminate\Http\JsonResponse;
 use Seier\Resting\Tests\Meta\PersonQuery;
@@ -57,7 +56,6 @@ class LaravelIntegrationTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response = $harnessRun->getResponse());
 
         $this->assertSame(422, $response->getStatusCode());
-
         $this->assertArraySubset(
             [
                 'message' => 'One or more errors prevented the request from being fulfilled.',
@@ -223,5 +221,22 @@ class LaravelIntegrationTest extends TestCase
         $this->assertInstanceOf(NotRequiredPersonResource::class, $person = $harnessRun->getActionCallArguments()[0]);
         $this->assertNull($person->name->get());
         $this->assertNull($person->age->get());
+    }
+
+    public function testWhenExpectingOneResourceButProvidedArrayOfObjects()
+    {
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonResource $p) => $p,
+        );
+
+        $harnessRun = $harness->request(content: json_encode([
+            ['name' => $this->faker->uuid(), 'age' => 1],
+        ]));
+
+        $this->assertFalse($harnessRun->wasActionCalled());
+
+        $this->assertInstanceOf(JsonResponse::class, $response = $harnessRun->getResponse());
+        $this->assertStringContainsString('The value was expected to be an object, array [object] received instead.', $response->getContent());
     }
 }
