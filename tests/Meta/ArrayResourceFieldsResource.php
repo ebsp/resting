@@ -3,7 +3,6 @@
 namespace Seier\Resting\Tests\Meta;
 
 use Seier\Resting\Resource;
-use Seier\Resting\Fields\ArrayField;
 use Seier\Resting\Fields\ResourceArrayField;
 
 class ArrayResourceFieldsResource extends Resource

@@ -5,8 +5,8 @@ namespace Seier\Resting\Tests\Validation\Secondary\Numeric;
 
 
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MaxValidationError;

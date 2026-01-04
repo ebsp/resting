@@ -5,8 +5,8 @@ namespace Seier\Resting\Tests\Validation\Secondary\Anonymous;
 
 
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Validation\Secondary\Anonymous\AnonymousValidationError;
 
 class AnonymousValidationTest extends TestCase

@@ -2,9 +2,11 @@
 
 namespace Seier\Resting\Support;
 
+use Closure;
 use ArrayObject;
 use ReflectionType;
 use ReflectionClass;
+use ReflectionFunction;
 use ReflectionParameter;
 use Seier\Resting\Query;
 use ReflectionNamedType;
@@ -26,10 +28,10 @@ use Illuminate\Contracts\Support\Responsable;
 class OpenAPI implements Arrayable, Responsable
 {
 
-    public $document;
-    protected $routes;
-    protected $resources = [];
-    protected $parameters = [];
+    public array $document = [];
+    protected RouteCollection $routes;
+    protected array $resources = [];
+    protected array $parameters = [];
 
     public function __construct(RouteCollection $collection)
     {
@@ -38,7 +40,7 @@ class OpenAPI implements Arrayable, Responsable
         $this->process();
     }
 
-    protected function process()
+    protected function process(): void
     {
         $this->processInfo();
 
@@ -47,7 +49,7 @@ class OpenAPI implements Arrayable, Responsable
         $this->processParameters();
     }
 
-    protected function processInfo()
+    protected function processInfo(): void
     {
         $this->document['openapi'] = '3.0.0';
 
@@ -61,7 +63,7 @@ class OpenAPI implements Arrayable, Responsable
         }
     }
 
-    protected function processParameters()
+    protected function processParameters(): void
     {
         foreach ($this->parameters as $query => $where) {
             /** @var Resource $query */
@@ -82,7 +84,7 @@ class OpenAPI implements Arrayable, Responsable
         }
     }
 
-    protected function processResources()
+    protected function processResources(): void
     {
         foreach ($this->resources as $resource => $_) {
             $resource = new $resource;
@@ -90,7 +92,7 @@ class OpenAPI implements Arrayable, Responsable
         }
     }
 
-    protected function describeResource(Resource $resource)
+    protected function describeResource(Resource $resource): void
     {
         $fields = $resource->fields()->filter(function ($attr) {
             $field = $attr instanceof Field;
@@ -172,12 +174,11 @@ class OpenAPI implements Arrayable, Responsable
         ];
     }
 
-    protected function processPaths()
+    protected function processPaths(): void
     {
         $paths = [];
 
         foreach ($this->routes->getRoutes() as $route) {
-            /** @var $route Route */
             $method = Arr::first(array_filter($route->methods(), function ($method) {
                 return !in_array($method, ['OPTIONS', 'HEAD']);
             }));
@@ -356,7 +357,7 @@ class OpenAPI implements Arrayable, Responsable
         return $endpoint;
     }
 
-    protected function describeResponse(Route $route)
+    protected function describeResponse(Route $route): array
     {
         $resourceClassesSeen = new ArrayObject();
         $responseType = [];
@@ -366,8 +367,8 @@ class OpenAPI implements Arrayable, Responsable
             list($_class, $_method) = explode('@', $type);
             $reflectionClass = new ReflectionClass($_class);
             $returnType = $reflectionClass->getMethod($_method)->getReturnType();
-        } elseif ($route->action['uses'] instanceof \Closure) {
-            $reflectionFunction = new \ReflectionFunction($route->action['uses']);
+        } elseif ($route->action['uses'] instanceof Closure) {
+            $reflectionFunction = new ReflectionFunction($route->action['uses']);
             $returnType = $reflectionFunction->getReturnType();
         }
 
@@ -403,7 +404,7 @@ class OpenAPI implements Arrayable, Responsable
                     array_filter(
                         $type->getTypes(),
                         function (ReflectionType $type) {
-                            
+
                             if ($type instanceof ReflectionNamedType && $type->getName() === 'null') {
                                 return false;
                             }
@@ -466,7 +467,7 @@ class OpenAPI implements Arrayable, Responsable
         return (new $className)->getDependantResources();
     }
 
-    protected function addResource($resourceName)
+    protected function addResource($resourceName): void
     {
         if ($resourceName !== UnionResource::class) {
             $resource = new $resourceName;
@@ -478,7 +479,7 @@ class OpenAPI implements Arrayable, Responsable
                 $this->resources[$resourceName] = [];
             }
 
-            foreach ($resource->fields() as $k => $field) {
+            foreach ($resource->fields() as $field) {
                 if ($field instanceof ResourceField && ($field->getResourcePrototype() instanceof UnionResource)) {
                     foreach ($field->getResourcePrototype()->getDependantResources() as $dependantResource) {
                         $this->addResource($dependantResource);
@@ -493,32 +494,32 @@ class OpenAPI implements Arrayable, Responsable
         }
     }
 
-    public function addParameter($queryClass, $where = 'query')
+    public function addParameter($queryClass, $where = 'query'): void
     {
         $this->parameters[$queryClass] = $where;
     }
 
-    public static function componentPath($component, $type = 'schemas')
+    public static function componentPath($component, $type = 'schemas'): string
     {
-        return "#/components/{$type}/{$component}";
+        return "#/components/$type/$component";
     }
 
-    public static function resourceRefName($resourceClass)
+    public static function resourceRefName($resourceClass): array|string
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $resourceClass);
     }
 
-    protected static function parametersRefName($queryClass, $propertyName)
+    protected static function parametersRefName($queryClass, $propertyName): string
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $queryClass) . '_' . $propertyName;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return $this->document;
     }
 
-    public function toResponse($request)
+    public function toResponse($request): JsonResponse
     {
         return new JsonResponse(
             $this->toArray()

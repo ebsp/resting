@@ -6,8 +6,8 @@ namespace Seier\Resting\Tests\Validation\Secondary\String;
 
 use Seier\Resting\Tests\TestCase;
 use Jchook\AssertThrows\AssertThrows;
-use Seier\Resting\Exceptions\RestingInternalException;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Exceptions\RestingInternalException;
 use Seier\Resting\Validation\Secondary\String\StringMaxLengthValidator;
 use Seier\Resting\Validation\Secondary\String\StringMaxLengthValidationError;
 

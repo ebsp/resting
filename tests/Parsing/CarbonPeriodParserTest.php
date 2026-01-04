@@ -8,10 +8,10 @@ use Carbon\Carbon;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonParseError;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Parsing\CarbonPeriodParser;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Parsing\CarbonPeriodParseError;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 
 class CarbonPeriodParserTest extends TestCase
 {

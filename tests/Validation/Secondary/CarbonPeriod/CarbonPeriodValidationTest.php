@@ -8,8 +8,8 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Carbon\CarbonInterval;
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Validation\Secondary\CarbonPeriod\CarbonPeriodMinDurationValidationError;
 use Seier\Resting\Validation\Secondary\CarbonPeriod\CarbonPeriodMaxDurationValidationError;
 

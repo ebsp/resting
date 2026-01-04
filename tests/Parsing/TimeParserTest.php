@@ -7,8 +7,8 @@ namespace Seier\Resting\Tests\Parsing;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Parsing\TimeParser;
 use Seier\Resting\Parsing\TimeParseError;
-use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Parsing\DefaultParseContext;
 
 class TimeParserTest extends TestCase
 {

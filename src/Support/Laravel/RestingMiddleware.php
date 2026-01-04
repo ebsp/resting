@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support\Laravel;
 
 use Closure;
+use stdClass;
 use ReflectionClass;
 use Seier\Resting\Query;
 use ReflectionNamedType;
@@ -29,7 +30,7 @@ class RestingMiddleware
     {
         $this->request = $request;
 
-        // validate that we received json
+        // validate that we received JSON
         $this->validateIsJsonBody();
 
         // clear all parameters for the route, so we can create our own
@@ -52,7 +53,7 @@ class RestingMiddleware
         $route = $this->request->route();
         foreach ($route->parameterNames() as $parameterName) {
             $parameters[$parameterName] = $route->parameter($parameterName);
-            $this->request->route()->forgetParameter($parameterName);
+            $route->forgetParameter($parameterName);
         }
 
         return $parameters;
@@ -114,24 +115,24 @@ class RestingMiddleware
         }
 
         if ($resourceClass->isSubclassOf(Query::class)) {
-            return $this->resolveQuery($resourceName);
+            return $this->resolveQueryResource($resourceName);
         }
 
         if ($resourceClass->isSubclassOf(Params::class)) {
-            return $this->resolveParam($resourceName);
+            return $this->resolveParamResource($resourceName);
         }
 
-        return $this->resolveResource($resourceName, $nullable, $isVariadic);
+        return $this->resolveBodyResource($resourceName, $nullable, $isVariadic);
     }
 
-    protected function resolveParam(string $resourceName)
+    protected function resolveParamResource(string $resourceName)
     {
         $marshaller = new ResourceMarshaller();
         $marshaller->isStringBased();
         $factory = ClosureResourceFactory::from($resourceName);
         $result = $marshaller->marshalResource(
             $factory,
-            $this->request->route()->originalParameters(),
+            (object)$this->request->route()->originalParameters(),
         );
 
         $this->appendErrors($result, $this->paramErrors);
@@ -139,14 +140,14 @@ class RestingMiddleware
         return $result->getValue();
     }
 
-    protected function resolveQuery(string $resourceName): Resource
+    protected function resolveQueryResource(string $resourceName): Resource
     {
         $marshaller = new ResourceMarshaller();
         $marshaller->isStringBased();
         $factory = ClosureResourceFactory::from($resourceName);
         $result = $marshaller->marshalResource(
             $factory,
-            $this->request->query->all(),
+            (object)$this->request->query->all(),
         );
 
         $this->appendErrors($result, $this->queryErrors);
@@ -154,15 +155,15 @@ class RestingMiddleware
         return $result->getValue();
     }
 
-    protected function resolveResource(string $resourceName, bool $nullable, bool $isVariadic = false)
+    protected function resolveBodyResource(string $resourceName, bool $nullable, bool $isVariadic = false)
     {
-        $content = json_decode($this->request->getContent(), true);
+        $content = json_decode($this->request->getContent());
 
         $marshaller = new ResourceMarshaller();
         $factory = ClosureResourceFactory::from($resourceName);
         $result = $isVariadic
             ? $marshaller->marshalResources($factory, $content)
-            : ($nullable ? $marshaller->marshalNullableResource($factory, $content) : $marshaller->marshalResource($factory, $content));
+            : ($nullable ? $marshaller->marshalNullableResource($factory, $content) : $marshaller->marshalResource($factory, $content ?? new stdClass));
 
         $this->appendErrors($result, $this->bodyErrors);
 
