@@ -62,7 +62,7 @@ class LaravelIntegrationTestHarness
         $this->request = new Request(query: $query, server: $server, content: $content);
         $this->request->setRouteResolver(fn () => $this->route);
         $this->route->bind($this->request);
-        $this->response = $this->restingMiddleware->handle($this->request, function (Request $request) {
+        $this->response = $this->restingMiddleware->handle($this->request, function () {
             return $this->callAction([$this, 'controllerMethod'][1], $this->route->parameters());
         });
 

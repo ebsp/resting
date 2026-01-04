@@ -4,6 +4,7 @@ namespace Seier\Resting\Support\Laravel;
 
 use Exception;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionNamedType;
 use Seier\Resting\Resource;
 use Illuminate\Http\Request;
@@ -16,14 +17,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 trait UsesResting
 {
-    protected Request $request;
-
-    public abstract function resolveReflectionFunction(string $methodName): ReflectionFunctionAbstract;
+    protected function resolveReflectionFunction(string $methodName): ReflectionFunctionAbstract
+    {
+        return new ReflectionMethod($this, $methodName);
+    }
 
     public function callAction($method, $parameters)
     {
-        $this->request = $this->request ?? request();
-
         $result = $this->{$method}(...$this->handleVariadicParameters($method, $parameters));
 
         if ($result instanceof Collection) {
