@@ -2,6 +2,7 @@
 
 namespace Seier\Resting;
 
+use stdClass;
 use Seier\Resting\Fields\Field;
 use Illuminate\Support\Collection;
 use Seier\Resting\Fields\ResourceField;
@@ -33,7 +34,7 @@ abstract class Resource implements Arrayable, Jsonable
 
     public static function fromArray(array $values): static
     {
-        return static::fromCollection(collect($values));
+        return static::fromCollection(collect((object)$values));
     }
 
     public static function fromCollection(Collection $values): static
@@ -89,7 +90,7 @@ abstract class Resource implements Arrayable, Jsonable
     public function setFieldsFromCollection(Collection $collection): static
     {
         $marshaller = new ResourceMarshaller();
-        $marshaller->marshalResourceFields($this, $collection->toArray());
+        $marshaller->marshalResourceFields($this, (object)$collection->toArray());
         if ($errors = $marshaller->getValidationErrors()) {
             throw new ValidationException($errors);
         }
@@ -278,6 +279,15 @@ abstract class Resource implements Arrayable, Jsonable
                 (!$this->removeEmptyArrays || $value !== [])
             );
         });
+    }
+
+    public function toResponseObject(array $filter = null, array $rename = null, bool $requireFilled = false): stdClass
+    {
+        return (object)$this->toResponseArray(
+            filter: $filter,
+            rename: $rename,
+            requireFilled: $requireFilled
+        );
     }
 
     public function removeNulls(bool $should): static

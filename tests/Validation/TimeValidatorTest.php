@@ -7,8 +7,8 @@ namespace Seier\Resting\Tests\Validation;
 use Seier\Resting\Fields\Time;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Validation\TimeValidator;
-use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NotTimeValidationError;
 

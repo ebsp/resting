@@ -5,10 +5,10 @@ namespace Seier\Resting\Tests\Validation;
 
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\ArrayValidator;
 use Seier\Resting\Tests\Meta\MockPrimaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockPrimaryValidationError;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
