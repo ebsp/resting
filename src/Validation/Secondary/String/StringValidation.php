@@ -60,7 +60,7 @@ trait StringValidation
         return $this;
     }
 
-    public function digits(int $length = null): static
+    public function digits(?int $length = null): static
     {
         $this->getSupportsSecondaryValidation()->withValidator(
             new StringRegexValidator('/^[0-9]+$/')

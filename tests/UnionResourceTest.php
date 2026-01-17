@@ -215,7 +215,7 @@ class UnionResourceTest extends TestCase
         $this->assertEquals('a_value', $return[0]->a->get());
         $this->assertEquals('a_value', $return[0]->value->get());
 
-        assert($return[0] instanceof UnionResourceB);
+        assert($return[1] instanceof UnionResourceB);
         $this->assertEquals('b_value', $return[1]->b->get());
         $this->assertEquals('b_value', $return[1]->value->get());
     }

@@ -22,7 +22,7 @@ trait NumericValidation
         return $this;
     }
 
-    public function decimalCount(int $min = null, int $max = null): static
+    public function decimalCount(?int $min = null, ?int $max = null): static
     {
         if ($min !== null || $max !== null) {
             $this->getSupportsSecondaryValidation()->withValidator(new DecimalCountValidator(

@@ -93,7 +93,7 @@ abstract class Field
      * @return $this
      * @throws ValidationException When the default value does not pass validation.
      */
-    public function omittedDefault(mixed $value, Predicate $predicate = null): static
+    public function omittedDefault(mixed $value, ?Predicate $predicate = null): static
     {
         $this->validateValue($value);
 
@@ -123,7 +123,7 @@ abstract class Field
      * @throws ValidationException When the default value does not pass validation.
      * @see Field::omittedDefault() Another way to register default values for fields.
      */
-    public function nullDefault(mixed $value, Predicate $predicate = null): static
+    public function nullDefault(mixed $value, ?Predicate $predicate = null): static
     {
         $this->validateValue($value);
 
@@ -152,7 +152,7 @@ abstract class Field
      * @see Field::omittedDefault() Another way to register default values for fields.
      * @see Field::nullDefault() Another way to register default values for the field.
      */
-    public function withDefault(mixed $value, Predicate $predicate = null): static
+    public function withDefault(mixed $value, ?Predicate $predicate = null): static
     {
         $this->required(false);
         $this->nullable();
