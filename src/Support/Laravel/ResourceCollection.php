@@ -38,7 +38,7 @@ class ResourceCollection extends Collection
         return $this;
     }
 
-    public static function fromCollection(Collection $collection, Transformer $transformer = null): ResourceCollection
+    public static function fromCollection(Collection $collection, ?Transformer $transformer = null): ResourceCollection
     {
         return (new static)->use($transformer)->from(
             $collection

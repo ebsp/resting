@@ -74,7 +74,7 @@ class ArrayField extends Field
         return parent::set($value);
     }
 
-    public function ofStrings(callable $config = null, ?bool $nullable = null): static
+    public function ofStrings(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -90,7 +90,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofIntegers(callable $config = null, ?bool $nullable = null): static
+    public function ofIntegers(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -106,7 +106,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofNumbers(callable $config = null, ?bool $nullable = null): static
+    public function ofNumbers(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -122,7 +122,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofBooleans(callable $config = null, ?bool $nullable = null): static
+    public function ofBooleans(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -138,7 +138,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofTimes(callable $config = null, ?bool $nullable = null): static
+    public function ofTimes(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -154,7 +154,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofArrays(callable $config = null, ?bool $nullable = null): static
+    public function ofArrays(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
@@ -170,7 +170,7 @@ class ArrayField extends Field
         return $this->of($validator, $parser);
     }
 
-    public function ofCarbons(callable $config = null, ?bool $nullable = null): static
+    public function ofCarbons(?callable $config = null, ?bool $nullable = null): static
     {
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
