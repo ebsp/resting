@@ -99,7 +99,7 @@ trait UsesResting
         return $values;
     }
 
-    public function transform($data, Transformer $transformer = null)
+    public function transform($data, ?Transformer $transformer = null)
     {
         if (!$transformer) {
             $transformer = new BaseTransformer;
