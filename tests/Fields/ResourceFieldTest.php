@@ -3,6 +3,7 @@
 namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\Person;
 use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
@@ -20,7 +21,7 @@ class ResourceFieldTest extends TestCase
     {
         parent::setUp();
 
-        $this->instance = new ResourceField(fn() => new PersonResource);
+        $this->instance = new ResourceField(fn () => new PersonResource);
     }
 
     public function testGetEmptyReturnsNull()
@@ -48,7 +49,7 @@ class ResourceFieldTest extends TestCase
 
     public function testSetWhenGivenArrayWithNullValuesCanOverride()
     {
-        $this->instance = new ResourceField(fn() => PersonResource::nullableName());
+        $this->instance = new ResourceField(fn () => PersonResource::nullableName());
 
         $this->instance->set(['name' => 'A', 'age' => 1]);
         $this->assertType($this->instance->get(), function (PersonResource $resource) {
@@ -116,5 +117,97 @@ class ResourceFieldTest extends TestCase
         $this->assertThrows(ValidationException::class, function () {
             $this->instance->set(null);
         });
+    }
+
+    public function testApplyCanSetValue()
+    {
+        $name = $this->faker->name;
+        $age = $this->faker->randomNumber(2);
+
+        $this->assertNull($this->instance->get());
+        $givenPersonResource = null;
+
+        $this->instance->apply(
+            function (PersonResource $resource) use ($age, $name, &$givenPersonResource) {
+                $resource->name->set($name);
+                $resource->age->set($age);
+                $givenPersonResource = $resource;
+            }
+        );
+
+        $value = $this->instance->get();
+        $this->assertSame($givenPersonResource, $value);
+        $this->assertInstanceOf(PersonResource::class, $value);
+        $this->assertSame($name, $value->name->get());
+        $this->assertSame($age, $value->age->get());
+    }
+
+    public function testApplyCanSetValueUsingFactoryMethod()
+    {
+        $name = $this->faker->name;
+        $age = $this->faker->randomNumber(2);
+        $person = Person::from($name, $age);
+
+        $this->assertNull($this->instance->get());
+
+        $this->instance->apply(
+            fn (PersonResource $resource) => $resource->from($person)
+        );
+
+        $value = $this->instance->get();
+        $this->assertInstanceOf(PersonResource::class, $value);
+        $this->assertSame($name, $value->name->get());
+        $this->assertSame($age, $value->age->get());
+    }
+
+    public function testApplyNullable()
+    {
+        $name = $this->faker->name;
+        $age = $this->faker->randomNumber(2);
+        $person = Person::from($name, $age);
+
+        $this->assertNull($this->instance->get());
+        $this->instance->applyNullable(
+            $person,
+            fn (PersonResource $resource) => $resource->from($person)
+        );
+
+        $value = $this->instance->get();
+        $this->assertInstanceOf(PersonResource::class, $value);
+        $this->assertSame($name, $value->name->get());
+        $this->assertSame($age, $value->age->get());
+
+        $this->instance->nullable();
+        $this->instance->applyNullable(
+            null,
+            fn (PersonResource $resource) => $resource->from(null) // Expected not to be called
+        );
+
+        $this->assertSame(null, $this->instance->get());
+        $this->assertTrue($this->instance->isNull());
+    }
+
+    public function testApplyNullableClosureIsGivenValue()
+    {
+        $name = $this->faker->name;
+        $age = $this->faker->randomNumber(2);
+        $person = Person::from($name, $age);
+
+        $givenValue = null;
+        $this->assertNull($this->instance->get());
+        $this->instance->applyNullable(
+            $person,
+            function (PersonResource $resource, Person $value) use ($person, &$givenValue) {
+                $givenValue = $value;
+                return $resource->from($person);
+            }
+        );
+
+        $value = $this->instance->get();
+        $this->assertInstanceOf(PersonResource::class, $value);
+        $this->assertSame($name, $value->name->get());
+        $this->assertSame($age, $value->age->get());
+
+        $this->assertSame($person, $givenValue);
     }
 }

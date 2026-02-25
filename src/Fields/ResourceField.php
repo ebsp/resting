@@ -83,6 +83,29 @@ class ResourceField extends Field
         return $this;
     }
 
+    public function apply(Closure $apply): static
+    {
+        $resource = $this->resource;
+        $apply($resource);
+        $this->set($resource);
+
+        return $this;
+    }
+
+    public function applyNullable(mixed $value, Closure $apply): static
+    {
+        if ($value === null) {
+            $this->set(null);
+            return $this;
+        }
+
+        $resource = $this->resource;
+        $apply($resource, $value);
+        $this->set($resource);
+
+        return $this;
+    }
+
     public function resourceAsDefault(): static
     {
         $this->nullDefault($this->resourceFactory);
