@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation\Secondary\CarbonPeriod;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Carbon\CarbonInterval;
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Validation\Errors\ValidationError;
@@ -15,10 +15,10 @@ class CarbonPeriodMinDurationValidationError implements ValidationError
     use HasPath;
 
     private CarbonInterval $min;
-    private Carbon $actualStart;
-    private Carbon $actualEnd;
+    private CarbonInterface $actualStart;
+    private CarbonInterface $actualEnd;
 
-    public function __construct(CarbonInterval $min, Carbon $actualStart, Carbon $actualEnd)
+    public function __construct(CarbonInterval $min, CarbonInterface $actualStart, CarbonInterface $actualEnd)
     {
         $this->min = $min;
         $this->actualStart = $actualStart;

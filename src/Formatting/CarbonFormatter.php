@@ -4,7 +4,7 @@
 namespace Seier\Resting\Formatting;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Seier\Resting\Validation\Secondary\Panics;
 
 class CarbonFormatter implements Formatter
@@ -20,7 +20,7 @@ class CarbonFormatter implements Formatter
             return null;
         }
 
-        if (!$value instanceof Carbon) {
+        if (!$value instanceof CarbonInterface) {
             $this->panic();
         }
 
