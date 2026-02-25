@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Tests\Fields;
 
+use Carbon\CarbonImmutable;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Parsing\CarbonParseError;
@@ -168,5 +169,56 @@ class CarbonFieldTest extends TestCase
 
         $this->instance->set('');
         $this->assertNull($this->instance->get());
+    }
+
+    public function testSetCarbonImmutableReturnsCarbonImmutable()
+    {
+        $now = CarbonImmutable::now();
+        $this->instance->set($now);
+        $this->assertInstanceOf(CarbonImmutable::class, $this->instance->get());
+    }
+
+    public function testSetCarbonImmutable()
+    {
+        $now = CarbonImmutable::now();
+        $this->instance->set($now);
+        $this->assertEquals($now->micro, $this->instance->get()->micro);
+    }
+
+    public function testSetCarbonImmutableReturnsNewInstance()
+    {
+        $now = CarbonImmutable::now();
+        $this->instance->set($now);
+        $this->assertNotSame($now, $this->instance->get());
+    }
+
+    public function testSetCarbonImmutableWithMinValidation()
+    {
+        $this->instance->min($limit = CarbonImmutable::now());
+        $this->assertDoesNotThrowValidationException(function () use ($limit) {
+            $this->instance->set($limit->addSecond());
+        });
+    }
+
+    public function testSetCarbonImmutableFailsMinValidation()
+    {
+        $this->instance->min($limit = CarbonImmutable::now());
+        $validationException = $this->assertThrowsValidationException(function () use ($limit) {
+            $this->instance->set($limit->subSecond());
+        });
+
+        $this->assertCount(1, $validationException->getErrors());
+        $this->assertHasError($validationException, MinValidationError::class);
+    }
+
+    public function testFormattedWithCarbonImmutable()
+    {
+        $now = CarbonImmutable::now();
+        $this->instance->set($now);
+
+        $this->assertEquals(
+            $now->toDateTimeString(),
+            $this->instance->formatted(),
+        );
     }
 }

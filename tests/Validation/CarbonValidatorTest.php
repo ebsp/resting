@@ -4,6 +4,7 @@
 namespace Seier\Resting\Tests\Validation;
 
 
+use Carbon\CarbonImmutable;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\CarbonValidator;
@@ -55,5 +56,10 @@ class CarbonValidatorTest extends TestCase
 
         $this->assertNotEmpty($errors = $this->instance->validate(now()));
         $this->assertHasError($errors, MockSecondaryValidationError::class);
+    }
+
+    public function testValidateCarbonImmutableInstance()
+    {
+        $this->assertEmpty($this->instance->validate(CarbonImmutable::now()));
     }
 }

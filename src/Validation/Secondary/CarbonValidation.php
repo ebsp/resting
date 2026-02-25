@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation\Secondary;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Seier\Resting\Fields\Field;
 use Seier\Resting\Fields\CarbonField;
 use Seier\Resting\Validation\Resolver\ClosureValidatorResolver;
@@ -16,11 +16,11 @@ trait CarbonValidation
 
     protected abstract function getSupportsSecondaryValidation(): SupportsSecondaryValidation;
 
-    public function min(Carbon|Field $min): static
+    public function min(CarbonInterface|Field $min): static
     {
         if ($min instanceof Field) {
             $this->getSupportsSecondaryValidation()->withLateBoundValidator(
-                ClosureValidatorResolver::whenNotNullThen($min, function (Carbon $resolved) {
+                ClosureValidatorResolver::whenNotNullThen($min, function (CarbonInterface $resolved) {
                     return $this->createMinValidator($resolved, inclusive: true);
                 })
             );
@@ -35,11 +35,11 @@ trait CarbonValidation
         return $this;
     }
 
-    public function max(Carbon|Field $max): static
+    public function max(CarbonInterface|Field $max): static
     {
         if ($max instanceof Field) {
             $this->getSupportsSecondaryValidation()->withLateBoundValidator(
-                ClosureValidatorResolver::whenNotNullThen($max, function (Carbon $resolved) {
+                ClosureValidatorResolver::whenNotNullThen($max, function (CarbonInterface $resolved) {
                     return $this->createMaxValidator($resolved, inclusive: true);
                 })
             );
@@ -54,11 +54,11 @@ trait CarbonValidation
         return $this;
     }
 
-    public function after(Carbon|Field $low): static
+    public function after(CarbonInterface|Field $low): static
     {
         if ($low instanceof Field) {
             $this->getSupportsSecondaryValidation()->withLateBoundValidator(
-                ClosureValidatorResolver::whenNotNullThen($low, function (Carbon $resolved) {
+                ClosureValidatorResolver::whenNotNullThen($low, function (CarbonInterface $resolved) {
                     return $this->createMinValidator($resolved, inclusive: false);
                 })
             );
@@ -73,11 +73,11 @@ trait CarbonValidation
         return $this;
     }
 
-    public function before(Carbon|Field $high): static
+    public function before(CarbonInterface|Field $high): static
     {
         if ($high instanceof CarbonField) {
             $this->getSupportsSecondaryValidation()->withLateBoundValidator(
-                ClosureValidatorResolver::whenNotNullThen($high, function (Carbon $resolved) {
+                ClosureValidatorResolver::whenNotNullThen($high, function (CarbonInterface $resolved) {
                     return $this->createMaxValidator($resolved, inclusive: false);
                 })
             );
@@ -92,7 +92,7 @@ trait CarbonValidation
         return $this;
     }
 
-    public function between(Carbon $from, Carbon $to): static
+    public function between(CarbonInterface $from, CarbonInterface $to): static
     {
         $this->min($from);
         $this->max($to);
@@ -100,23 +100,23 @@ trait CarbonValidation
         return $this;
     }
 
-    private function createMinValidator(Carbon $min, bool $inclusive): MinValidator
+    private function createMinValidator(CarbonInterface $min, bool $inclusive): MinValidator
     {
         return new MinValidator(
             $min,
             inclusive: $inclusive,
-            normalizer: fn(Carbon $carbon) => $carbon->unix(),
-            formatter: fn(Carbon $carbon) => $carbon->toDateString(),
+            normalizer: fn(CarbonInterface $carbon) => $carbon->unix(),
+            formatter: fn(CarbonInterface $carbon) => $carbon->toDateString(),
         );
     }
 
-    private function createMaxValidator(Carbon $max, bool $inclusive): MaxValidator
+    private function createMaxValidator(CarbonInterface $max, bool $inclusive): MaxValidator
     {
         return new MaxValidator(
             $max,
             inclusive: $inclusive,
-            normalizer: fn(Carbon $carbon) => $carbon->unix(),
-            formatter: fn(Carbon $carbon) => $carbon->toDateString(),
+            normalizer: fn(CarbonInterface $carbon) => $carbon->unix(),
+            formatter: fn(CarbonInterface $carbon) => $carbon->toDateString(),
         );
     }
 }

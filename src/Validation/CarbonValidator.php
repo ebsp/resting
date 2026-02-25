@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Seier\Resting\Validation\Secondary\CarbonValidation;
 use Seier\Resting\Validation\Errors\NotCarbonValidationError;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
@@ -21,7 +21,7 @@ class CarbonValidator extends BasePrimaryValidator implements PrimaryValidator
 
     public function validate(mixed $value): array
     {
-        return $value instanceof Carbon
+        return $value instanceof CarbonInterface
             ? $this->runValidators($value)
             : [new NotCarbonValidationError($value)];
     }

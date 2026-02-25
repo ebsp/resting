@@ -4,6 +4,8 @@
 namespace Seier\Resting\Tests\Fields;
 
 
+use Carbon\CarbonInterface;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonPeriodField;
@@ -154,5 +156,30 @@ class CarbonPeriodFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testSetArrayOfCarbonImmutable()
+    {
+        $from = CarbonImmutable::now();
+        $to = $from->addHour();
+
+        $this->instance->set([$from, $to]);
+        $this->assertNotNull($period = $this->instance->get());
+        $this->assertEquals($from->unix(), $period->start->unix());
+        $this->assertEquals($to->unix(), $period->end->unix());
+    }
+
+    public function testStartReturnsCarbonInterface()
+    {
+        $period = CarbonPeriod::create(now(), now()->addDay());
+        $this->instance->set($period);
+        $this->assertInstanceOf(CarbonInterface::class, $this->instance->start());
+    }
+
+    public function testEndReturnsCarbonInterface()
+    {
+        $period = CarbonPeriod::create(now(), now()->addDay());
+        $this->instance->set($period);
+        $this->assertInstanceOf(CarbonInterface::class, $this->instance->end());
     }
 }

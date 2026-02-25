@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation\Errors;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Seier\Resting\Support\HasPath;
 
 class CarbonPeriodOrderedRequiredValidationError implements ValidationError
@@ -12,10 +12,10 @@ class CarbonPeriodOrderedRequiredValidationError implements ValidationError
 
     use HasPath;
 
-    private Carbon $start;
-    private Carbon $end;
+    private CarbonInterface $start;
+    private CarbonInterface $end;
 
-    public function __construct(Carbon $start, Carbon $end)
+    public function __construct(CarbonInterface $start, CarbonInterface $end)
     {
         $this->start = $start;
         $this->end = $end;
