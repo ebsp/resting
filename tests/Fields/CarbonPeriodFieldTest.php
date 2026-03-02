@@ -4,7 +4,7 @@
 namespace Seier\Resting\Tests\Fields;
 
 
-use Carbon\CarbonInterface;
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Seier\Resting\Tests\TestCase;
@@ -169,17 +169,39 @@ class CarbonPeriodFieldTest extends TestCase
         $this->assertEquals($to->unix(), $period->end->unix());
     }
 
-    public function testStartReturnsCarbonInterface()
+    public function testStartReturnsCarbonInstance()
     {
-        $period = CarbonPeriod::create(now(), now()->addDay());
+        $period = CarbonPeriod::create(Carbon::now(), Carbon::now()->addDay());
         $this->instance->set($period);
-        $this->assertInstanceOf(CarbonInterface::class, $this->instance->start());
+        $this->assertInstanceOf(Carbon::class, $this->instance->start());
     }
 
-    public function testEndReturnsCarbonInterface()
+    public function testStartReturnsCarbonImmutableInstance()
     {
-        $period = CarbonPeriod::create(now(), now()->addDay());
+        $period = new CarbonPeriod();
+        $period->setDateClass(CarbonImmutable::class);
+        $period->setStartDate(CarbonImmutable::now());
+        $period->setEndDate(CarbonImmutable::now()->addDay());
+
         $this->instance->set($period);
-        $this->assertInstanceOf(CarbonInterface::class, $this->instance->end());
+        $this->assertInstanceOf(CarbonImmutable::class, $this->instance->start());
+    }
+
+    public function testEndReturnsCarbonInstance()
+    {
+        $period = CarbonPeriod::create(Carbon::now(), Carbon::now()->addDay());
+        $this->instance->set($period);
+        $this->assertInstanceOf(Carbon::class, $this->instance->end());
+    }
+
+    public function testEndReturnsCarbonImmutableInstance()
+    {
+        $period = new CarbonPeriod();
+        $period->setDateClass(CarbonImmutable::class);
+        $period->setStartDate(CarbonImmutable::now());
+        $period->setEndDate(CarbonImmutable::now()->addDay());
+
+        $this->instance->set($period);
+        $this->assertInstanceOf(CarbonImmutable::class, $this->instance->end());
     }
 }
