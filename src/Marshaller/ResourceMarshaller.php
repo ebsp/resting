@@ -4,6 +4,7 @@
 namespace Seier\Resting\Marshaller;
 
 
+use stdClass;
 use Seier\Resting\UnionResource;
 use Seier\Resting\ResourceFactory;
 use Seier\Resting\Fields\ResourceField;
@@ -11,13 +12,13 @@ use Seier\Resting\Fields\ResourceArrayField;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Validation\Errors\ValidationError;
-use Seier\Resting\ResourceValidation\ResourceValidator;
 use Seier\Resting\Exceptions\ValidationExceptionHandler;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Predicates\ArrayResourceContext;
 use Seier\Resting\Validation\Errors\ForbiddenValidationError;
+use Seier\Resting\Validation\Errors\NotObjectValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 
 class ResourceMarshaller
@@ -44,7 +45,7 @@ class ResourceMarshaller
         $this->validationErrors[] = $validationError->prependPath($path);
     }
 
-    private function pushRootError(NotArrayValidationError $validationError)
+    private function pushRootError(NotArrayValidationError|NotObjectValidationError $validationError)
     {
         $this->pushPathError('', $validationError);
     }
@@ -79,9 +80,8 @@ class ResourceMarshaller
         $this->reset();
 
         $resource = $factory->create();
-
-        if (!is_array($content)) {
-            $this->pushRootError(new NotArrayValidationError($content));
+        if (!$content instanceof stdClass) {
+            $this->pushRootError(new NotObjectValidationError($content));
             return new ResourceMarshallerResult($resource, $this->validationErrors);
         }
 
@@ -97,18 +97,18 @@ class ResourceMarshaller
         return new ResourceMarshallerResult($resource, $this->validationErrors);
     }
 
-    private function getUnionSubResource(UnionResource $baseResource, $content): ResourceMarshallerResult|UnionResource
+    private function getUnionSubResource(UnionResource $baseResource, stdClass $content): ResourceMarshallerResult|UnionResource
     {
         $dependantResources = $baseResource->getResourceMap();
         $discriminatorKey = $baseResource->getDiscriminatorKey();
 
-        if (!array_key_exists($discriminatorKey, $content)) {
+        if (!property_exists($content, $discriminatorKey)) {
             $path = $this->getCurrentPath($discriminatorKey);
             $this->pushPathError($path, new RequiredValidationError());
             return new ResourceMarshallerResult($baseResource, $this->validationErrors);
         }
 
-        $discriminatorValue = $content[$discriminatorKey];
+        $discriminatorValue = $content->{$discriminatorKey};
         if (!is_scalar($discriminatorValue) || !array_key_exists($discriminatorValue, $dependantResources)) {
             $path = $this->getCurrentPath($discriminatorKey);
             $this->pushPathError($path, new UnknownUnionDiscriminatorValidationError(
@@ -121,10 +121,14 @@ class ResourceMarshaller
         return $dependantResources[$discriminatorValue];
     }
 
-    public function marshalResourceFields(RestingResource $resource, array $content)
+    public function marshalResourceFields(RestingResource $resource, array|stdClass $content)
     {
+        if (is_array($content)) {
+            $content = (object)$content;
+        }
+
         $fields = $this->getFields($resource);
-        $resourceContext = new ArrayResourceContext($fields, $content, $this->isStringBased);
+        $resourceContext = new ArrayResourceContext($fields, (array)$content, $this->isStringBased);
         $resource->prepare($resourceContext);
 
         foreach ($fields as $key => $field) {
@@ -132,7 +136,7 @@ class ResourceMarshaller
             $requiredValidator = $field->getRequiredValidator();
             $nullableValidator = $field->getNullableValidator();
             $forbiddenValidator = $field->getForbiddenValidator();
-            $isProvided = array_key_exists($key, $content);
+            $isProvided = property_exists($content, $key);
             $field->setFilled($isProvided);
 
             if (!$isProvided) {
@@ -166,7 +170,7 @@ class ResourceMarshaller
 
             }
 
-            $fieldValue = $isProvided ? $content[$key] : $defaultValue;
+            $fieldValue = $isProvided ? $content->{$key} : $defaultValue;
 
             if ($fieldValue === null) {
                 foreach ($nullableValidator->getDefaultValues() as $possibleDefault) {
@@ -267,7 +271,7 @@ class ResourceMarshaller
                 continue;
             }
 
-            $exceptionHandler->suppress($this->getCurrentPath($key), fn() => $field->set($fieldValue));
+            $exceptionHandler->suppress($this->getCurrentPath($key), fn () => $field->set($fieldValue));
             foreach ($exceptionHandler->getErrors() as $validationError) {
                 $this->pushError($validationError);
             }
@@ -328,9 +332,9 @@ class ResourceMarshaller
             $this->pushPath($key);
             $resource = $factory->create();
 
-            if (!is_array($value)) {
+            if (!is_object($value)) {
                 $path = $this->getCurrentPath();
-                $this->pushPathError($path, new NotArrayValidationError($value));
+                $this->pushPathError($path, new NotObjectValidationError($value));
                 continue;
             }
 

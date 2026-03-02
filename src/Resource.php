@@ -2,6 +2,7 @@
 
 namespace Seier\Resting;
 
+use stdClass;
 use Seier\Resting\Fields\Field;
 use Illuminate\Support\Collection;
 use Seier\Resting\Fields\ResourceField;
@@ -33,7 +34,7 @@ abstract class Resource implements Arrayable, Jsonable
 
     public static function fromArray(array $values): static
     {
-        return static::fromCollection(collect($values));
+        return static::fromCollection(collect((object)$values));
     }
 
     public static function fromCollection(Collection $values): static
@@ -89,7 +90,7 @@ abstract class Resource implements Arrayable, Jsonable
     public function setFieldsFromCollection(Collection $collection): static
     {
         $marshaller = new ResourceMarshaller();
-        $marshaller->marshalResourceFields($this, $collection->toArray());
+        $marshaller->marshalResourceFields($this, (object)$collection->toArray());
         if ($errors = $marshaller->getValidationErrors()) {
             throw new ValidationException($errors);
         }
@@ -111,7 +112,7 @@ abstract class Resource implements Arrayable, Jsonable
         return $this;
     }
 
-    public function fields(array $filter = null, array $rename = null, bool $requireFilled = false): Collection
+    public function fields(?array $filter = null, ?array $rename = null, bool $requireFilled = false): Collection
     {
         $fields = collect(get_object_vars($this))->filter(function ($value) use ($requireFilled) {
             return $value instanceof Field && $value->isEnabled();
@@ -239,7 +240,7 @@ abstract class Resource implements Arrayable, Jsonable
             })->toArray();
     }
 
-    public function toArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
+    public function toArray(?array $filter = null, ?array $rename = null, bool $requireFilled = false): array
     {
         return $this->values(
             format: false,
@@ -259,7 +260,7 @@ abstract class Resource implements Arrayable, Jsonable
         return new static();
     }
 
-    public function toResponseArray(array $filter = null, array $rename = null, bool $requireFilled = false): array
+    public function toResponseArray(?array $filter = null, ?array $rename = null, bool $requireFilled = false): array
     {
         $array = $this->values(
             format: true,
@@ -278,6 +279,15 @@ abstract class Resource implements Arrayable, Jsonable
                 (!$this->removeEmptyArrays || $value !== [])
             );
         });
+    }
+
+    public function toResponseObject(?array $filter = null, ?array $rename = null, bool $requireFilled = false): stdClass
+    {
+        return (object)$this->toResponseArray(
+            filter: $filter,
+            rename: $rename,
+            requireFilled: $requireFilled
+        );
     }
 
     public function removeNulls(bool $should): static
