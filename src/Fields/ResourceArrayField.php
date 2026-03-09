@@ -128,6 +128,8 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
         if (!is_array($value) || $this->isAssociativeArray($value)) {
             throw new ValidationException([new NotArrayValidationError($value)]);
+        } else {
+            $value = array_values($value);
         }
 
         $resources = [];

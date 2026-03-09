@@ -220,4 +220,47 @@ class ResourceArrayFieldTest extends TestCase
         $this->assertNull($this->instance->get());
         $this->assertFalse($this->instance->allowsNullElements());
     }
+
+    public function testSetReindexesArrayWithGaps()
+    {
+        $personA = new PersonResource();
+        $personA->name->set('A');
+        $personA->age->set(1);
+
+        $personB = new PersonResource();
+        $personB->name->set('B');
+        $personB->age->set(2);
+
+        $this->instance->set([3 => $personA, 7 => $personB]);
+
+        $result = $this->instance->get();
+        $this->assertCount(2, $result);
+        $this->assertSame('A', $result[0]->name->get());
+        $this->assertSame('B', $result[1]->name->get());
+    }
+
+    public function testSetReindexesFilteredArray()
+    {
+        $personA = new PersonResource();
+        $personA->name->set('A');
+        $personA->age->set(10);
+
+        $personB = new PersonResource();
+        $personB->name->set('B');
+        $personB->age->set(20);
+
+        $personC = new PersonResource();
+        $personC->name->set('C');
+        $personC->age->set(30);
+
+        $resources = [$personA, $personB, $personC];
+        $filtered = array_filter($resources, fn (PersonResource $r) => $r->age->get() > 10);
+
+        $this->instance->set($filtered);
+
+        $result = $this->instance->get();
+        $this->assertCount(2, $result);
+        $this->assertSame('B', $result[0]->name->get());
+        $this->assertSame('C', $result[1]->name->get());
+    }
 }

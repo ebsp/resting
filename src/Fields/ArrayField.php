@@ -67,6 +67,10 @@ class ArrayField extends Field
             $value = [...$value];
         }
 
+        if (is_array($value)) {
+            $value = array_values($value);
+        }
+
         return parent::set($value);
     }
 
@@ -203,7 +207,7 @@ class ArrayField extends Field
         if ($nullable !== null) {
             $this->validator->allowNullElements(state: $nullable);
         }
-        
+
         $this->setElementValidator($validator);
         $this->setElementParser($parser);
 

@@ -264,4 +264,21 @@ class ArrayFieldTest extends TestCase
         $this->instance->of(validator: new BoolValidator(), parser: new BoolParser(), nullable: true);
         $this->assertTrue($this->instance->allowsNullElements());
     }
+
+    public function testSetReindexesArrayWithGaps()
+    {
+        $this->instance->set([2 => 'a', 5 => 'b', 9 => 'c']);
+
+        $this->assertSame(['a', 'b', 'c'], $this->instance->get());
+    }
+
+    public function testSetReindexesFilteredArray()
+    {
+        $values = [1, 2, 3, 4, 5];
+        $filtered = array_filter($values, fn ($v) => $v > 2);
+
+        $this->instance->set($filtered);
+
+        $this->assertSame([3, 4, 5], $this->instance->get());
+    }
 }
