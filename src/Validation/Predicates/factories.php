@@ -159,7 +159,7 @@ function when(Field $field, Closure $closure): Predicate
             return "True when value provided to $fieldName passes a custom closure validator.";
         },
         function (ResourceContext $context) use ($closure, $field) {
-            return (bool)$closure($context->getValue($field), $context);
+            return (bool)$closure($context->getValue($field), $context, $field);
         },
     );
 }
