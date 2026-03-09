@@ -24,7 +24,7 @@ abstract class Resource implements Arrayable, Jsonable
     use ResourceValidation;
 
     private bool $removeNulls = true;
-    private bool $removeEmptyArrays = true;
+    private ?bool $removeEmptyArrays = null;
     private mixed $raw = null;
 
     public static function create(): static
@@ -269,14 +269,16 @@ abstract class Resource implements Arrayable, Jsonable
             requireFilled: $requireFilled,
         );
 
-        if (!$this->removeNulls && !$this->removeEmptyArrays) {
+        $removeEmptyArrays = $this->removeEmptyArrays ?? RestingSettings::instance()->removeEmptyArrays;
+
+        if (!$this->removeNulls && !$removeEmptyArrays) {
             return $array;
         }
 
-        return array_filter($array, function (mixed $value) {
+        return array_filter($array, function (mixed $value) use ($removeEmptyArrays) {
             return (
                 (!$this->removeNulls || $value !== null) &&
-                (!$this->removeEmptyArrays || $value !== [])
+                (!$removeEmptyArrays || $value !== [])
             );
         });
     }
@@ -297,7 +299,7 @@ abstract class Resource implements Arrayable, Jsonable
         return $this;
     }
 
-    public function removeEmptyArrays(bool $should): static
+    public function removeEmptyArrays(?bool $should): static
     {
         $this->removeEmptyArrays = $should;
 

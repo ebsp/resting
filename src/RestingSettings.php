@@ -7,6 +7,7 @@ class RestingSettings
     private static ?RestingSettings $instance = null;
 
     public bool $useImmutableCarbon = false;
+    public bool $removeEmptyArrays = false;
 
     private function __construct()
     {

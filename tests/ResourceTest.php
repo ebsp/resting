@@ -3,6 +3,7 @@
 namespace Seier\Resting\Tests;
 
 use Carbon\Carbon;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\DynamicResource;
 use Seier\Resting\Tests\Meta\Person;
 use Seier\Resting\Fields\ResourceField;
@@ -907,6 +908,62 @@ class ResourceTest extends TestCase
             ['name' => $nameB],
             ['name' => $nameC],
         ]], $resource->toResponseArray());
+    }
+
+    public function testRemoveEmptyArraysDefaultsToGlobalSettingWhenFalse()
+    {
+        RestingSettings::reset();
+        RestingSettings::instance()->removeEmptyArrays = false;
+
+        $resource = new ClassResource();
+        $resource->students->set([]);
+
+        $expected = ['students' => []];
+        $this->assertEquals($expected, $resource->toResponseArray());
+
+        RestingSettings::reset();
+    }
+
+    public function testRemoveEmptyArraysDefaultsToGlobalSettingWhenTrue()
+    {
+        RestingSettings::reset();
+        RestingSettings::instance()->removeEmptyArrays = true;
+
+        $resource = new ClassResource();
+        $resource->students->set([]);
+
+        $this->assertEquals([], $resource->toResponseArray());
+
+        RestingSettings::reset();
+    }
+
+    public function testRemoveEmptyArraysResourceOverridesGlobalWhenTrue()
+    {
+        RestingSettings::reset();
+        RestingSettings::instance()->removeEmptyArrays = false;
+
+        $resource = new ClassResource();
+        $resource->students->set([]);
+        $resource->removeEmptyArrays(true);
+
+        $this->assertEquals([], $resource->toResponseArray());
+
+        RestingSettings::reset();
+    }
+
+    public function testRemoveEmptyArraysResourceOverridesGlobalWhenFalse()
+    {
+        RestingSettings::reset();
+        RestingSettings::instance()->removeEmptyArrays = true;
+
+        $resource = new ClassResource();
+        $resource->students->set([]);
+        $resource->removeEmptyArrays(false);
+
+        $expected = ['students' => []];
+        $this->assertEquals($expected, $resource->toResponseArray());
+
+        RestingSettings::reset();
     }
 
     public function testAddValidatorCanAddResourceValidator()
