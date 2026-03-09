@@ -3,6 +3,7 @@
 namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\Person;
 use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
@@ -12,6 +13,8 @@ use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
+use Seier\Resting\Exceptions\RestingDefinitionException;
+use Seier\Resting\Tests\Meta\RequiredConstructorParamsResource;
 
 class ResourceArrayFieldTest extends TestCase
 {
@@ -219,6 +222,43 @@ class ResourceArrayFieldTest extends TestCase
         $this->assertHasError($exception, NullableValidationError::class, path: '2');
         $this->assertNull($this->instance->get());
         $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testConstructorAcceptsClassName()
+    {
+        $field = new ResourceArrayField(PersonResource::class);
+
+        $this->assertInstanceOf(PersonResource::class, $field->resource());
+    }
+
+    public function testConstructorWithClassNameCanSetArray()
+    {
+        $field = new ResourceArrayField(PersonResource::class);
+
+        $field->set([[
+            'name' => $name = $this->faker->name,
+            'age' => $age = $this->faker->randomNumber(2),
+        ]]);
+
+        $this->assertCount(1, $return = $field->get());
+        $this->assertType($return[0], function (PersonResource $resource) use ($name, $age) {
+            $this->assertEquals($name, $resource->name->get());
+            $this->assertEquals($age, $resource->age->get());
+        });
+    }
+
+    public function testConstructorWithClassNameRejectsNonResourceClass()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceArrayField(Person::class);
+        });
+    }
+
+    public function testConstructorWithClassNameRejectsRequiredConstructorParams()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceArrayField(RequiredConstructorParamsResource::class);
+        });
     }
 
     public function testSetReindexesArrayWithGaps()

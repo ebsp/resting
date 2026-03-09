@@ -12,6 +12,7 @@ use Seier\Resting\Support\Resourcable;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Validation\Errors\NotSubclassOfError;
+use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
 class ResourceField extends Field
@@ -21,18 +22,41 @@ class ResourceField extends Field
     private RestingResource $resource;
     private ReflectionClass $resourceReflection;
 
-    public function __construct(Closure $resourceFactory)
+    public function __construct(string|Closure $resourceFactory)
     {
         parent::__construct();
 
         $this->setResourcePrototypeFactory($resourceFactory);
     }
 
-    public function setResourcePrototypeFactory(Closure $resourceFactory): static
+    public function setResourcePrototypeFactory(string|Closure $resourceFactory): static
     {
-        $this->resourceFactory = $resourceFactory;
-        $this->resource = $resourceFactory();
-        $this->resourceReflection = new ReflectionClass($this->resource::class);
+        if (is_string($resourceFactory)) {
+            $this->resourceReflection = new ReflectionClass($resourceFactory);
+
+            if (!$this->resourceReflection->isSubclassOf(RestingResource::class)) {
+                $className = $this->resourceReflection->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceField cannot accept class ($className), that is not a subclass of resource.",
+                );
+            }
+
+            $constructor = $this->resourceReflection->getConstructor();
+            if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
+                $className = $this->resourceReflection->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceField cannot create instance of class ($className), that has required constructor parameters.",
+                );
+            }
+
+            $this->resourceFactory = fn () => new ($this->resourceReflection->getName());
+            $this->resource = ($this->resourceFactory)();
+
+        } else {
+            $this->resourceFactory = $resourceFactory;
+            $this->resource = $resourceFactory();
+            $this->resourceReflection = new ReflectionClass($this->resource::class);
+        }
 
         return $this;
     }

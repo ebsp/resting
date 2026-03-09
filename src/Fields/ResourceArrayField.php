@@ -17,6 +17,7 @@ use Seier\Resting\Validation\ArrayValidator;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Exceptions\ValidationExceptionHandler;
+use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Secondary\Arrays\ArrayValidation;
@@ -34,7 +35,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
     protected mixed $rawValue = null;
     protected bool $rawValueFilled = false;
 
-    public function __construct(Closure $resourceFactory)
+    public function __construct(string|Closure $resourceFactory)
     {
         parent::__construct();
 
@@ -42,11 +43,34 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         $this->validator = new ArrayValidator();
     }
 
-    public function setResourcePrototypeFactory(Closure $resourceFactory): static
+    public function setResourcePrototypeFactory(string|Closure $resourceFactory): static
     {
-        $this->resourceFactory = $resourceFactory;
-        $this->resource = $resourceFactory();
-        $this->reflectionClass = new ReflectionClass($this->resource);
+        if (is_string($resourceFactory)) {
+            $this->reflectionClass = new ReflectionClass($resourceFactory);
+
+            if (!$this->reflectionClass->isSubclassOf(RestingResource::class)) {
+                $className = $this->reflectionClass->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceArrayField cannot accept class ($className), that is not a subclass of resource.",
+                );
+            }
+
+            $constructor = $this->reflectionClass->getConstructor();
+            if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
+                $className = $this->reflectionClass->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceArrayField cannot create instance of class ($className), that has required constructor parameters.",
+                );
+            }
+
+            $this->resourceFactory = fn () => new ($this->reflectionClass->getName());
+            $this->resource = ($this->resourceFactory)();
+
+        } else {
+            $this->resourceFactory = $resourceFactory;
+            $this->resource = $resourceFactory();
+            $this->reflectionClass = new ReflectionClass($this->resource);
+        }
 
         return $this;
     }

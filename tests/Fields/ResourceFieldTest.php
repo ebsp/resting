@@ -9,6 +9,8 @@ use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Exceptions\ValidationException;
+use Seier\Resting\Exceptions\RestingDefinitionException;
+use Seier\Resting\Tests\Meta\RequiredConstructorParamsResource;
 
 class ResourceFieldTest extends TestCase
 {
@@ -185,6 +187,52 @@ class ResourceFieldTest extends TestCase
 
         $this->assertSame(null, $this->instance->get());
         $this->assertTrue($this->instance->isNull());
+    }
+
+    public function testConstructorAcceptsClassName()
+    {
+        $field = new ResourceField(PersonResource::class);
+
+        $this->assertInstanceOf(PersonResource::class, $field->getResourcePrototype());
+    }
+
+    public function testConstructorWithClassNameCanSetArray()
+    {
+        $field = new ResourceField(PersonResource::class);
+
+        $field->set([
+            'name' => $name = $this->faker->name,
+            'age' => $age = $this->faker->randomNumber(2),
+        ]);
+
+        $this->assertType($field->get(), function (PersonResource $resource) use ($name, $age) {
+            $this->assertEquals($name, $resource->name->get());
+            $this->assertEquals($age, $resource->age->get());
+        });
+    }
+
+    public function testConstructorWithClassNameCanSetResource()
+    {
+        $field = new ResourceField(PersonResource::class);
+
+        $person = new PersonResource();
+        $field->set($person);
+
+        $this->assertSame($person, $field->get());
+    }
+
+    public function testConstructorWithClassNameRejectsNonResourceClass()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceField(Person::class);
+        });
+    }
+
+    public function testConstructorWithClassNameRejectsRequiredConstructorParams()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceField(RequiredConstructorParamsResource::class);
+        });
     }
 
     public function testApplyNullableClosureIsGivenValue()
