@@ -7,6 +7,7 @@ use Faker\Factory;
 use ReflectionFunction;
 use Faker\Generator as Faker;
 use Seier\Resting\ResourceFactory;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\ClosureResourceFactory;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\PersonResource;
@@ -23,6 +24,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         $this->faker = Factory::create();
+        RestingSettings::reset();
     }
 
     public function resourceFactory(string|Closure $factory): ResourceFactory

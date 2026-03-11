@@ -6,13 +6,6 @@ use Seier\Resting\RestingSettings;
 
 class RestingSettingsTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        RestingSettings::reset();
-
-        parent::tearDown();
-    }
-
     public function testInstanceReturnsSingleton()
     {
         $a = RestingSettings::instance();

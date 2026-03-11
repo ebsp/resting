@@ -27,12 +27,6 @@ class CarbonParserTest extends TestCase
         $this->instance = new CarbonParser();
     }
 
-    protected function tearDown(): void
-    {
-        RestingSettings::reset();
-
-        parent::tearDown();
-    }
 
     public function testWhenProvidedEmptyString()
     {

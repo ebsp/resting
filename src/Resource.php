@@ -23,7 +23,7 @@ abstract class Resource implements Arrayable, Jsonable
     use Panics;
     use ResourceValidation;
 
-    private bool $removeNulls = true;
+    private ?bool $removeNulls = null;
     private ?bool $removeEmptyArrays = null;
     private mixed $raw = null;
 
@@ -270,14 +270,15 @@ abstract class Resource implements Arrayable, Jsonable
         );
 
         $removeEmptyArrays = $this->removeEmptyArrays ?? RestingSettings::instance()->removeEmptyArrays;
+        $removeNulls = $this->removeNulls ?? RestingSettings::instance()->removeNulls;
 
-        if (!$this->removeNulls && !$removeEmptyArrays) {
+        if (!$removeNulls && !$removeEmptyArrays) {
             return $array;
         }
 
-        return array_filter($array, function (mixed $value) use ($removeEmptyArrays) {
+        return array_filter($array, function (mixed $value) use ($removeNulls, $removeEmptyArrays) {
             return (
-                (!$this->removeNulls || $value !== null) &&
+                (!$removeNulls || $value !== null) &&
                 (!$removeEmptyArrays || $value !== [])
             );
         });
@@ -292,7 +293,7 @@ abstract class Resource implements Arrayable, Jsonable
         );
     }
 
-    public function removeNulls(bool $should): static
+    public function removeNulls(?bool $should): static
     {
         $this->removeNulls = $should;
 

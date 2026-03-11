@@ -168,9 +168,9 @@ class ResourceArrayFieldTest extends TestCase
         });
 
         $this->assertEquals([
-            ['name' => $nameA],
-            ['name' => $nameB],
-            ['name' => $nameC],
+            ['name' => $nameA, 'age' => null],
+            ['name' => $nameB, 'age' => null],
+            ['name' => $nameC, 'age' => null],
         ], $this->instance->get());
     }
 

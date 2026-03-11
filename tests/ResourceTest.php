@@ -535,6 +535,7 @@ class ResourceTest extends TestCase
     {
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(true);
 
         $this->assertEquals([], $resource->toResponseArray());
@@ -544,6 +545,7 @@ class ResourceTest extends TestCase
     {
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(false);
 
         $expected = ['students' => []];
@@ -845,6 +847,7 @@ class ResourceTest extends TestCase
     {
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(true);
 
         $this->assertEquals(
@@ -857,6 +860,7 @@ class ResourceTest extends TestCase
     {
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(false);
 
         $this->assertEquals(
@@ -886,7 +890,7 @@ class ResourceTest extends TestCase
         $resource = new ClassResource();
         $resource->students->setRaw($raw = $this->faker->rgbColorAsArray);
 
-        $this->assertEquals(['students' => $raw], $resource->toResponseArray());
+        $this->assertEquals(['students' => $raw, 'grade' => null], $resource->toResponseArray());
     }
 
     public function testToResponseArrayReturnsRawResourceWhenUsingSetManyRaw()
@@ -904,66 +908,100 @@ class ResourceTest extends TestCase
         });
 
         $this->assertEquals(['students' => [
-            ['name' => $nameA],
-            ['name' => $nameB],
-            ['name' => $nameC],
-        ]], $resource->toResponseArray());
+            ['name' => $nameA, 'age' => null],
+            ['name' => $nameB, 'age' => null],
+            ['name' => $nameC, 'age' => null],
+        ], 'grade' => null], $resource->toResponseArray());
     }
 
     public function testRemoveEmptyArraysDefaultsToGlobalSettingWhenFalse()
     {
-        RestingSettings::reset();
         RestingSettings::instance()->removeEmptyArrays = false;
 
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
 
         $expected = ['students' => []];
         $this->assertEquals($expected, $resource->toResponseArray());
-
-        RestingSettings::reset();
     }
 
     public function testRemoveEmptyArraysDefaultsToGlobalSettingWhenTrue()
     {
-        RestingSettings::reset();
         RestingSettings::instance()->removeEmptyArrays = true;
 
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
 
         $this->assertEquals([], $resource->toResponseArray());
-
-        RestingSettings::reset();
     }
 
     public function testRemoveEmptyArraysResourceOverridesGlobalWhenTrue()
     {
-        RestingSettings::reset();
         RestingSettings::instance()->removeEmptyArrays = false;
 
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(true);
 
         $this->assertEquals([], $resource->toResponseArray());
-
-        RestingSettings::reset();
     }
 
     public function testRemoveEmptyArraysResourceOverridesGlobalWhenFalse()
     {
-        RestingSettings::reset();
         RestingSettings::instance()->removeEmptyArrays = true;
 
         $resource = new ClassResource();
         $resource->students->set([]);
+        $resource->removeNulls(true);
         $resource->removeEmptyArrays(false);
 
         $expected = ['students' => []];
         $this->assertEquals($expected, $resource->toResponseArray());
+    }
 
-        RestingSettings::reset();
+    public function testRemoveNullsDefaultsToGlobalSettingWhenFalse()
+    {
+        RestingSettings::instance()->removeNulls = false;
+
+        $resource = new PetResource();
+
+        $this->assertCount(2, $response = $resource->toResponseArray());
+        $this->assertNull($response['name']);
+        $this->assertNull($response['owner']);
+    }
+
+    public function testRemoveNullsDefaultsToGlobalSettingWhenTrue()
+    {
+        RestingSettings::instance()->removeNulls = true;
+
+        $resource = new PetResource();
+
+        $this->assertCount(0, $resource->toResponseArray());
+    }
+
+    public function testRemoveNullsResourceOverridesGlobalWhenTrue()
+    {
+        RestingSettings::instance()->removeNulls = false;
+
+        $resource = new PetResource();
+        $resource->removeNulls(true);
+
+        $this->assertCount(0, $resource->toResponseArray());
+    }
+
+    public function testRemoveNullsResourceOverridesGlobalWhenFalse()
+    {
+        RestingSettings::instance()->removeNulls = true;
+
+        $resource = new PetResource();
+        $resource->removeNulls(false);
+
+        $this->assertCount(2, $response = $resource->toResponseArray());
+        $this->assertNull($response['name']);
+        $this->assertNull($response['owner']);
     }
 
     public function testAddValidatorCanAddResourceValidator()
