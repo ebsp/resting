@@ -3,6 +3,7 @@
 namespace Seier\Resting\Fields;
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Validation\CarbonValidator;
 use Seier\Resting\Formatting\CarbonFormatter;
@@ -63,7 +64,7 @@ class CarbonField extends Field
         return parent::set($value);
     }
 
-    public function get(): ?Carbon
+    public function get(): Carbon|CarbonImmutable|null
     {
         return $this->value?->copy();
     }
@@ -110,10 +111,7 @@ class CarbonField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'string',
-            'format' => 'date-time',
-        ];
+        return $this->validator->type();
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation

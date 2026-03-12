@@ -6,10 +6,10 @@ namespace Seier\Resting\Tests\Validation;
 
 use Carbon\CarbonPeriod;
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\CarbonValidator;
 use Seier\Resting\Validation\CarbonPeriodValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NotCarbonPeriodValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;

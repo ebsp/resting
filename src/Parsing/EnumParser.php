@@ -2,7 +2,6 @@
 
 namespace Seier\Resting\Parsing;
 
-use Exception;
 use Throwable;
 use BackedEnum;
 use ReflectionEnum;

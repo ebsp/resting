@@ -3,6 +3,8 @@
 namespace Seier\Resting\Fields;
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonPeriodParser;
@@ -58,18 +60,14 @@ class CarbonPeriodField extends Field
         ];
     }
 
-    public function start(): ?Carbon
+    public function start(): Carbon|CarbonImmutable|null
     {
-        $carbon = $this->get()?->start?->copy();
-
-        return $carbon ? new Carbon($carbon) : null;
+        return $this->get()?->start?->copy();
     }
 
-    public function end(): ?Carbon
+    public function end(): Carbon|CarbonImmutable|null
     {
-        $carbon = $this->get()?->end?->copy();
-
-        return $carbon ? new Carbon($carbon) : null;
+        return $this->get()?->end?->copy();
     }
 
     public function withFormat($format): static
@@ -125,9 +123,7 @@ class CarbonPeriodField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'array',
-        ];
+        return $this->validator->type();
     }
 
     private function fromArray(array $values): CarbonPeriod
@@ -147,7 +143,7 @@ class CarbonPeriodField extends Field
         $parsed = [];
         foreach ($values as $index => $value) {
 
-            if (!$value instanceof Carbon) {
+            if (!$value instanceof CarbonInterface) {
                 $errors[] = (new NotCarbonValidationError($value))->prependPath($index);
                 continue;
             }

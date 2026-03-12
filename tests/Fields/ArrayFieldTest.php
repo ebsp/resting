@@ -4,11 +4,13 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\ArrayField;
+use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Tests\Meta\SuiteEnum;
 use Seier\Resting\Tests\Support\TestEnum;
 use Seier\Resting\Validation\IntValidator;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\SuiteResource;
+use Seier\Resting\Validation\BoolValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
@@ -35,7 +37,7 @@ class ArrayFieldTest extends TestCase
         $this->assertNull($this->instance->get());
     }
 
-    public function getGetCanReturnArray()
+    public function getGetCanReturnArray(): void
     {
         $this->instance->set([]);
         $this->assertEquals([], $this->instance->get());
@@ -188,5 +190,95 @@ class ArrayFieldTest extends TestCase
             ['suites' => [SuiteEnum::Diamonds->value]],
             $resource->toResponseArray()
         );
+    }
+
+    public function testDoesNotAllowNullElementsByDefault()
+    {
+        $this->instance->ofIntegers();
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([1, 2, 3, null]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '3');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testCanAllowNullElements()
+    {
+        $this->instance->ofIntegers();
+        $this->instance->allowNullElements();
+
+        $this->instance->set([1, 2, 3, null]);
+
+        $this->assertSame(
+            [1, 2, 3, null],
+            $this->instance->get()
+        );
+
+        $this->assertTrue($this->instance->allowsNullElements());
+    }
+
+    public function testAllowNullsCanDisallowNullAfterBeingAllowed()
+    {
+        $this->instance->ofIntegers();
+        $this->instance->allowNullElements(true);
+        $this->instance->allowNullElements(false);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([1, 2, 3, null]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '3');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testOfMethodsCanSetNullability()
+    {
+        $this->instance->ofIntegers(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofStrings(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofNumbers(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofBooleans(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofTimes(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofArrays(nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->ofCarbons(nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+
+        $this->instance->ofEnums(SuiteEnum::class, nullable: false);
+        $this->assertFalse($this->instance->allowsNullElements());
+
+        $this->instance->of(validator: new BoolValidator(), parser: new BoolParser(), nullable: true);
+        $this->assertTrue($this->instance->allowsNullElements());
+    }
+
+    public function testSetReindexesArrayWithGaps()
+    {
+        $this->instance->set([2 => 'a', 5 => 'b', 9 => 'c']);
+
+        $this->assertSame(['a', 'b', 'c'], $this->instance->get());
+    }
+
+    public function testSetReindexesFilteredArray()
+    {
+        $values = [1, 2, 3, 4, 5];
+        $filtered = array_filter($values, fn ($v) => $v > 2);
+
+        $this->instance->set($filtered);
+
+        $this->assertSame([3, 4, 5], $this->instance->get());
     }
 }

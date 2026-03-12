@@ -58,4 +58,17 @@ class EnumValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return $this;
     }
+
+    public function type(): array
+    {
+        $options = [];
+        foreach ($this->reflectionEnum->getCases() as $case) {
+            $options[] = $case->getBackingValue();
+        }
+
+        return [
+            'type' => 'string',
+            'enum' => $options,
+        ];
+    }
 }

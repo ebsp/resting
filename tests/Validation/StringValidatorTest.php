@@ -5,9 +5,9 @@ namespace Seier\Resting\Tests\Validation;
 
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Validation\StringValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
-use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NotStringValidationError;
 

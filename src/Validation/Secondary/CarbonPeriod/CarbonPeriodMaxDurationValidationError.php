@@ -4,7 +4,7 @@
 namespace Seier\Resting\Validation\Secondary\CarbonPeriod;
 
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Carbon\CarbonInterval;
 use Seier\Resting\Support\HasPath;
 use Seier\Resting\Validation\Errors\ValidationError;
@@ -15,10 +15,10 @@ class CarbonPeriodMaxDurationValidationError implements ValidationError
     use HasPath;
 
     private CarbonInterval $max;
-    private Carbon $start;
-    private ?Carbon $end;
+    private CarbonInterface $start;
+    private ?CarbonInterface $end;
 
-    public function __construct(CarbonInterval $max, Carbon $start, ?Carbon $end)
+    public function __construct(CarbonInterval $max, CarbonInterface $start, ?CarbonInterface $end)
     {
         $this->max = $max;
         $this->start = $start;

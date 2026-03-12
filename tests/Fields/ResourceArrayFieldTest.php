@@ -3,6 +3,7 @@
 namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
+use Seier\Resting\Tests\Meta\Person;
 use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
@@ -12,6 +13,8 @@ use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
 use Seier\Resting\Validation\Errors\NullableValidationError;
+use Seier\Resting\Exceptions\RestingDefinitionException;
+use Seier\Resting\Tests\Meta\RequiredConstructorParamsResource;
 
 class ResourceArrayFieldTest extends TestCase
 {
@@ -25,7 +28,7 @@ class ResourceArrayFieldTest extends TestCase
     {
         parent::setUp();
 
-        $this->instance = new ResourceArrayField(fn() => new PersonResource);
+        $this->instance = new ResourceArrayField(fn () => new PersonResource);
     }
 
     public function testGetEmptyReturnsNull()
@@ -165,9 +168,139 @@ class ResourceArrayFieldTest extends TestCase
         });
 
         $this->assertEquals([
-            ['name' => $nameA],
-            ['name' => $nameB],
-            ['name' => $nameC],
+            ['name' => $nameA, 'age' => null],
+            ['name' => $nameB, 'age' => null],
+            ['name' => $nameC, 'age' => null],
         ], $this->instance->get());
+    }
+
+    public function testDoesNotAllowNullElementsByDefault()
+    {
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([
+                null,
+                new PersonResource(),
+            ]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '0');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testCanAllowNullElements()
+    {
+        $this->instance->allowNullElements();
+
+        $this->instance->set([
+            new PersonResource(),
+            null,
+            new PersonResource(),
+        ]);
+
+        $this->assertTrue($this->instance->allowsNullElements());
+        $this->assertCount(3, $elements = $this->instance->get());
+
+        $this->assertInstanceOf(PersonResource::class, $elements[0]);
+        $this->assertNull($elements[1]);
+        $this->assertInstanceOf(PersonResource::class, $elements[2]);
+    }
+
+    public function testAllowNullsCanDisallowNullAfterBeingAllowed()
+    {
+        $this->instance->allowNullElements(true);
+        $this->instance->allowNullElements(false);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set([
+                new PersonResource(),
+                new PersonResource(),
+                null,
+            ]);
+        });
+
+        $this->assertHasError($exception, NullableValidationError::class, path: '2');
+        $this->assertNull($this->instance->get());
+        $this->assertFalse($this->instance->allowsNullElements());
+    }
+
+    public function testConstructorAcceptsClassName()
+    {
+        $field = new ResourceArrayField(PersonResource::class);
+
+        $this->assertInstanceOf(PersonResource::class, $field->resource());
+    }
+
+    public function testConstructorWithClassNameCanSetArray()
+    {
+        $field = new ResourceArrayField(PersonResource::class);
+
+        $field->set([[
+            'name' => $name = $this->faker->name,
+            'age' => $age = $this->faker->randomNumber(2),
+        ]]);
+
+        $this->assertCount(1, $return = $field->get());
+        $this->assertType($return[0], function (PersonResource $resource) use ($name, $age) {
+            $this->assertEquals($name, $resource->name->get());
+            $this->assertEquals($age, $resource->age->get());
+        });
+    }
+
+    public function testConstructorWithClassNameRejectsNonResourceClass()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceArrayField(Person::class);
+        });
+    }
+
+    public function testConstructorWithClassNameRejectsRequiredConstructorParams()
+    {
+        $this->assertThrows(RestingDefinitionException::class, function () {
+            new ResourceArrayField(RequiredConstructorParamsResource::class);
+        });
+    }
+
+    public function testSetReindexesArrayWithGaps()
+    {
+        $personA = new PersonResource();
+        $personA->name->set('A');
+        $personA->age->set(1);
+
+        $personB = new PersonResource();
+        $personB->name->set('B');
+        $personB->age->set(2);
+
+        $this->instance->set([3 => $personA, 7 => $personB]);
+
+        $result = $this->instance->get();
+        $this->assertCount(2, $result);
+        $this->assertSame('A', $result[0]->name->get());
+        $this->assertSame('B', $result[1]->name->get());
+    }
+
+    public function testSetReindexesFilteredArray()
+    {
+        $personA = new PersonResource();
+        $personA->name->set('A');
+        $personA->age->set(10);
+
+        $personB = new PersonResource();
+        $personB->name->set('B');
+        $personB->age->set(20);
+
+        $personC = new PersonResource();
+        $personC->name->set('C');
+        $personC->age->set(30);
+
+        $resources = [$personA, $personB, $personC];
+        $filtered = array_filter($resources, fn (PersonResource $r) => $r->age->get() > 10);
+
+        $this->instance->set($filtered);
+
+        $result = $this->instance->get();
+        $this->assertCount(2, $result);
+        $this->assertSame('B', $result[0]->name->get());
+        $this->assertSame('C', $result[1]->name->get());
     }
 }

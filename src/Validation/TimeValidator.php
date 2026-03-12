@@ -32,4 +32,12 @@ class TimeValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return $this;
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'string',
+            'format' => 'time',
+        ];
+    }
 }

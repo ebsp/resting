@@ -7,8 +7,8 @@ namespace Seier\Resting\Tests\Parsing;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Parsing\BoolParser;
 use Seier\Resting\Parsing\BoolParseError;
-use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Parsing\DefaultParseContext;
 
 class BoolParserTest extends TestCase
 {

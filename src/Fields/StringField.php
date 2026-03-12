@@ -82,9 +82,7 @@ class StringField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'string',
-        ];
+        return $this->validator->type();
     }
 
     protected function getSupportsSecondaryValidation(): SupportsSecondaryValidation

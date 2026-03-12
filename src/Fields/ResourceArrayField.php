@@ -17,7 +17,9 @@ use Seier\Resting\Validation\ArrayValidator;
 use Seier\Resting\Resource as RestingResource;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Exceptions\ValidationExceptionHandler;
+use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Errors\NotArrayValidationError;
+use Seier\Resting\Validation\Errors\NullableValidationError;
 use Seier\Resting\Validation\Secondary\Arrays\ArrayValidation;
 use Seier\Resting\Validation\Secondary\SupportsSecondaryValidation;
 
@@ -33,7 +35,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
     protected mixed $rawValue = null;
     protected bool $rawValueFilled = false;
 
-    public function __construct(Closure $resourceFactory)
+    public function __construct(string|Closure $resourceFactory)
     {
         parent::__construct();
 
@@ -41,11 +43,34 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         $this->validator = new ArrayValidator();
     }
 
-    public function setResourcePrototypeFactory(Closure $resourceFactory): static
+    public function setResourcePrototypeFactory(string|Closure $resourceFactory): static
     {
-        $this->resourceFactory = $resourceFactory;
-        $this->resource = $resourceFactory();
-        $this->reflectionClass = new ReflectionClass($this->resource);
+        if (is_string($resourceFactory)) {
+            $this->reflectionClass = new ReflectionClass($resourceFactory);
+
+            if (!$this->reflectionClass->isSubclassOf(RestingResource::class)) {
+                $className = $this->reflectionClass->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceArrayField cannot accept class ($className), that is not a subclass of resource.",
+                );
+            }
+
+            $constructor = $this->reflectionClass->getConstructor();
+            if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
+                $className = $this->reflectionClass->getName();
+                throw new RestingDefinitionException(
+                    message: "ResourceArrayField cannot create instance of class ($className), that has required constructor parameters.",
+                );
+            }
+
+            $this->resourceFactory = fn () => new ($this->reflectionClass->getName());
+            $this->resource = ($this->resourceFactory)();
+
+        } else {
+            $this->resourceFactory = $resourceFactory;
+            $this->resource = $resourceFactory();
+            $this->reflectionClass = new ReflectionClass($this->resource);
+        }
 
         return $this;
     }
@@ -127,12 +152,24 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
         if (!is_array($value) || $this->isAssociativeArray($value)) {
             throw new ValidationException([new NotArrayValidationError($value)]);
+        } else {
+            $value = array_values($value);
         }
 
         $resources = [];
         $errors = [];
 
         foreach ($value as $index => $element) {
+
+            if ($element === null) {
+                if ($this->allowsNullElements()) {
+                    $resources[] = null;
+                } else {
+                    $errors[] = (new NullableValidationError)->prependPath($index);
+                }
+
+                continue;
+            }
 
             if ($element instanceof Resource && $this->reflectionClass->isInstance($element)) {
                 $resources[] = $element;
@@ -150,7 +187,7 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
             }
 
             $exceptionHandler = new ValidationExceptionHandler();
-            $exceptionHandler->suppress($index, fn() => $resource->set($element));
+            $exceptionHandler->suppress($index, fn () => $resource->set($element));
             $exceptionHandler->moveErrors($errors);
         }
 
@@ -191,23 +228,40 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         return $this->resource;
     }
 
+    public function allowNullElements(bool $state = true): static
+    {
+        $this->validator->allowNullElements(state: $state);
+
+        return $this;
+    }
+
+    public function allowsNullElements(): bool
+    {
+        return $this->validator->allowsNullElements();
+    }
+
     public function type(): array
     {
         if ($this->resource instanceof UnionResource) {
             return [
                 'type' => 'array',
-                'items' => ['oneOf' => array_map(function ($resource) {
-                    return ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))];
-                }, $this->resource->getDependantResources())],
+                'items' => [
+                    'oneOf' => array_map(fn ($resource) => [
+                        'nullable' => $this->allowsNullElements(),
+                        '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))
+                    ], $this->resource->getDependantResources())
+                ],
             ];
         }
 
         return [
             'type' => 'array',
             'items' => [
+                'type' => 'object',
+                'nullable' => $this->allowsNullElements(),
                 '$ref' => OpenAPI::componentPath(
                     OpenAPI::resourceRefName(get_class($this->resource))
-                ),
+                )
             ]
         ];
     }
@@ -224,17 +278,17 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
         return array_key_exists($offset, $this->value);
     }
 
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return $this->value[$offset];
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         $this->value[$offset] = $value;
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->value[$offset]);
     }

@@ -5,6 +5,7 @@ namespace Seier\Resting\Fields;
 
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class Time
 {
@@ -58,7 +59,7 @@ class Time
         );
     }
 
-    public static function fromCarbon(Carbon $carbon): static
+    public static function fromCarbon(CarbonInterface $carbon): static
     {
         return new static(
             hours: $carbon->hour,

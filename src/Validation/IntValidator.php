@@ -31,4 +31,12 @@ class IntValidator extends BasePrimaryValidator implements PrimaryValidator
     {
         return $this;
     }
+
+    public function type(): array
+    {
+        return [
+            'type' => 'integer',
+            'format' => 'int64',
+        ];
+    }
 }

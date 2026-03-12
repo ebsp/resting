@@ -2,7 +2,7 @@
 
 namespace Seier\Resting\Fields;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Seier\Resting\Parsing\TimeParser;
 use Seier\Resting\Validation\TimeValidator;
 use Seier\Resting\Formatting\TimeFormatter;
@@ -74,7 +74,7 @@ class TimeField extends Field
             return $value;
         }
 
-        if ($value instanceof Carbon) {
+        if ($value instanceof CarbonInterface) {
             return Time::fromCarbon($value);
         }
 
@@ -125,9 +125,6 @@ class TimeField extends Field
 
     public function type(): array
     {
-        return [
-            'type' => 'string',
-            'format' => 'time',
-        ];
+        return $this->validator->type();
     }
 }

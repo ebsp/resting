@@ -5,11 +5,13 @@ namespace Seier\Resting\Tests\Parsing;
 
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonParseError;
-use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Tests\Meta\AssertsErrors;
+use Seier\Resting\Parsing\DefaultParseContext;
 
 class CarbonParserTest extends TestCase
 {
@@ -24,6 +26,7 @@ class CarbonParserTest extends TestCase
 
         $this->instance = new CarbonParser();
     }
+
 
     public function testWhenProvidedEmptyString()
     {
@@ -60,5 +63,34 @@ class CarbonParserTest extends TestCase
         $context = new DefaultParseContext('2020-10-11 10:11:12');
         $this->assertNotEmpty($errors = $this->instance->canParse($context));
         $this->assertHasError($errors, CarbonParseError::class);
+    }
+
+    public function testParseReturnsMutableCarbonByDefault()
+    {
+        $context = new DefaultParseContext('2020-10-11');
+        $result = $this->instance->parse($context);
+
+        $this->assertInstanceOf(Carbon::class, $result);
+    }
+
+    public function testParseReturnsImmutableCarbonWhenEnabled()
+    {
+        RestingSettings::instance()->useImmutableCarbon = true;
+
+        $context = new DefaultParseContext('2020-10-11');
+        $result = $this->instance->parse($context);
+
+        $this->assertInstanceOf(CarbonImmutable::class, $result);
+    }
+
+    public function testParseWithFormatReturnsImmutableCarbonWhenEnabled()
+    {
+        RestingSettings::instance()->useImmutableCarbon = true;
+        $this->instance->withFormat('Y-m-d');
+
+        $context = new DefaultParseContext('2020-10-11');
+        $result = $this->instance->parse($context);
+
+        $this->assertInstanceOf(CarbonImmutable::class, $result);
     }
 }

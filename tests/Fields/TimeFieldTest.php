@@ -2,6 +2,7 @@
 
 namespace Seier\Resting\Tests\Fields;
 
+use Carbon\CarbonImmutable;
 use Seier\Resting\Fields\Time;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\TimeField;
@@ -163,6 +164,16 @@ class TimeFieldTest extends TestCase
         });
 
         $this->assertHasError($exception, MockSecondaryValidationError::class);
+    }
+
+    public function testSetCarbonImmutable()
+    {
+        $this->instance->set(CarbonImmutable::create(2024, 1, 1, 10, 20, 30));
+
+        $result = $this->instance->get();
+        $this->assertEquals(10, $result->hours);
+        $this->assertEquals(20, $result->minutes);
+        $this->assertEquals(30, $result->seconds);
     }
 
     public function testCanCastEmptyValuesToNull()

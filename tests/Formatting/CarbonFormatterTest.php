@@ -4,6 +4,7 @@
 namespace Seier\Resting\Tests\Formatting;
 
 
+use Carbon\CarbonImmutable;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Formatting\CarbonFormatter;
 
@@ -41,5 +42,12 @@ class CarbonFormatterTest extends TestCase
             $now->format($format),
             $this->instance->format($now),
         );
+    }
+
+    public function testFormatCarbonImmutable()
+    {
+        $now = CarbonImmutable::now();
+
+        $this->assertEquals($now->toDateTimeString(), $this->instance->format($now));
     }
 }

@@ -24,7 +24,7 @@ class MockPrimaryValidator implements PrimaryValidator
 
     public static function pass(): static
     {
-        return new static(fn() => []);
+        return new static(fn () => []);
     }
 
     public static function passWhenMatches(mixed $value): static
@@ -38,7 +38,7 @@ class MockPrimaryValidator implements PrimaryValidator
 
     public static function fail(): static
     {
-        return new static(fn() => [new MockSecondaryValidationError()]);
+        return new static(fn () => [new MockSecondaryValidationError()]);
     }
 
     public function getNullableValidator(): NullableValidator
@@ -95,5 +95,10 @@ class MockPrimaryValidator implements PrimaryValidator
         }
 
         return $errors;
+    }
+
+    public function type(): array
+    {
+        return [];
     }
 }

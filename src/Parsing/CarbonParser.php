@@ -5,6 +5,8 @@ namespace Seier\Resting\Parsing;
 
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\Fields\EmptyStringAsNull;
 use Carbon\Exceptions\InvalidFormatException;
 
@@ -35,11 +37,12 @@ class CarbonParser implements Parser
         }
 
         try {
+            $carbonClass = $this->carbonClass();
 
             if ($this->format) {
-                Carbon::createFromFormat($this->format, $raw);
+                $carbonClass::createFromFormat($this->format, $raw);
             } else {
-                Carbon::parse($raw);
+                $carbonClass::parse($raw);
             }
 
             return [];
@@ -48,7 +51,7 @@ class CarbonParser implements Parser
         }
     }
 
-    public function parse(ParseContext $context): ?Carbon
+    public function parse(ParseContext $context): Carbon|CarbonImmutable|null
     {
         $raw = $context->getValue();
         $raw = $this->maybeEmptyStringAsNull($raw);
@@ -56,9 +59,21 @@ class CarbonParser implements Parser
             return null;
         }
 
+        $carbonClass = $this->carbonClass();
+
         return $this->format
-            ? Carbon::createFromFormat($this->format, $raw, now()->timezone)
-            : Carbon::parse($raw);
+            ? $carbonClass::createFromFormat($this->format, $raw, now()->timezone)
+            : $carbonClass::parse($raw);
+    }
+
+    /**
+     * @return class-string<Carbon|CarbonImmutable>
+     */
+    private function carbonClass(): string
+    {
+        return RestingSettings::instance()->useImmutableCarbon
+            ? CarbonImmutable::class
+            : Carbon::class;
     }
 
     public function shouldParse(ParseContext $context): bool
