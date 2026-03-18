@@ -205,4 +205,21 @@ class StringFieldTest extends TestCase
 
         $this->assertNull($this->instance->get());
     }
+
+    public function testStripWritespace()
+    {
+        $this->instance->stripWhitespace();
+
+        $this->instance->set(' ');
+        $this->assertSame('', $this->instance->get());
+
+        $this->instance->set("\ta\n");
+        $this->assertSame('a', $this->instance->get());
+        
+        $this->instance->set("\tå\n");
+        $this->assertSame('å', $this->instance->get());
+
+        $this->instance->set("\t生\n");
+        $this->assertSame('生', $this->instance->get());
+    }
 }

@@ -58,6 +58,15 @@ class StringField extends Field
         return $this;
     }
 
+    public function stripWhitespace(): static
+    {
+        $this->transformers[] = static function (string $value) {
+            return preg_replace('/\s+/', '', $value);
+        };
+
+        return $this;
+    }
+
     public function getValidator(): StringValidator
     {
         return $this->validator;
