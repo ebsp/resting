@@ -19,6 +19,7 @@ class StringField extends Field
 
     private StringValidator $validator;
     private StringParser $parser;
+    private array $transformers;
 
     public function __construct()
     {
@@ -26,6 +27,35 @@ class StringField extends Field
 
         $this->validator = new StringValidator();
         $this->parser = new StringParser();
+        $this->transformers = [];
+    }
+
+    public function transform(callable $callable): static
+    {
+        $this->transformers[] = $callable;
+
+        return $this;
+    }
+
+    public function trim(): static
+    {
+        $this->transformers[] = trim(...);
+
+        return $this;
+    }
+
+    public function upper(): static
+    {
+        $this->transformers[] = mb_strtoupper(...);
+
+        return $this;
+    }
+
+    public function lower(): static
+    {
+        $this->transformers[] = mb_strtolower(...);
+
+        return $this;
     }
 
     public function getValidator(): StringValidator
@@ -40,6 +70,12 @@ class StringField extends Field
 
     public function set($value): static
     {
+        if (is_string($value)) {
+            foreach ($this->transformers as $mapper) {
+                $value = $mapper($value);
+            }
+        }
+
         $parseContext = new DefaultParseContext($value, false);
         if ($this->parser->shouldParse($parseContext)) {
             $errors = $this->parser->canParse($parseContext);
@@ -73,9 +109,6 @@ class StringField extends Field
     public function emptyStringAsNull(bool $state = true): static
     {
         $this->parser->emptyStringAsNull($state);
-        if ($state) {
-            $this->nullable();
-        }
 
         return $this;
     }

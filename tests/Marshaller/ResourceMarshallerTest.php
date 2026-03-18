@@ -1105,9 +1105,9 @@ class ResourceMarshallerTest extends TestCase
         $factory = $this->resourceFactory(function () {
             $dynamic = new DynamicResource();
 
-            $dynamic->withField('time', (new TimeField)->emptyStringAsNull());
-            $dynamic->withField('carbon', (new CarbonField)->emptyStringAsNull());
-            $dynamic->withField('string', (new StringField)->emptyStringAsNull());
+            $dynamic->withField('time', (new TimeField)->nullable()->emptyStringAsNull());
+            $dynamic->withField('carbon', (new CarbonField)->nullable()->emptyStringAsNull());
+            $dynamic->withField('string', (new StringField)->nullable()->emptyStringAsNull());
 
             return $dynamic;
         });

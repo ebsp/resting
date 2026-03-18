@@ -115,9 +115,94 @@ class StringFieldTest extends TestCase
 
     public function testCanCastEmptyValuesToNull()
     {
+        $this->instance->nullable();
         $this->instance->emptyStringAsNull();
 
         $this->instance->set('');
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testTransformersCanChangeSetValue()
+    {
+        $this->instance->transform(strtoupper(...));
+        $this->instance->transform(trim(...));
+
+        $this->instance->set('a ');
+
+        $this->assertSame('A', $this->instance->get());
+    }
+
+    public function testTrimTransformer()
+    {
+        $this->instance->trim();
+
+        $this->instance->set(' a ');
+
+        $this->assertSame('a', $this->instance->get());
+    }
+
+    public function testLowerTransformer()
+    {
+        $this->instance->lower();
+
+        $this->instance->set('ÆØÅ');
+
+        $this->assertSame('æøå', $this->instance->get());
+    }
+
+    public function testUpperTransformer()
+    {
+        $this->instance->upper();
+
+        $this->instance->set('æøå');
+
+        $this->assertSame('ÆØÅ', $this->instance->get());
+    }
+
+    public function testEmptyStringAsNull()
+    {
+        $this->instance->nullable();
+        $this->instance->emptyStringAsNull();
+
+        $this->instance->set('');
+
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testTrimWithEmptyStringAsNull()
+    {
+        $this->instance->nullable();
+        $this->instance->emptyStringAsNull();
+        $this->instance->trim();
+
+        $this->instance->set(' ');
+
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testTrimAndRemoveEmptyWithNonNullValidation()
+    {
+        $this->instance->nullable(false);
+        $this->instance->emptyStringAsNull();
+        $this->instance->trim();
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set(' ');
+        });
+
+        $this->assertNull($this->instance->get());
+    }
+
+    public function testTrimAndRemoveEmptyWithMinLengthValidation()
+    {
+        $this->instance->nullable(false);
+        $this->instance->minLength(1);
+        $this->instance->trim();
+
+        $this->assertThrows(ValidationException::class, function () {
+            $this->instance->set('  ');
+        });
+
         $this->assertNull($this->instance->get());
     }
 }

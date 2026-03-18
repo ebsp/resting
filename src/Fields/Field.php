@@ -174,7 +174,6 @@ abstract class Field
     private function validateValue(mixed $value)
     {
         if (is_null($value)) {
-
             if (!$this->getNullableValidator()->hasPredicates() && !$this->getNullableValidator()->isNullable()) {
                 throw new ValidationException([
                     new NullableValidationError,
