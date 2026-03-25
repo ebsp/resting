@@ -27,7 +27,7 @@ class CarbonPeriodMinDurationValidationError implements ValidationError
 
     public function getMessage(): string
     {
-        $actualSeconds = $this->actualEnd->diffInSeconds($this->actualStart);
+        $actualSeconds = abs($this->actualEnd->diffInSeconds($this->actualStart));
 
         $formattedMin = $this->min->cascade()->forHumans();
         $formattedActual = CarbonInterval::seconds($actualSeconds)->cascade()->forHumans();

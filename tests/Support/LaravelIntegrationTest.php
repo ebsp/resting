@@ -12,12 +12,9 @@ use Seier\Resting\Tests\Meta\CarbonPeriodQuery;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
 use Seier\Resting\Tests\Meta\NotRequiredPersonResource;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 
 class LaravelIntegrationTest extends TestCase
 {
-    use ArraySubsetAsserts;
-
     public function setUp(): void
     {
         parent::setUp();

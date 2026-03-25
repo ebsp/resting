@@ -37,7 +37,7 @@ class CarbonPeriodMinDurationValidator implements SecondaryValidator
         $start = $value->start->min($value->end);
         $end = $value->start->max($value->end);
 
-        $actualSeconds = $end->diffInSeconds($start);
+        $actualSeconds = abs($end->diffInSeconds($start));
 
         return $actualSeconds >= $this->min->totalSeconds
             ? []

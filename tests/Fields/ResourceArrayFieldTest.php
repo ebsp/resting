@@ -4,7 +4,6 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\Person;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Fields\ResourceArrayField;
@@ -20,7 +19,6 @@ class ResourceArrayFieldTest extends TestCase
 {
 
     use AssertsErrors;
-    use AssertThrows;
 
     private ResourceArrayField $instance;
 

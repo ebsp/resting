@@ -32,7 +32,7 @@ class CarbonPeriodMaxDurationValidationError implements ValidationError
             return "Expected period to be less than or equal to $formattedMax, received period without end.";
         }
 
-        $actualSeconds = $this->end->diffInSeconds($this->start);
+        $actualSeconds = abs($this->end->diffInSeconds($this->start));
         $actualFormatted = CarbonInterval::seconds($actualSeconds)->cascade()->forHumans();
 
         return "Expected period to be less than or equal to $formattedMax, received period of $actualFormatted instead.";

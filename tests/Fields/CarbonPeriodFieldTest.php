@@ -176,15 +176,12 @@ class CarbonPeriodFieldTest extends TestCase
         $this->assertInstanceOf(Carbon::class, $this->instance->start());
     }
 
-    public function testStartReturnsCarbonImmutableInstance()
+    public function testStartReturnsCarbonInstanceWhenCreatedWithImmutable()
     {
-        $period = new CarbonPeriod();
-        $period->setDateClass(CarbonImmutable::class);
-        $period->setStartDate(CarbonImmutable::now());
-        $period->setEndDate(CarbonImmutable::now()->addDay());
+        $period = CarbonPeriod::create(CarbonImmutable::now(), CarbonImmutable::now()->addDay());
 
         $this->instance->set($period);
-        $this->assertInstanceOf(CarbonImmutable::class, $this->instance->start());
+        $this->assertInstanceOf(Carbon::class, $this->instance->start());
     }
 
     public function testEndReturnsCarbonInstance()
@@ -194,14 +191,11 @@ class CarbonPeriodFieldTest extends TestCase
         $this->assertInstanceOf(Carbon::class, $this->instance->end());
     }
 
-    public function testEndReturnsCarbonImmutableInstance()
+    public function testEndReturnsCarbonInstanceWhenCreatedWithImmutable()
     {
-        $period = new CarbonPeriod();
-        $period->setDateClass(CarbonImmutable::class);
-        $period->setStartDate(CarbonImmutable::now());
-        $period->setEndDate(CarbonImmutable::now()->addDay());
+        $period = CarbonPeriod::create(CarbonImmutable::now(), CarbonImmutable::now()->addDay());
 
         $this->instance->set($period);
-        $this->assertInstanceOf(CarbonImmutable::class, $this->instance->end());
+        $this->assertInstanceOf(Carbon::class, $this->instance->end());
     }
 }

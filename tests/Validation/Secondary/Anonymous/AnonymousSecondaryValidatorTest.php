@@ -5,7 +5,6 @@ namespace Seier\Resting\Tests\Validation\Secondary\Anonymous;
 
 
 use Seier\Resting\Tests\TestCase;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Secondary\Anonymous\AnonymousValidationError;
 use Seier\Resting\Validation\Secondary\Anonymous\AnonymousSecondaryValidator;
@@ -13,7 +12,6 @@ use Seier\Resting\Validation\Secondary\Anonymous\AnonymousSecondaryValidator;
 class AnonymousSecondaryValidatorTest extends TestCase
 {
 
-    use AssertThrows;
 
     private string $description;
 

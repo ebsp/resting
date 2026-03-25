@@ -5,7 +5,6 @@ namespace Seier\Resting\Tests\Validation\Secondary\String;
 
 
 use Seier\Resting\Tests\TestCase;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\RestingInternalException;
 use Seier\Resting\Validation\Secondary\String\StringLengthValidator;
@@ -14,7 +13,6 @@ use Seier\Resting\Validation\Secondary\String\StringLengthValidationError;
 class StringLengthValidatorTest extends TestCase
 {
 
-    use AssertThrows;
     use AssertsErrors;
 
     public function testWhenLengthEqualsExpectedLength()

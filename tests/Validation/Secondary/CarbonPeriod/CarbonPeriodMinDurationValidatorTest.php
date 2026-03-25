@@ -7,7 +7,6 @@ namespace Seier\Resting\Tests\Validation\Secondary\CarbonPeriod;
 use Carbon\CarbonPeriod;
 use Carbon\CarbonInterval;
 use Seier\Resting\Tests\TestCase;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\RestingInternalException;
 use Seier\Resting\Validation\Secondary\CarbonPeriod\CarbonPeriodMinDurationValidator;
@@ -16,7 +15,6 @@ use Seier\Resting\Validation\Secondary\CarbonPeriod\CarbonPeriodMinDurationValid
 class CarbonPeriodMinDurationValidatorTest extends TestCase
 {
 
-    use AssertThrows;
     use AssertsErrors;
 
     public function testWhenPeriodDurationEqualsMin()

@@ -46,7 +46,7 @@ class CarbonPeriodField extends Field
     {
         $copy = $this->value?->copy();
         if ($copy && $copy->end === null && $this->useStartWhenEndIsMissing) {
-            $copy->end = $copy->start->copy();
+            $copy = CarbonPeriod::create($copy->start->copy(), $copy->start->copy());
         }
 
         return $copy;

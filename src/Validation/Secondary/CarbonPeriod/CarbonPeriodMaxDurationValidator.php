@@ -48,7 +48,7 @@ class CarbonPeriodMaxDurationValidator implements SecondaryValidator
         $start = $value->start->min($value->end);
         $end = $value->start->max($value->end);
 
-        return $end->diffInSeconds($start) <= $this->max->totalSeconds
+        return abs($end->diffInSeconds($start)) <= $this->max->totalSeconds
             ? []
             : [new CarbonPeriodMaxDurationValidationError($this->max, $value->start, $value->end)];
     }

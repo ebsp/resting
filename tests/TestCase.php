@@ -60,6 +60,47 @@ abstract class TestCase extends Orchestra
         $function($value);
     }
 
+    public function assertThrows(
+        Closure|string $test,
+        Closure|string $expectedClass = 'Throwable',
+        Closure|string|null $expectedMessage = null,
+    ): void {
+        // Support old pattern: assertThrows(ExceptionClass, callback, ?assertionClosure)
+        if (is_string($test) && $expectedClass instanceof Closure) {
+            $exceptionClass = $test;
+            $callback = $expectedClass;
+            $assertion = $expectedMessage instanceof Closure ? $expectedMessage : null;
+
+            try {
+                $callback();
+                $this->fail("Expected exception {$exceptionClass} was not thrown");
+            } catch (\Throwable $e) {
+                $this->assertInstanceOf($exceptionClass, $e);
+                if ($assertion) {
+                    $assertion($e);
+                }
+            }
+
+            return;
+        }
+
+        parent::assertThrows($test, $expectedClass, $expectedMessage);
+    }
+
+    protected static function assertArraySubset(array $subset, array $array, bool $strict = false, string $message = ''): void
+    {
+        foreach ($subset as $key => $value) {
+            static::assertArrayHasKey($key, $array, $message);
+            if (is_array($value) && is_array($array[$key])) {
+                static::assertArraySubset($value, $array[$key], $strict, $message);
+            } elseif ($strict) {
+                static::assertSame($value, $array[$key], $message);
+            } else {
+                static::assertEquals($value, $array[$key], $message);
+            }
+        }
+    }
+
     protected function getPackageProviders($app): array
     {
         return [

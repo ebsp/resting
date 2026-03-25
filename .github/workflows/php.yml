@@ -13,10 +13,9 @@ jobs:
       matrix:
         operating-system: [ "ubuntu-latest" ]
         php-versions: [ "8.2", "8.3", "8.4" ]
-        phpunit-versions: [ "latest" ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -24,7 +23,7 @@ jobs:
           extensions: mbstring, intl
           ini-values: post_max_size=256M, max_execution_time=180
           coverage: xdebug
-          tools: phpunit:${{ matrix.phpunit-versions }}
+          tools: composer
 
       - name: Update packages to fit PHP Version
         run: composer update --no-install
@@ -33,7 +32,7 @@ jobs:
         run: composer validate
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress
 
       - name: Run test suite
         run: ./vendor/bin/phpunit

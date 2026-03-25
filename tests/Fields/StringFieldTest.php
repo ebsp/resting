@@ -4,7 +4,6 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\StringField;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
@@ -14,7 +13,6 @@ class StringFieldTest extends TestCase
 {
 
     use AssertsErrors;
-    use AssertThrows;
 
     private StringField $instance;
 

@@ -16,13 +16,10 @@ use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Tests\Meta\UnionParentResource;
 use Seier\Resting\Tests\Meta\ArrayFieldsResource;
 use Seier\Resting\Tests\Meta\UnionListParentResource;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Seier\Resting\Tests\Meta\ArrayResourceFieldsResource;
 
 class OpenAPITest extends TestCase
 {
-    use ArraySubsetAsserts;
-
     public function testConstructor()
     {
         $routeCollection = new RouteCollection();

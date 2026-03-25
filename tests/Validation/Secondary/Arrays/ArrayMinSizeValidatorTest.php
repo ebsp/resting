@@ -5,7 +5,6 @@ namespace Seier\Resting\Tests\Validation\Secondary\Arrays;
 
 
 use Seier\Resting\Tests\TestCase;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\RestingInternalException;
 use Seier\Resting\Validation\Secondary\Arrays\ArrayMinSizeValidator;
@@ -15,7 +14,6 @@ class ArrayMinSizeValidatorTest extends TestCase
 {
 
     use AssertsErrors;
-    use AssertThrows;
 
     public function testWhenSizeEqualsMin()
     {

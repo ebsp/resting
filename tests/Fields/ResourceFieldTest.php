@@ -4,7 +4,6 @@ namespace Seier\Resting\Tests\Fields;
 
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Tests\Meta\Person;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\PersonResource;
@@ -15,7 +14,6 @@ use Seier\Resting\Tests\Meta\RequiredConstructorParamsResource;
 class ResourceFieldTest extends TestCase
 {
 
-    use AssertThrows;
 
     private ResourceField $instance;
 

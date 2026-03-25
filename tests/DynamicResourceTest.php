@@ -4,13 +4,11 @@ namespace Seier\Resting\Tests;
 
 use Seier\Resting\DynamicResource;
 use Seier\Resting\Fields\StringField;
-use Jchook\AssertThrows\AssertThrows;
 use Seier\Resting\Exceptions\DynamicResourceFieldException;
 
 class DynamicResourceTest extends TestCase
 {
 
-    use AssertThrows;
 
     private DynamicResource $instance;
 
