@@ -1,6 +1,22 @@
 {
     "name": "ebsp/resting",
-    "description": "Simple REST library for Laravel",
+    "description": "Typed REST resources, validation, and OpenAPI generation for Laravel.",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "rest",
+        "api",
+        "openapi",
+        "swagger",
+        "resources",
+        "validation",
+        "transformer"
+    ],
+    "homepage": "https://github.com/ebsp/resting",
+    "support": {
+        "issues": "https://github.com/ebsp/resting/issues",
+        "source": "https://github.com/ebsp/resting"
+    },
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.0|^12.0",
@@ -10,6 +26,10 @@
         {
             "name": "Emil Büchler Seier Petersen",
             "email": "emil@ebsp.dk"
+        },
+        {
+            "name": "Thomas Rosenkrans Vestergaard",
+            "email": "thro@subit.dk"
         }
     ],
     "autoload": {

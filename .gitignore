@@ -3,6 +3,9 @@
 composer.phar
 composer.lock
 .DS_Store
-docs
 .phpunit.result.cache
 .claude
+node_modules/
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/coverage
