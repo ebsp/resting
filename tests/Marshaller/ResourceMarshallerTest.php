@@ -241,7 +241,7 @@ class ResourceMarshallerTest extends TestCase
 
         $this->assertFalse($result->hasErrors());
         $this->assertType($result->getValue(), function (ActivityResource $activity) use ($start) {
-            $this->assertEquals($activity->start->get(), $start);
+            $this->assertEquals($activity->start->get(), $start->copy()->startOfSecond());
             $this->assertNull($activity->end->get());
         });
     }
@@ -261,8 +261,8 @@ class ResourceMarshallerTest extends TestCase
 
         $this->assertFalse($result->hasErrors());
         $this->assertType($result->getValue(), function (ActivityResource $activity) use ($end, $start) {
-            $this->assertEquals($activity->start->get(), $start);
-            $this->assertEquals($activity->end->get(), $end);
+            $this->assertEquals($activity->start->get(), $start->copy()->startOfSecond());
+            $this->assertEquals($activity->end->get(), $end->copy()->startOfSecond());
         });
     }
 

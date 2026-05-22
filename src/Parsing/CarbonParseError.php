@@ -14,12 +14,10 @@ class CarbonParseError implements ValidationError
     use HasPath;
     use FormatsValues;
 
-    private ?string $expectedFormat;
     private string $actual;
 
-    public function __construct(?string $expectedFormat, string $actual)
+    public function __construct(string $actual)
     {
-        $this->expectedFormat = $expectedFormat;
         $this->actual = $actual;
     }
 
@@ -27,8 +25,6 @@ class CarbonParseError implements ValidationError
     {
         $formatted = $this->format($this->actual);
 
-        return $this->expectedFormat
-            ? "Expected value in the format $this->expectedFormat, received $formatted instead."
-            : "Expected value that could be parsed to carbon timestamp, received $formatted.";
+        return "Expected value that could be parsed to carbon timestamp, received '$formatted'.";
     }
 }

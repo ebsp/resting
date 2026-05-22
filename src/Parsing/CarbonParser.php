@@ -15,15 +15,6 @@ class CarbonParser implements Parser
 
     use EmptyStringAsNull;
 
-    private ?string $format = null;
-
-    public function withFormat(?string $format): static
-    {
-        $this->format = $format;
-
-        return $this;
-    }
-
     public function canParse(ParseContext $context): array
     {
         $raw = $context->getValue();
@@ -33,21 +24,15 @@ class CarbonParser implements Parser
         }
 
         if ($raw === '') {
-            return [new CarbonParseError($this->format, $raw)];
+            return [new CarbonParseError($raw)];
         }
 
         try {
-            $carbonClass = $this->carbonClass();
-
-            if ($this->format) {
-                $carbonClass::createFromFormat($this->format, $raw);
-            } else {
-                $carbonClass::parse($raw);
-            }
+            $this->carbonClass()::parse($raw);
 
             return [];
         } catch (InvalidFormatException) {
-            return [new CarbonParseError($this->format, $raw)];
+            return [new CarbonParseError($raw)];
         }
     }
 
@@ -59,11 +44,7 @@ class CarbonParser implements Parser
             return null;
         }
 
-        $carbonClass = $this->carbonClass();
-
-        return $this->format
-            ? $carbonClass::createFromFormat($this->format, $raw, now()->timezone)
-            : $carbonClass::parse($raw);
+        return $this->carbonClass()::parse($raw);
     }
 
     /**

@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
-use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonPeriodParser;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Exceptions\ValidationException;
@@ -23,6 +22,7 @@ class CarbonPeriodField extends Field
     private CarbonPeriodParser $parser;
     private CarbonPeriodValidator $validator;
     private bool $useStartWhenEndIsMissing = false;
+    private CarbonGranularity $granularity = CarbonGranularity::Second;
 
     public function __construct()
     {
@@ -70,14 +70,9 @@ class CarbonPeriodField extends Field
         return $this->get()?->end?->copy();
     }
 
-    public function withFormat($format): static
+    public function granularity(CarbonGranularity $granularity): static
     {
-        $apply = function (CarbonParser $validator) use ($format) {
-            $validator->withFormat($format);
-        };
-
-        $this->parser->onStart($apply);
-        $this->parser->onEnd($apply);
+        $this->granularity = $granularity;
 
         return $this;
     }
@@ -109,16 +104,28 @@ class CarbonPeriodField extends Field
     public function set($value): static
     {
         if (is_array($value)) {
-            parent::set($this->fromArray($value));
-            return $this;
+            $value = $this->fromArray($value);
         }
 
         if ($value instanceof CarbonPeriod) {
-            parent::set($value);
-            return $this;
+            $value = $this->truncate($value);
         }
 
         return parent::set($value);
+    }
+
+    private function truncate(CarbonPeriod $period): CarbonPeriod
+    {
+        $start = $this->granularity->truncate($period->start->copy());
+
+        $end = $period->end?->copy();
+        if ($end !== null) {
+            $end = $this->granularity->truncate($end);
+        }
+
+        return $end !== null
+            ? CarbonPeriod::create($start, $end)
+            : CarbonPeriod::create($start);
     }
 
     public function type(): array
