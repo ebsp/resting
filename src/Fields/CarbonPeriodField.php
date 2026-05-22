@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
-use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonPeriodParser;
 use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Exceptions\ValidationException;
@@ -68,18 +67,6 @@ class CarbonPeriodField extends Field
     public function end(): Carbon|CarbonImmutable|null
     {
         return $this->get()?->end?->copy();
-    }
-
-    public function withFormat($format): static
-    {
-        $apply = function (CarbonParser $validator) use ($format) {
-            $validator->withFormat($format);
-        };
-
-        $this->parser->onStart($apply);
-        $this->parser->onEnd($apply);
-
-        return $this;
     }
 
     public function endRequired(bool $state): static

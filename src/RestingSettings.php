@@ -2,6 +2,8 @@
 
 namespace Seier\Resting;
 
+use Seier\Resting\Fields\CarbonGranularity;
+
 class RestingSettings
 {
     private static ?RestingSettings $instance = null;
@@ -9,6 +11,13 @@ class RestingSettings
     public bool $useImmutableCarbon = false;
     public bool $removeEmptyArrays = false;
     public bool $removeNulls = false;
+
+    private array $carbonFormats = [
+        'date' => 'Y-m-d',
+        'hour' => 'Y-m-d H',
+        'minute' => 'Y-m-d H:i',
+        'second' => 'Y-m-d H:i:s',
+    ];
 
     private function __construct()
     {
@@ -26,5 +35,17 @@ class RestingSettings
     public static function reset(): void
     {
         static::$instance = null;
+    }
+
+    public function carbonFormat(CarbonGranularity $granularity): string
+    {
+        return $this->carbonFormats[$granularity->value];
+    }
+
+    public function setCarbonFormat(CarbonGranularity $granularity, string $format): static
+    {
+        $this->carbonFormats[$granularity->value] = $format;
+
+        return $this;
     }
 }

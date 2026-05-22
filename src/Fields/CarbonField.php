@@ -4,6 +4,7 @@ namespace Seier\Resting\Fields;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Validation\CarbonValidator;
 use Seier\Resting\Formatting\CarbonFormatter;
@@ -20,6 +21,7 @@ class CarbonField extends Field
     private CarbonValidator $validator;
     private CarbonParser $parser;
     private CarbonFormatter $formatter;
+    private CarbonGranularity $granularity = CarbonGranularity::Second;
 
     public function __construct()
     {
@@ -61,6 +63,10 @@ class CarbonField extends Field
             $value = $this->parser->parse($parseContext);
         }
 
+        if ($value instanceof CarbonInterface) {
+            $value = $this->granularity->truncate($value->copy());
+        }
+
         return parent::set($value);
     }
 
@@ -69,32 +75,17 @@ class CarbonField extends Field
         return $this->value?->copy();
     }
 
+    public function granularity(CarbonGranularity $granularity): static
+    {
+        $this->granularity = $granularity;
+        $this->formatter->withGranularity($granularity);
+
+        return $this;
+    }
+
     public function withFormat(string $format): static
     {
-        $this->withInputFormat($format);
-        $this->withOutputFormat($format);
-
-        return $this;
-    }
-
-    public function withInputFormat(string $format): static
-    {
-        $this->parser->withFormat($format);
-
-        return $this;
-    }
-
-    public function withOutputFormat(string $format): static
-    {
         $this->formatter->withFormat($format);
-
-        return $this;
-    }
-
-    public function withIsoDateFormat(): static
-    {
-        $this->withFormat('Y-m-d|');
-        $this->withOutputFormat('Y-m-d');
 
         return $this;
     }

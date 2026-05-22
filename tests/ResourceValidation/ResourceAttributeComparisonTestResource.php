@@ -9,6 +9,7 @@ use Seier\Resting\Fields\TimeField;
 use Seier\Resting\Fields\StringField;
 use Seier\Resting\Fields\NumberField;
 use Seier\Resting\Fields\CarbonField;
+use Seier\Resting\Fields\CarbonGranularity;
 
 class ResourceAttributeComparisonTestResource extends Resource
 {
@@ -53,7 +54,7 @@ class ResourceAttributeComparisonTestResource extends Resource
         $this->carbon_field_a = new CarbonField;
         $this->carbon_field_b = new CarbonField;
 
-        $this->date_field_a = (new CarbonField)->withIsoDateFormat();
-        $this->date_field_b = (new CarbonField)->withIsoDateFormat();
+        $this->date_field_a = (new CarbonField)->granularity(CarbonGranularity::Date);
+        $this->date_field_b = (new CarbonField)->granularity(CarbonGranularity::Date);
     }
 }

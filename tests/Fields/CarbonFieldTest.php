@@ -2,9 +2,12 @@
 
 namespace Seier\Resting\Tests\Fields;
 
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonField;
+use Seier\Resting\Fields\CarbonGranularity;
 use Seier\Resting\Parsing\CarbonParseError;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
@@ -36,7 +39,8 @@ class CarbonFieldTest extends TestCase
     public function testGetCanReturnCarbonInstance()
     {
         $this->instance->set($now = now());
-        $this->assertSame($now->micro, $this->instance->get()->micro);
+        $this->assertInstanceOf(Carbon::class, $this->instance->get());
+        $this->assertEquals($now->copy()->startOfSecond(), $this->instance->get());
     }
 
     public function testGetReturnsNewInstanceEveryTime()
@@ -49,7 +53,15 @@ class CarbonFieldTest extends TestCase
     {
         $now = now();
         $this->instance->set($now);
-        $this->assertEquals($now->micro, $this->instance->get()->micro);
+        $this->assertEquals($now->copy()->startOfSecond(), $this->instance->get());
+    }
+
+    public function testSetDoesNotMutateProvidedCarbon()
+    {
+        $now = now();
+        $micro = $now->micro;
+        $this->instance->set($now);
+        $this->assertSame($micro, $now->micro);
     }
 
     public function testSetNullWhenNullable()
@@ -149,7 +161,7 @@ class CarbonFieldTest extends TestCase
         $this->instance->withValidator(MockSecondaryValidator::pass());
 
         $this->instance->set($now = now());
-        $this->assertEquals($now, $this->instance->get());
+        $this->assertEquals($now->copy()->startOfSecond(), $this->instance->get());
     }
 
     public function testValidateWithRegisteredSecondaryValidationThatFails()
@@ -182,7 +194,7 @@ class CarbonFieldTest extends TestCase
     {
         $now = CarbonImmutable::now();
         $this->instance->set($now);
-        $this->assertEquals($now->micro, $this->instance->get()->micro);
+        $this->assertEquals($now->startOfSecond(), $this->instance->get());
     }
 
     public function testSetCarbonImmutableReturnsNewInstance()
@@ -220,5 +232,88 @@ class CarbonFieldTest extends TestCase
             $now->toDateTimeString(),
             $this->instance->formatted(),
         );
+    }
+
+    public function testDefaultGranularityTruncatesToSecond()
+    {
+        $value = Carbon::create(2025, 1, 2, 3, 4, 5)->addMicroseconds(123456);
+        $this->instance->set($value);
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 5), $this->instance->get());
+    }
+
+    public function testGranularityDateTruncatesToStartOfDay()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 0, 0, 0), $this->instance->get());
+    }
+
+    public function testGranularityHourTruncatesToStartOfHour()
+    {
+        $this->instance->granularity(CarbonGranularity::Hour);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 0, 0), $this->instance->get());
+    }
+
+    public function testGranularityMinuteTruncatesToStartOfMinute()
+    {
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 0), $this->instance->get());
+    }
+
+    public function testGranularityTruncatesParsedString()
+    {
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set('2025-01-02 03:04:05');
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 0), $this->instance->get());
+    }
+
+    public function testAcceptsAnyCarbonParseableString()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set('2025-01-02T03:04:05+00:00');
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 0, 0, 0), $this->instance->get());
+    }
+
+    public function testFormattedUsesGranularityFormat()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals('2025-01-02', $this->instance->formatted());
+    }
+
+    public function testFormattedUsesGranularityFormatForMinute()
+    {
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals('2025-01-02 03:04', $this->instance->formatted());
+    }
+
+    public function testFormattedUsesConfiguredGranularityFormat()
+    {
+        RestingSettings::instance()->setCarbonFormat(CarbonGranularity::Minute, 'H:i');
+
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals('03:04', $this->instance->formatted());
+    }
+
+    public function testWithFormatOverridesGranularityFormat()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->withFormat('d/m/Y');
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
+
+        $this->assertEquals('02/01/2025', $this->instance->formatted());
     }
 }

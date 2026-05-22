@@ -6,7 +6,6 @@ namespace Seier\Resting\Tests\Parsing;
 
 use Carbon\Carbon;
 use Seier\Resting\Tests\TestCase;
-use Seier\Resting\Parsing\CarbonParser;
 use Seier\Resting\Parsing\CarbonParseError;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Parsing\CarbonPeriodParser;
@@ -86,25 +85,4 @@ class CarbonPeriodParserTest extends TestCase
         $this->assertHasError($errors, CarbonParseError::class, 'end');
     }
 
-    public function testCarbonParsersCanReturnErrors()
-    {
-        $this->instance->onStart(function (CarbonParser $start) {
-            $start->withFormat('Y-m-d H');
-        });
-
-        $context = new DefaultParseContext('2020-10-11,2020-10-12');
-        $this->assertNotEmpty($errors = $this->instance->canParse($context));
-        $this->assertHasError($errors, CarbonParseError::class, 'start');
-    }
-
-    public function testCarbonParsersCanParseReturnErrors()
-    {
-        $this->instance->onStart(function (CarbonParser $start) {
-            $start->withFormat('Y-m-d H');
-        });
-
-        $context = new DefaultParseContext('2020-10-11 14,2020-10-12');
-        $this->assertEmpty($this->instance->canParse($context));
-        $this->assertEquals(Carbon::create(2020, 10, 11, 14), $this->instance->parse($context)->start);
-    }
 }

@@ -5,6 +5,8 @@ namespace Seier\Resting\Formatting;
 
 
 use Carbon\CarbonInterface;
+use Seier\Resting\RestingSettings;
+use Seier\Resting\Fields\CarbonGranularity;
 use Seier\Resting\Validation\Secondary\Panics;
 
 class CarbonFormatter implements Formatter
@@ -12,7 +14,8 @@ class CarbonFormatter implements Formatter
 
     use Panics;
 
-    private ?string $format = null;
+    private CarbonGranularity $granularity = CarbonGranularity::Second;
+    private ?string $formatOverride = null;
 
     public function format(mixed $value): ?string
     {
@@ -24,14 +27,22 @@ class CarbonFormatter implements Formatter
             $this->panic();
         }
 
-        $format = $this->format ?? 'Y-m-d H:i:s';
+        $format = $this->formatOverride
+            ?? RestingSettings::instance()->carbonFormat($this->granularity);
 
         return $value->format($format);
     }
 
+    public function withGranularity(CarbonGranularity $granularity): static
+    {
+        $this->granularity = $granularity;
+
+        return $this;
+    }
+
     public function withFormat(string $format): static
     {
-        $this->format = $format;
+        $this->formatOverride = $format;
 
         return $this;
     }

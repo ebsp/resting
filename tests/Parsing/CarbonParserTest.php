@@ -56,13 +56,14 @@ class CarbonParserTest extends TestCase
         $this->assertEquals(Carbon::create(2020, 10, 11, 10, 11, 12), $this->instance->parse($context));
     }
 
-    public function testCanEnforceFormat()
+    public function testAcceptsAnyCarbonParseableString()
     {
-        $this->instance->withFormat('Y-m-d');
-
-        $context = new DefaultParseContext('2020-10-11 10:11:12');
-        $this->assertNotEmpty($errors = $this->instance->canParse($context));
-        $this->assertHasError($errors, CarbonParseError::class);
+        $context = new DefaultParseContext('2020-10-11T10:11:12');
+        $this->assertEmpty($this->instance->canParse($context));
+        $this->assertEquals(
+            Carbon::create(2020, 10, 11, 10, 11, 12),
+            $this->instance->parse($context),
+        );
     }
 
     public function testParseReturnsMutableCarbonByDefault()
@@ -76,17 +77,6 @@ class CarbonParserTest extends TestCase
     public function testParseReturnsImmutableCarbonWhenEnabled()
     {
         RestingSettings::instance()->useImmutableCarbon = true;
-
-        $context = new DefaultParseContext('2020-10-11');
-        $result = $this->instance->parse($context);
-
-        $this->assertInstanceOf(CarbonImmutable::class, $result);
-    }
-
-    public function testParseWithFormatReturnsImmutableCarbonWhenEnabled()
-    {
-        RestingSettings::instance()->useImmutableCarbon = true;
-        $this->instance->withFormat('Y-m-d');
 
         $context = new DefaultParseContext('2020-10-11');
         $result = $this->instance->parse($context);
