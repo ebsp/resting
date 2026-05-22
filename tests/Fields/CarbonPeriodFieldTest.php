@@ -9,6 +9,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Seier\Resting\Tests\TestCase;
 use Seier\Resting\Fields\CarbonPeriodField;
+use Seier\Resting\Fields\CarbonGranularity;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
@@ -80,10 +81,9 @@ class CarbonPeriodFieldTest extends TestCase
 
     public function testAsArray()
     {
-        $period = CarbonPeriod::create(
-            $from = now(),
-            $to = now()->addDay(),
-        );
+        $from = now()->startOfSecond();
+        $to = $from->copy()->addDay();
+        $period = CarbonPeriod::create($from, $to);
 
         $this->instance->set($period);
         $this->assertCount(2, $result = $this->instance->asArray());
@@ -143,7 +143,8 @@ class CarbonPeriodFieldTest extends TestCase
     {
         $this->instance->withValidator(MockSecondaryValidator::pass());
 
-        $this->instance->set($period = CarbonPeriod::create(now(), now()->addDay()));
+        $start = now()->startOfSecond();
+        $this->instance->set($period = CarbonPeriod::create($start, $start->copy()->addDay()));
         $this->assertEquals($period, $this->instance->get());
     }
 
@@ -197,5 +198,117 @@ class CarbonPeriodFieldTest extends TestCase
 
         $this->instance->set($period);
         $this->assertInstanceOf(Carbon::class, $this->instance->end());
+    }
+
+    public function testDefaultGranularityTruncatesToSecond()
+    {
+        $start = Carbon::create(2025, 1, 2, 3, 4, 5)->addMicroseconds(123456);
+        $end = Carbon::create(2025, 1, 3, 6, 7, 8)->addMicroseconds(654321);
+
+        $this->instance->set(CarbonPeriod::create($start, $end));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 5), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 6, 7, 8), $period->end);
+    }
+
+    public function testGranularityDateTruncatesBothEndpoints()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set(CarbonPeriod::create(
+            Carbon::create(2025, 1, 2, 3, 4, 5),
+            Carbon::create(2025, 1, 3, 6, 7, 8),
+        ));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 0, 0, 0), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 0, 0, 0), $period->end);
+    }
+
+    public function testGranularityHourTruncatesBothEndpoints()
+    {
+        $this->instance->granularity(CarbonGranularity::Hour);
+        $this->instance->set(CarbonPeriod::create(
+            Carbon::create(2025, 1, 2, 3, 4, 5),
+            Carbon::create(2025, 1, 3, 6, 7, 8),
+        ));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 0, 0), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 6, 0, 0), $period->end);
+    }
+
+    public function testGranularityMinuteTruncatesBothEndpoints()
+    {
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set(CarbonPeriod::create(
+            Carbon::create(2025, 1, 2, 3, 4, 5),
+            Carbon::create(2025, 1, 3, 6, 7, 8),
+        ));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 0), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 6, 7, 0), $period->end);
+    }
+
+    public function testGranularityTruncatesArrayInput()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set([
+            Carbon::create(2025, 1, 2, 3, 4, 5),
+            Carbon::create(2025, 1, 3, 6, 7, 8),
+        ]);
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3), $period->end);
+    }
+
+    public function testGranularityTruncatesParsedStringInput()
+    {
+        $this->instance->granularity(CarbonGranularity::Minute);
+        $this->instance->set(['2025-01-02 03:04:05', '2025-01-03 06:07:08']);
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 0), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 6, 7, 0), $period->end);
+    }
+
+    public function testGranularityTruncatesPeriodWithoutEnd()
+    {
+        $this->instance->endNotRequired();
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set(CarbonPeriod::create(Carbon::create(2025, 1, 2, 3, 4, 5)));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 0, 0, 0), $period->start);
+        $this->assertNull($period->end);
+    }
+
+    public function testGranularityTruncatesCarbonImmutablePeriod()
+    {
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set(CarbonPeriod::create(
+            CarbonImmutable::create(2025, 1, 2, 3, 4, 5),
+            CarbonImmutable::create(2025, 1, 3, 6, 7, 8),
+        ));
+
+        $period = $this->instance->get();
+        $this->assertEquals(Carbon::create(2025, 1, 2, 0, 0, 0), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 0, 0, 0), $period->end);
+    }
+
+    public function testGranularityDoesNotMutateProvidedPeriod()
+    {
+        $period = CarbonPeriod::create(
+            Carbon::create(2025, 1, 2, 3, 4, 5),
+            Carbon::create(2025, 1, 3, 6, 7, 8),
+        );
+
+        $this->instance->granularity(CarbonGranularity::Date);
+        $this->instance->set($period);
+
+        $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 5), $period->start);
+        $this->assertEquals(Carbon::create(2025, 1, 3, 6, 7, 8), $period->end);
     }
 }
