@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support;
 
 use Closure;
+use stdClass;
 use ArrayObject;
 use ReflectionType;
 use ReflectionClass;
@@ -51,6 +52,80 @@ class OpenAPI implements Arrayable, Responsable
         $this->processPaths();
         $this->processResources();
         $this->processParameters();
+
+        $this->document = $this->normalizeRefSiblings($this->document);
+        $this->document = $this->normalizeEmptySchemas($this->document);
+        $this->pruneUnusedComponents();
+    }
+
+    protected function emptySchema(): stdClass
+    {
+        return new stdClass();
+    }
+
+    protected function normalizeTypeReturn(array $type): array|stdClass
+    {
+        return $type === []
+            ? $this->emptySchema()
+            : $type;
+    }
+
+    protected function normalizeRefSiblings(mixed $node): mixed
+    {
+        if (is_array($node)) {
+            if (isset($node['$ref'])) {
+                return ['$ref' => $node['$ref']];
+            }
+
+            $normalized = [];
+            foreach ($node as $key => $value) {
+                $normalized[$key] = $this->normalizeRefSiblings($value);
+            }
+            return $normalized;
+        }
+
+        return $node;
+    }
+
+    protected function normalizeEmptySchemas(mixed $node, array $path = []): mixed
+    {
+        $isSchemaPosition = self::isSchemaPosition($path);
+
+        if (is_array($node) && $node === [] && $isSchemaPosition) {
+            return $this->emptySchema();
+        }
+
+        if (is_array($node)) {
+            $normalized = [];
+            foreach ($node as $key => $value) {
+                $normalized[$key] = $this->normalizeEmptySchemas($value, [...$path, $key]);
+            }
+            return $normalized;
+        }
+
+        return $node;
+    }
+
+    private static function isSchemaPosition(array $path): bool
+    {
+        $last = end($path);
+        if ($last === 'schema' || $last === 'items') {
+            return true;
+        }
+
+        if (count($path) >= 2 && $path[count($path) - 2] === 'properties') {
+            return true;
+        }
+
+        if (count($path) >= 2 && ($path[count($path) - 2] === 'oneOf' || $path[count($path) - 2] === 'allOf' || $path[count($path) - 2] === 'anyOf')) {
+            return true;
+        }
+
+        if (count($path) >= 2 && $path[count($path) - 2] === 'schemas' && count($path) >= 3 && $path[count($path) - 3] === 'components') {
+            return true;
+        }
+
+        return false;
     }
 
     protected function processInfo(): void
@@ -82,7 +157,7 @@ class OpenAPI implements Arrayable, Responsable
                     'in' => $where,
                     'name' => $key,
                     'required' => $abstract->isRequired(),
-                    'schema' => $abstract->type(),
+                    'schema' => $this->normalizeTypeReturn($abstract->type()),
                 ];
             });
         }
@@ -133,6 +208,8 @@ class OpenAPI implements Arrayable, Responsable
             })->values()->toArray(),
             'properties' => $fields->map(function (Field $field, string $fieldName) use ($resource, $unionDiscriminatorKey, $resourceReflection) {
 
+                $fieldType = $this->normalizeTypeReturn($field->type());
+
                 if ($resource instanceof UnionResource && $fieldName === $unionDiscriminatorKey) {
                     $resourceMap = $resource->getResourceMap();
                     $foundDiscriminatorValue = null;
@@ -142,9 +219,11 @@ class OpenAPI implements Arrayable, Responsable
                         }
                     }
 
-                    return array_merge($field->type(), [
-                        'enum' => [$foundDiscriminatorValue],
-                    ]);
+                    $base = is_array($fieldType) ? $fieldType : [];
+                    if ($foundDiscriminatorValue !== null) {
+                        return array_merge($base, ['enum' => [$foundDiscriminatorValue]]);
+                    }
+                    return $base === [] ? $this->emptySchema() : $base;
                 }
 
                 foreach ($field->nestedRefs() as $type => $refs) {
@@ -185,7 +264,15 @@ class OpenAPI implements Arrayable, Responsable
                     $merge['description'] = $description;
                 }
 
-                return $merge + $field->type();
+                if (!is_array($fieldType)) {
+                    return $merge === [] ? $this->emptySchema() : $merge;
+                }
+
+                if (isset($fieldType['$ref']) && $merge !== []) {
+                    return ['allOf' => [$fieldType]] + $merge;
+                }
+
+                return $merge + $fieldType;
 
             })->toArray(),
         ];
@@ -240,10 +327,11 @@ class OpenAPI implements Arrayable, Responsable
             'description' => $endpointDescription ?? '',
             'responses' => [
                 '200' => [
-                    "content" => [
-                        "application/json" => $this->describeResponse($route),
-                    ]
-                ]
+                    'description' => ($endpointDescription !== null && $endpointDescription !== '') ? $endpointDescription : 'OK',
+                    'content' => [
+                        'application/json' => $this->describeResponse($route),
+                    ],
+                ],
             ],
         ];
 
@@ -275,7 +363,6 @@ class OpenAPI implements Arrayable, Responsable
 
             if ($this->isUnionSubclass($resourceName)) {
                 $schema = [
-                    'type' => 'object',
                     'oneOf' => $this->createOneOfArray($resourceName)
                 ];
             } else {
@@ -383,15 +470,23 @@ class OpenAPI implements Arrayable, Responsable
             return false;
         });
 
+        $coveredPathNames = [];
+
         if ($paramClass) {
             /** @var ReflectionParameter $queryClass */
             $this->addParameter($paramClass = $paramClass->getType()->getName(), 'path');
             /** @var Params $query */
             $query = new $paramClass;
 
-            $fields = $query->fields()->filter(function ($field) {
+            $paramFields = $query->fields()->filter(function ($field) {
                 return $field instanceof Field;
-            })->map(function (Field $fieldAbstract, $key) use ($query) {
+            });
+
+            foreach ($paramFields->keys() as $name) {
+                $coveredPathNames[$name] = true;
+            }
+
+            $fields = $paramFields->map(function (Field $fieldAbstract, $key) use ($query) {
                 return [
                     '$ref' => static::componentPath(
                         static::parametersRefName(get_class($query), $key), 'parameters'
@@ -402,27 +497,34 @@ class OpenAPI implements Arrayable, Responsable
             $endpoint['parameters'] = array_merge($endpoint['parameters'] ?? [], $fields->toArray());
         }
 
-        $uriParameterNames = $route->parameterNames();
+        $scalarParameters = [];
         foreach ($route->signatureParameters() as $parameter) {
             $type = $parameter->getType();
-            if (!$type instanceof ReflectionNamedType || !$type->isBuiltin()) {
-                continue;
+            if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+                $scalarParameters[$parameter->getName()] = $parameter;
             }
+        }
 
-            if (!in_array($parameter->getName(), $uriParameterNames, true)) {
+        foreach ($route->parameterNames() as $placeholder) {
+            if (isset($coveredPathNames[$placeholder])) {
                 continue;
             }
 
             $paramEntry = [
                 'in' => 'path',
-                'name' => $parameter->getName(),
+                'name' => $placeholder,
                 'required' => true,
-                'schema' => $this->scalarSchemaForName($type->getName()),
+                'schema' => ['type' => 'string'],
             ];
 
-            $description = Doc::descriptionFor($parameter);
-            if ($description !== null) {
-                $paramEntry['description'] = $description;
+            if (isset($scalarParameters[$placeholder])) {
+                $scalar = $scalarParameters[$placeholder];
+                $paramEntry['schema'] = $this->scalarSchemaForName($scalar->getType()->getName());
+
+                $description = Doc::descriptionFor($scalar);
+                if ($description !== null) {
+                    $paramEntry['description'] = $description;
+                }
             }
 
             $endpoint['parameters'][] = $paramEntry;
@@ -445,7 +547,7 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeResponse(Route $route): array
     {
         $resourceClassesSeen = new ArrayObject();
-        $responseType = [];
+        $responseType = $this->emptySchema();
         $returnType = null;
 
         $actionReflection = $this->getRouteActionReflection($route);
@@ -458,7 +560,11 @@ class OpenAPI implements Arrayable, Responsable
         }
 
         if ($returnType instanceof ReflectionType) {
-            $responseType = $this->createTypeFromReflectionType($returnType, $resourceClassesSeen);
+            $reflected = $this->createTypeFromReflectionType($returnType, $resourceClassesSeen);
+            if (is_array($reflected) && $reflected === []) {
+                $reflected = $this->emptySchema();
+            }
+            $responseType = $reflected;
         }
 
         foreach ($resourceClassesSeen as $resourceClass) {
@@ -499,32 +605,39 @@ class OpenAPI implements Arrayable, Responsable
         return null;
     }
 
-    protected function createTypeFromReflectionType(ReflectionType $type, ArrayObject $resourceClassesSeen): array
+    protected function createTypeFromReflectionType(ReflectionType $type, ArrayObject $resourceClassesSeen): array|stdClass
     {
         if ($type instanceof ReflectionUnionType) {
-            return array(
+            $members = [];
+            foreach ($type->getTypes() as $inner) {
+                if ($inner instanceof ReflectionNamedType && $inner->getName() === 'null') {
+                    continue;
+                }
+
+                $memberSchema = $this->createTypeFromReflectionType($inner, $resourceClassesSeen);
+
+                if (is_array($memberSchema) && $memberSchema === []) {
+                    continue;
+                }
+
+                $members[] = $memberSchema;
+            }
+
+            if ($members === []) {
+                return $type->allowsNull()
+                    ? ['nullable' => true]
+                    : $this->emptySchema();
+            }
+
+            return [
                 'nullable' => $type->allowsNull(),
-                'oneOf' => array_map(
-                    fn (ReflectionType $reflectionType) => $this->createTypeFromReflectionType($reflectionType, $resourceClassesSeen),
-                    array_filter(
-                        $type->getTypes(),
-                        function (ReflectionType $type) {
-
-                            if ($type instanceof ReflectionNamedType && $type->getName() === 'null') {
-                                return false;
-                            }
-
-                            return true;
-                        },
-                    ),
-                )
-            );
+                'oneOf' => $members,
+            ];
         }
 
         if ($type instanceof ReflectionNamedType) {
             if ($type->isBuiltin()) {
                 return [
-                    'type' => 'object',
                     'nullable' => $type->allowsNull(),
                     'description' => '',
                     ...(match ($type->getName()) {
@@ -534,7 +647,7 @@ class OpenAPI implements Arrayable, Responsable
                             'format' => 'double',
                         ],
                         'bool' => ['type' => 'boolean'],
-                        'array' => ['type' => 'array', 'items' => []],
+                        'array' => ['type' => 'array', 'items' => $this->emptySchema()],
                         'object' => ['type' => 'object'],
                         'int' => [
                             'type' => 'integer',
@@ -545,14 +658,20 @@ class OpenAPI implements Arrayable, Responsable
                 ];
             } else if ((new ReflectionClass($className = $type->getName()))->isSubclassOf(Resource::class)) {
                 $resourceClassesSeen[] = $className;
+
+                if ($this->isUnionSubclass($className)) {
+                    return [
+                        'oneOf' => $this->createOneOfArray($className),
+                    ];
+                }
+
                 return [
-                    'type' => 'object',
                     '$ref' => static::componentPath(static::resourceRefName($className)),
                 ];
             }
         }
 
-        return [];
+        return $this->emptySchema();
     }
 
     protected function isUnionSubclass($className): bool
@@ -602,6 +721,45 @@ class OpenAPI implements Arrayable, Responsable
     public function addParameter($queryClass, $where = 'query'): void
     {
         $this->parameters[$queryClass] = $where;
+    }
+
+    protected function pruneUnusedComponents(): void
+    {
+        if (!isset($this->document['components']['parameters'])) {
+            return;
+        }
+
+        $referenced = $this->collectReferencedComponents($this->document);
+
+        foreach (array_keys($this->document['components']['parameters']) as $name) {
+            $key = "#/components/parameters/{$name}";
+            if (!isset($referenced[$key])) {
+                unset($this->document['components']['parameters'][$name]);
+            }
+        }
+
+        if ($this->document['components']['parameters'] === []) {
+            unset($this->document['components']['parameters']);
+        }
+
+        if ($this->document['components'] === []) {
+            unset($this->document['components']);
+        }
+    }
+
+    protected function collectReferencedComponents(mixed $node, array &$refs = []): array
+    {
+        if (is_array($node)) {
+            foreach ($node as $key => $value) {
+                if ($key === '$ref' && is_string($value)) {
+                    $refs[$value] = true;
+                } else {
+                    $this->collectReferencedComponents($value, $refs);
+                }
+            }
+        }
+
+        return $refs;
     }
 
     public static function componentPath($component, $type = 'schemas'): string

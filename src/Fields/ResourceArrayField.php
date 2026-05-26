@@ -242,27 +242,36 @@ class ResourceArrayField extends Field implements ArrayAccess, Countable, Iterat
 
     public function type(): array
     {
+        $allowsNullElements = $this->allowsNullElements();
+
         if ($this->resource instanceof UnionResource) {
+            $items = [
+                'oneOf' => array_map(fn ($resource) => [
+                    '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))
+                ], $this->resource->getDependantResources()),
+            ];
+
+            if ($allowsNullElements) {
+                $items['nullable'] = true;
+            }
+
             return [
                 'type' => 'array',
-                'items' => [
-                    'oneOf' => array_map(fn ($resource) => [
-                        'nullable' => $this->allowsNullElements(),
-                        '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName($resource))
-                    ], $this->resource->getDependantResources())
-                ],
+                'items' => $items,
             ];
         }
 
+        $ref = ['$ref' => OpenAPI::componentPath(
+            OpenAPI::resourceRefName(get_class($this->resource))
+        )];
+
+        $items = $allowsNullElements
+            ? ['nullable' => true, 'allOf' => [$ref]]
+            : $ref;
+
         return [
             'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'nullable' => $this->allowsNullElements(),
-                '$ref' => OpenAPI::componentPath(
-                    OpenAPI::resourceRefName(get_class($this->resource))
-                )
-            ]
+            'items' => $items,
         ];
     }
 

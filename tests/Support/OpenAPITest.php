@@ -268,21 +268,23 @@ class OpenAPITest extends TestCase
             [
                 'type' => 'array',
                 'items' => [
-                    'type' => 'object',
-                    'nullable' => false,
                     '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class)),
                 ]
             ],
             $component['properties']['persons']
         );
 
+        $this->assertArrayNotHasKey('type', $component['properties']['persons']['items']);
+        $this->assertArrayNotHasKey('nullable', $component['properties']['persons']['items']);
+
         $this->assertArraySubset(
             [
                 'type' => 'array',
                 'items' => [
-                    'type' => 'object',
                     'nullable' => true,
-                    '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class)),
+                    'allOf' => [
+                        ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
+                    ],
                 ]
             ],
             $component['properties']['nullable_persons']
@@ -307,10 +309,9 @@ class OpenAPITest extends TestCase
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
 
-        $this->assertArraySubset(
-            ['type' => 'array', 'nullable' => false, 'items' => []],
-            $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
-        );
+        $schemaA = $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema'];
+        $this->assertArraySubset(['type' => 'array', 'nullable' => false], $schemaA);
+        $this->assertInstanceOf(\stdClass::class, $schemaA['items']);
 
         $this->assertArraySubset(
             ['type' => 'boolean', 'nullable' => false],
@@ -332,10 +333,9 @@ class OpenAPITest extends TestCase
             $schema['paths']['/e']['get']['responses']['200']['content']['application/json']['schema']
         );
 
-        $this->assertArraySubset(
-            ['type' => 'array', 'nullable' => true, 'items' => []],
-            $schema['paths']['/f']['get']['responses']['200']['content']['application/json']['schema']
-        );
+        $schemaF = $schema['paths']['/f']['get']['responses']['200']['content']['application/json']['schema'];
+        $this->assertArraySubset(['type' => 'array', 'nullable' => true], $schemaF);
+        $this->assertInstanceOf(\stdClass::class, $schemaF['items']);
 
         $this->assertArraySubset(
             ['type' => 'boolean', 'nullable' => true],
@@ -370,8 +370,8 @@ class OpenAPITest extends TestCase
             [
                 'nullable' => false,
                 'oneOf' => [
-                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
-                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
+                    ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
+                    ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
                 ]
             ],
             $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
@@ -390,8 +390,8 @@ class OpenAPITest extends TestCase
             [
                 'nullable' => true,
                 'oneOf' => [
-                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
-                    ['type' => 'object', '$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
+                    ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PersonResource::class))],
+                    ['$ref' => OpenAPI::componentPath(OpenAPI::resourceRefName(PetResource::class))],
                 ]
             ],
             $schema['paths']['/a']['get']['responses']['200']['content']['application/json']['schema']
