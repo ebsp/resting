@@ -89,18 +89,6 @@ class RestingServiceProvider extends ServiceProvider
             return $this;
         });
 
-        \Illuminate\Routing\Route::macro('lists', function (...$resources) {
-            $this->_lists = $resources;
-
-            return $this;
-        });
-
-        \Illuminate\Routing\Route::macro('docs', function ($text) {
-            $this->_docs = $text;
-
-            return $this;
-        });
-
         $_self = $this;
 
         $paginatableMacro = function ($limit = 15, ?callable $resourceMapper = null) use ($_self) {
