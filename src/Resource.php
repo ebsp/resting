@@ -128,8 +128,8 @@ abstract class Resource implements Arrayable, Jsonable
 
     protected function transformFields(
         Collection $fields,
-        array $filter = null,
-        array $rename = null,
+        ?array $filter = null,
+        ?array $rename = null,
         bool $requireFilled = false): Collection
     {
         if ($requireFilled) {
@@ -199,8 +199,8 @@ abstract class Resource implements Arrayable, Jsonable
 
     protected function values(
         bool $format,
-        array $filter = null,
-        array $rename = null,
+        ?array $filter = null,
+        ?array $rename = null,
         bool $requireFilled = false)
     {
         if (is_array($this->raw)) {
