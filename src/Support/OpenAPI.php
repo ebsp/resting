@@ -194,7 +194,7 @@ class OpenAPI implements Arrayable, Responsable
     protected function describeEndpoint(Route $route, $method): array
     {
         $endpoint = [
-            'description' => $route->defaults['_docs'] ?? null,
+            'description' => $route->_docs ?? '',
             'responses' => [
                 '200' => [
                     "content" => [
@@ -372,7 +372,7 @@ class OpenAPI implements Arrayable, Responsable
             $returnType = $reflectionFunction->getReturnType();
         }
 
-        foreach ((array)($route->defaults['_lists'] ?? []) as $type) {
+        foreach ((array)$route->_lists as $type) {
             $resourceClassesSeen[] = $type;
         }
 

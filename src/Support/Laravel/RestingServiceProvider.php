@@ -90,13 +90,13 @@ class RestingServiceProvider extends ServiceProvider
         });
 
         \Illuminate\Routing\Route::macro('lists', function (...$resources) {
-            $this->defaults['_lists'] = $resources;
+            $this->_lists = $resources;
 
             return $this;
         });
 
         \Illuminate\Routing\Route::macro('docs', function ($text) {
-            $this->defaults['_docs'] = $text;
+            $this->_docs = $text;
 
             return $this;
         });
