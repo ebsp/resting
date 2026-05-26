@@ -362,9 +362,7 @@ class OpenAPI implements Arrayable, Responsable
             $resourceName = $resourceClass->getType()->getName();
 
             if ($this->isUnionSubclass($resourceName)) {
-                $schema = [
-                    'oneOf' => $this->createOneOfArray($resourceName)
-                ];
+                $schema = $this->unionResourceSchema($resourceName);
             } else {
                 $schema = $ref = [
                     '$ref' => static::componentPath(
@@ -377,9 +375,7 @@ class OpenAPI implements Arrayable, Responsable
                 if ($this->isUnionSubclass($resourceName)) {
                     $schema = [
                         'type' => 'array',
-                        'items' => [
-                            'oneOf' => $this->createOneOfArray($resourceName)
-                        ]
+                        'items' => $this->unionResourceSchema($resourceName),
                     ];
                 } else {
                     $schema = [
@@ -660,9 +656,7 @@ class OpenAPI implements Arrayable, Responsable
                 $resourceClassesSeen[] = $className;
 
                 if ($this->isUnionSubclass($className)) {
-                    return [
-                        'oneOf' => $this->createOneOfArray($className),
-                    ];
+                    return $this->unionResourceSchema($className);
                 }
 
                 return [
@@ -684,6 +678,15 @@ class OpenAPI implements Arrayable, Responsable
         return array_values(array_map(function (string $dependant) {
             return ['$ref' => static::componentPath(static::resourceRefName($dependant))];
         }, $this->getDependantResources($className)));
+    }
+
+    protected function unionResourceSchema(string $className): array|stdClass
+    {
+        $oneOf = $this->createOneOfArray($className);
+
+        return $oneOf === []
+            ? $this->emptySchema()
+            : ['oneOf' => $oneOf];
     }
 
     protected function getDependantResources($className)
