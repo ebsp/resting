@@ -12,6 +12,7 @@ use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
 use Seier\Resting\Tests\Meta\PersonResource;
+use Seier\Resting\Tests\Meta\AnnotatedRoutes;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Tests\Meta\UnionParentResource;
 use Seier\Resting\Tests\Meta\ArrayFieldsResource;
@@ -117,13 +118,8 @@ class OpenAPITest extends TestCase
 
     public function testOutputUnionResourceListInheritance()
     {
-        \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
-            $this->_lists = $resource;
-            return $this;
-        });
-
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn () => null))->lists(UnionResourceBase::class));
+        $routeCollection->add(new Route(['POST'], 'output/union/inheritance', AnnotatedRoutes::listsUnionBase(...)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -135,13 +131,8 @@ class OpenAPITest extends TestCase
 
     public function testOutputUnionResourceListInheritanceCombination()
     {
-        \Illuminate\Routing\Route::macro('lists', function ($resource = null) {
-            $this->_lists = $resource;
-            return $this;
-        });
-
         $routeCollection = new RouteCollection();
-        $routeCollection->add((new Route(['POST'], 'output/union/inheritance', fn (): UnionResourceBase => null))->lists([UnionParentResource::class, UnionResourceBase::class]));
+        $routeCollection->add(new Route(['POST'], 'output/union/inheritance', AnnotatedRoutes::listsUnionCombination(...)));
 
         $openAPI = new OpenAPI($routeCollection);
         $schema = $openAPI->toArray();
@@ -467,8 +458,75 @@ class OpenAPITest extends TestCase
         $routeCollection->add(new Route(['POST'], 'scalar_parameters', fn (string $string) => null));
 
         $openAPI = new OpenAPI($routeCollection);
-        $openAPI->toArray();
-        $this->assertTrue(true);
+        $schema = $openAPI->toArray();
+
+        $this->assertArrayHasKey('/scalar_parameters', $schema['paths']);
+        $operation = $schema['paths']['/scalar_parameters']['post'];
+
+        $this->assertSame([], $operation['parameters'] ?? []);
+        $this->assertArrayNotHasKey('requestBody', $operation);
+    }
+
+    public function testInputScalarUriParameterEmittedAsPathParameter()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add(new Route(['GET'], 'items/{id}', fn (int $id) => null));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $parameters = $schema['paths']['/items/{id}']['get']['parameters'] ?? [];
+
+        $matched = null;
+        foreach ($parameters as $parameter) {
+            if (($parameter['name'] ?? null) === 'id' && ($parameter['in'] ?? null) === 'path') {
+                $matched = $parameter;
+                break;
+            }
+        }
+
+        $this->assertNotNull($matched, 'Expected a path parameter named "id"');
+        $this->assertTrue($matched['required']);
+        $this->assertSame('integer', $matched['schema']['type']);
+        $this->assertArrayNotHasKey('description', $matched);
+    }
+
+    public function testInputDocOnRequestBodyParameterDescribesRequestBody()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add(new Route(['POST'], 'persons', AnnotatedRoutes::annotatedRequestBody(...)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $requestBody = $schema['paths']['/persons']['post']['requestBody'];
+
+        $this->assertSame(AnnotatedRoutes::REQUEST_BODY_PARAM_DOC, $requestBody['description']);
+        $this->assertTrue($requestBody['required']);
+    }
+
+    public function testInputDocOnScalarUriParameterDescribesPathParameter()
+    {
+        $routeCollection = new RouteCollection();
+        $routeCollection->add(new Route(['GET'], 'users/{id}', AnnotatedRoutes::pathParamEndpoint(...)));
+
+        $openAPI = new OpenAPI($routeCollection);
+        $schema = $openAPI->toArray();
+
+        $parameters = $schema['paths']['/users/{id}']['get']['parameters'] ?? [];
+
+        $matched = null;
+        foreach ($parameters as $parameter) {
+            if (($parameter['name'] ?? null) === 'id' && ($parameter['in'] ?? null) === 'path') {
+                $matched = $parameter;
+                break;
+            }
+        }
+
+        $this->assertNotNull($matched, 'Expected a path parameter named "id"');
+        $this->assertSame(AnnotatedRoutes::PATH_PARAM_DOC, $matched['description']);
+        $this->assertSame('integer', $matched['schema']['type']);
+        $this->assertTrue($matched['required']);
     }
 
     private function assertComponentExists(array $schema, string $resource): array
@@ -482,14 +540,14 @@ class OpenAPITest extends TestCase
         return $schema['components']['schemas'][$refName];
     }
 
-    private function assertComponentNotExists(array $schema, string $resource)
+    private function assertComponentNotExists(array $schema, string $resource): void
     {
         $this->assertArrayHasKey('components', $schema);
         $this->assertArrayHasKey('schemas', $schema['components']);
         $this->assertArrayNotHasKey(static::resourceRefName($resource), $schema['components']['schemas']);
     }
 
-    public static function resourceRefName($resourceClass)
+    public static function resourceRefName($resourceClass): array|string
     {
         return str_replace(['App\\Api\\Resources\\', '\\'], ['', '_'], $resourceClass);
     }
@@ -502,7 +560,7 @@ class OpenAPITest extends TestCase
         return $resource['properties'][$propertyKey];
     }
 
-    private function assertPropertyHasEnumConstraint(array $property, array $enumValues)
+    private function assertPropertyHasEnumConstraint(array $property, array $enumValues): void
     {
         $this->assertArrayHasKey('enum', $property, 'Property does not have enum constraint');
         $this->assertEquals($enumValues, $property['enum'], 'Property enum constraints do not match expected constraints.');

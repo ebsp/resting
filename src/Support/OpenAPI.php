@@ -6,8 +6,10 @@ use Closure;
 use ArrayObject;
 use ReflectionType;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionFunction;
 use ReflectionParameter;
+use ReflectionFunctionAbstract;
 use Seier\Resting\Query;
 use ReflectionNamedType;
 use ReflectionUnionType;
@@ -21,6 +23,8 @@ use Seier\Resting\UnionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\RouteCollection;
 use Seier\Resting\Fields\ResourceField;
+use Seier\Resting\Annotations\Doc;
+use Seier\Resting\Annotations\Lists;
 use Illuminate\Contracts\Support\Arrayable;
 use Seier\Resting\Fields\ResourceArrayField;
 use Illuminate\Contracts\Support\Responsable;
@@ -120,12 +124,14 @@ class OpenAPI implements Arrayable, Responsable
             ? $resource->getDiscriminatorKey()
             : null;
 
-        $this->document['components']['schemas'][static::resourceRefName(get_class($resource))] = [
+        $resourceReflection = new ReflectionClass($resource);
+
+        $schema = [
             'type' => 'object',
             'required' => $requiredFields->map(function (Field $field, $key) {
                 return $key;
             })->values()->toArray(),
-            'properties' => $fields->map(function (Field $field, string $fieldName) use ($resource, $unionDiscriminatorKey) {
+            'properties' => $fields->map(function (Field $field, string $fieldName) use ($resource, $unionDiscriminatorKey, $resourceReflection) {
 
                 if ($resource instanceof UnionResource && $fieldName === $unionDiscriminatorKey) {
                     $resourceMap = $resource->getResourceMap();
@@ -156,6 +162,8 @@ class OpenAPI implements Arrayable, Responsable
 
                 $merge = [];
 
+                $description = null;
+
                 if ($validator = $field->getValidator()) {
                     $description = $validator->description();
                     if ($secondary = $validator->getSecondaryValidators()) {
@@ -164,7 +172,16 @@ class OpenAPI implements Arrayable, Responsable
                             $description .= "<br/>&nbsp;&nbsp;- " . $val->description();
                         }
                     }
+                }
 
+                $docDescription = $this->describePropertyDoc($resourceReflection, $fieldName);
+                if ($docDescription !== null) {
+                    $description = $description
+                        ? $docDescription . "\n\n" . $description
+                        : $docDescription;
+                }
+
+                if ($description !== null) {
                     $merge['description'] = $description;
                 }
 
@@ -172,6 +189,29 @@ class OpenAPI implements Arrayable, Responsable
 
             })->toArray(),
         ];
+
+        if ($classDoc = Doc::descriptionFor($resourceReflection)) {
+            $schema['description'] = $classDoc;
+        }
+
+        $this->document['components']['schemas'][static::resourceRefName(get_class($resource))] = $schema;
+    }
+
+    protected function describePropertyDoc(ReflectionClass $resourceReflection, string $fieldName): ?string
+    {
+        $current = $resourceReflection;
+        while ($current) {
+            if ($current->hasProperty($fieldName)) {
+                $property = $current->getProperty($fieldName);
+                $description = Doc::descriptionFor($property);
+                if ($description !== null) {
+                    return $description;
+                }
+            }
+            $current = $current->getParentClass() ?: null;
+        }
+
+        return null;
     }
 
     protected function processPaths(): void
@@ -193,8 +233,11 @@ class OpenAPI implements Arrayable, Responsable
 
     protected function describeEndpoint(Route $route, $method): array
     {
+        $actionReflection = $this->getRouteActionReflection($route);
+        $endpointDescription = $actionReflection ? Doc::descriptionFor($actionReflection) : null;
+
         $endpoint = [
-            'description' => $route->_docs ?? '',
+            'description' => $endpointDescription ?? '',
             'responses' => [
                 '200' => [
                     "content" => [
@@ -272,6 +315,11 @@ class OpenAPI implements Arrayable, Responsable
                     ],
                 ],
             ];
+
+            $resourceParameterDoc = Doc::descriptionFor($resourceClass);
+            if ($resourceParameterDoc !== null) {
+                $endpoint['requestBody']['description'] = $resourceParameterDoc;
+            }
         }
 
         $queryClass = Arr::first($route->signatureParameters(), function (ReflectionParameter $parameter) {
@@ -354,7 +402,44 @@ class OpenAPI implements Arrayable, Responsable
             $endpoint['parameters'] = array_merge($endpoint['parameters'] ?? [], $fields->toArray());
         }
 
+        $uriParameterNames = $route->parameterNames();
+        foreach ($route->signatureParameters() as $parameter) {
+            $type = $parameter->getType();
+            if (!$type instanceof ReflectionNamedType || !$type->isBuiltin()) {
+                continue;
+            }
+
+            if (!in_array($parameter->getName(), $uriParameterNames, true)) {
+                continue;
+            }
+
+            $paramEntry = [
+                'in' => 'path',
+                'name' => $parameter->getName(),
+                'required' => true,
+                'schema' => $this->scalarSchemaForName($type->getName()),
+            ];
+
+            $description = Doc::descriptionFor($parameter);
+            if ($description !== null) {
+                $paramEntry['description'] = $description;
+            }
+
+            $endpoint['parameters'][] = $paramEntry;
+        }
+
         return $endpoint;
+    }
+
+    protected function scalarSchemaForName(string $name): array
+    {
+        return match ($name) {
+            'string' => ['type' => 'string'],
+            'int' => ['type' => 'integer', 'format' => 'int64'],
+            'float' => ['type' => 'number', 'format' => 'double'],
+            'bool' => ['type' => 'boolean'],
+            default => ['type' => 'string'],
+        };
     }
 
     protected function describeResponse(Route $route): array
@@ -363,17 +448,13 @@ class OpenAPI implements Arrayable, Responsable
         $responseType = [];
         $returnType = null;
 
-        if ($type = $route->action['controller'] ?? null) {
-            list($_class, $_method) = explode('@', $type);
-            $reflectionClass = new ReflectionClass($_class);
-            $returnType = $reflectionClass->getMethod($_method)->getReturnType();
-        } elseif ($route->action['uses'] instanceof Closure) {
-            $reflectionFunction = new ReflectionFunction($route->action['uses']);
-            $returnType = $reflectionFunction->getReturnType();
-        }
+        $actionReflection = $this->getRouteActionReflection($route);
+        if ($actionReflection) {
+            $returnType = $actionReflection->getReturnType();
 
-        foreach ((array)$route->_lists as $type) {
-            $resourceClassesSeen[] = $type;
+            foreach (Lists::resourcesFor($actionReflection) as $type) {
+                $resourceClassesSeen[] = $type;
+            }
         }
 
         if ($returnType instanceof ReflectionType) {
@@ -392,6 +473,30 @@ class OpenAPI implements Arrayable, Responsable
         }
 
         return ['schema' => $responseType];
+    }
+
+    protected function getRouteActionReflection(Route $route): ?ReflectionFunctionAbstract
+    {
+        if ($type = $route->action['controller'] ?? null) {
+            if (is_string($type) && str_contains($type, '@')) {
+                [$class, $method] = explode('@', $type);
+                $reflectionClass = new ReflectionClass($class);
+                return $reflectionClass->getMethod($method);
+            }
+        }
+
+        $uses = $route->action['uses'] ?? null;
+        if ($uses instanceof Closure) {
+            return new ReflectionFunction($uses);
+        }
+
+        if (is_string($uses) && str_contains($uses, '@')) {
+            [$class, $method] = explode('@', $uses);
+            $reflectionClass = new ReflectionClass($class);
+            return $reflectionClass->getMethod($method);
+        }
+
+        return null;
     }
 
     protected function createTypeFromReflectionType(ReflectionType $type, ArrayObject $resourceClassesSeen): array
