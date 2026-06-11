@@ -3,8 +3,11 @@
 namespace Seier\Resting\Tests\Support;
 
 use stdClass;
+use Illuminate\Http\Request;
+use Seier\Resting\RestingSettings;
 use Seier\Resting\Tests\TestCase;
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\Support\Laravel\PaginatedResponse;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\PersonQuery;
 use Seier\Resting\Tests\Meta\ClassResource;
@@ -828,5 +831,36 @@ class LaravelIntegrationTest extends TestCase
             ],
             json_decode($response->getContent(), JSON_OBJECT_AS_ARRAY)
         );
+    }
+
+    public function testValidationErrorResponseUsesConfiguredJsonOptions()
+    {
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonResource $r) => new RestingResponse(data: []),
+        );
+
+        $harnessRun = $harness->request(content: json_encode(5));
+
+        $this->assertInstanceOf(JsonResponse::class, $response = $harnessRun->getResponse());
+        $this->assertSame(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE, $response->getEncodingOptions());
+        $this->assertStringContainsString("\n", $response->getContent());
+    }
+
+    public function testRestingResponseUsesConfiguredJsonOptions()
+    {
+        RestingSettings::instance()->setJsonOptions(JSON_UNESCAPED_SLASHES);
+
+        $response = (new RestingResponse(['url' => 'a/b']))->toResponse(new Request());
+
+        $this->assertSame(JSON_UNESCAPED_SLASHES, $response->getEncodingOptions());
+        $this->assertStringContainsString('a/b', $response->getContent());
+    }
+
+    public function testPaginatedResponseUsesConfiguredJsonOptions()
+    {
+        $response = (new PaginatedResponse([], 1, 15, 0))->toResponse(new Request());
+
+        $this->assertSame(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE, $response->getEncodingOptions());
     }
 }

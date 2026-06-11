@@ -800,7 +800,7 @@ class ResourceTest extends TestCase
         $resource->only($resource->name);
 
         $this->assertEquals(
-            json_encode(['name' => $name]),
+            json_encode(['name' => $name], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson(),
         );
     }
@@ -812,7 +812,7 @@ class ResourceTest extends TestCase
         $resource->age->set($age = $this->faker->randomNumber(2));
 
         $resource->setRaw($raw = [1, 2, 3]);
-        $this->assertEquals(json_encode($raw), $resource->toJson());
+        $this->assertEquals(json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $resource->toJson());
     }
 
     public function testToJsonRemovesNullsWhenSet()
@@ -824,7 +824,7 @@ class ResourceTest extends TestCase
         $resource->removeNulls(true);
 
         $this->assertEquals(
-            json_encode(['name' => $name]),
+            json_encode(['name' => $name], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -839,7 +839,7 @@ class ResourceTest extends TestCase
         $resource->removeNulls(false);
 
         $this->assertEquals(
-            json_encode(['name' => $name, 'age' => null]),
+            json_encode(['name' => $name, 'age' => null], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -865,7 +865,7 @@ class ResourceTest extends TestCase
         $resource->removeEmptyArrays(false);
 
         $this->assertEquals(
-            json_encode(['students' => []]),
+            json_encode(['students' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -899,7 +899,7 @@ class ResourceTest extends TestCase
         $pet->owner->set((new PersonResource)->only());
 
         $this->assertSame(
-            json_encode(['name' => $name, 'owner' => new \stdClass]),
+            json_encode(['name' => $name, 'owner' => new \stdClass], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $pet->toJson()
         );
     }
@@ -909,7 +909,7 @@ class ResourceTest extends TestCase
         $resource = (new PersonResource)->setRaw($raw = [1, 2, 3]);
 
         $this->assertSame($raw, $resource->toPlain());
-        $this->assertSame(json_encode($raw), $resource->toJson());
+        $this->assertSame(json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $resource->toJson());
     }
 
     public function testToPlainSerializesNestedPopulatedResourceAsObject()
@@ -949,7 +949,7 @@ class ResourceTest extends TestCase
                     ['name' => $firstName, 'age' => $firstAge],
                     ['name' => $secondName, 'age' => $secondAge],
                 ],
-            ]),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $class->toJson()
         );
     }
@@ -965,7 +965,7 @@ class ResourceTest extends TestCase
         $this->assertInstanceOf(\stdClass::class, $plain);
         $this->assertSame([], $plain->students);
         $this->assertSame(
-            json_encode(['grade' => $grade, 'students' => []]),
+            json_encode(['grade' => $grade, 'students' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $class->toJson()
         );
     }
@@ -977,7 +977,7 @@ class ResourceTest extends TestCase
         $resource->nullable_persons->set([null]);
 
         $this->assertSame(
-            json_encode(['persons' => [], 'nullable_persons' => [null]]),
+            json_encode(['persons' => [], 'nullable_persons' => [null]], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -991,7 +991,7 @@ class ResourceTest extends TestCase
         $pet->removeEmptyArrays(true);
 
         $this->assertSame(
-            json_encode(['name' => $name, 'owner' => new \stdClass]),
+            json_encode(['name' => $name, 'owner' => new \stdClass], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $pet->toJson()
         );
     }
@@ -1007,6 +1007,48 @@ class ResourceTest extends TestCase
         $this->assertInstanceOf(\stdClass::class, $plain);
         $this->assertSame($name, $plain->name);
         $this->assertFalse(property_exists($plain, 'age'));
+    }
+
+    public function testToJsonDefaultsToPrettyPrintAndUnescapedUnicode()
+    {
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $json = $resource->toJson();
+
+        $this->assertStringContainsString("\n", $json);
+        $this->assertStringContainsString('æøå', $json);
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $json
+        );
+    }
+
+    public function testToJsonUsesConfiguredJsonOptions()
+    {
+        RestingSettings::instance()->setJsonOptions(0);
+
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5]),
+            $resource->toJson()
+        );
+    }
+
+    public function testToJsonOptionsCanBeOverriddenInCall()
+    {
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5]),
+            $resource->toJson(0)
+        );
     }
 
     public function testFromRawDoesNotPerformValidation()

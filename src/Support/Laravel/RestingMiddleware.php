@@ -11,6 +11,7 @@ use ReflectionParameter;
 use ReflectionUnionType;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
+use Seier\Resting\RestingSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Seier\Resting\Parsing\Parser;
@@ -287,7 +288,7 @@ class RestingMiddleware
         $errors = compact('body', 'query', 'param');
         $content = compact('message', 'errors');
 
-        return response()->json($content, 422);
+        return response()->json($content, 422, [], RestingSettings::instance()->jsonOptions);
     }
 
     private function createErrorList(array $errors): array

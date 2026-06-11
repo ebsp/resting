@@ -257,9 +257,12 @@ abstract class Resource implements Arrayable, Jsonable
         );
     }
 
-    public function toJson($options = 0): bool|string
+    public function toJson($options = null): bool|string
     {
-        return json_encode($this->toPlain(), $options);
+        return json_encode(
+            $this->toPlain(),
+            $options ?? RestingSettings::instance()->jsonOptions,
+        );
     }
 
     public function toPlain(?array $filter = null, ?array $rename = null, bool $requireFilled = false): stdClass|array

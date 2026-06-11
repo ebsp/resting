@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support\Laravel;
 
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\RestingSettings;
 use Illuminate\Support\Collection;
 use Seier\Resting\Resource as RestingResource;
 use Illuminate\Contracts\Support\Responsable;
@@ -45,8 +46,11 @@ class RestingResponse implements Responsable
 
     public function toResponse($request): JsonResponse
     {
-        return new JsonResponse([
-            'data' => $this->data,
-        ], $this->status);
+        return new JsonResponse(
+            ['data' => $this->data],
+            $this->status,
+            [],
+            RestingSettings::instance()->jsonOptions,
+        );
     }
 }
