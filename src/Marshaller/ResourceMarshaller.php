@@ -210,6 +210,13 @@ class ResourceMarshaller
             if ($field instanceof ResourceField) {
 
                 $this->pushPath($key);
+
+                if (!is_object($fieldValue) && !is_array($fieldValue)) {
+                    $this->pushPathError($this->getCurrentPath(), new NotObjectValidationError($fieldValue));
+                    $this->popPath();
+                    continue;
+                }
+
                 $resource = $field->getReferenceResource();
 
                 if ($resource instanceof UnionResource) {
@@ -238,8 +245,7 @@ class ResourceMarshaller
             if ($parser->shouldParse($parseContext)) {
                 if ($parseErrors = $parser->canParse($parseContext)) {
                     foreach ($parseErrors as $parseError) {
-                        $parseError->prependPath($this->getCurrentPath($key));
-                        $this->pushPathError($parseError->getPath(), $parseError);
+                        $this->pushError($parseError->prependPath($this->getCurrentPath($key)));
                     }
 
                     continue;
@@ -295,8 +301,29 @@ class ResourceMarshaller
             return;
         }
 
+        $errorCountBefore = count($this->validationErrors);
         $resources = [];
         foreach ($values as $index => $value) {
+
+            if ($value === null) {
+                if ($field->allowsNullElements()) {
+                    $resources[] = null;
+                } else {
+                    $this->pushPath($index);
+                    $this->pushPathError($this->getCurrentPath(), new NullableValidationError());
+                    $this->popPath();
+                }
+
+                continue;
+            }
+
+            if (!is_object($value) && !is_array($value)) {
+                $this->pushPath($index);
+                $this->pushPathError($this->getCurrentPath(), new NotObjectValidationError($value));
+                $this->popPath();
+                continue;
+            }
+
             $resource = $field->getResourceFactory()();
             if ($resource instanceof UnionResource) {
                 $subResource = $this->getUnionSubResource($resource, $value);
@@ -313,7 +340,9 @@ class ResourceMarshaller
             $this->popPath();
         }
 
-        $field->set($resources);
+        if (count($this->validationErrors) === $errorCountBefore) {
+            $field->set($resources);
+        }
     }
 
     public function marshalResources(ResourceFactory $factory, $content): ResourceMarshallerResult
