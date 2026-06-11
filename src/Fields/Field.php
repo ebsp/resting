@@ -25,12 +25,49 @@ abstract class Field
     protected RequiredValidator $requiredValidator;
     protected NullableValidator $nullableValidator;
     protected ForbiddenValidator $forbiddenValidator;
+    private bool $ownsRequiredValidator = false;
+    private bool $ownsNullableValidator = false;
+    private bool $ownsForbiddenValidator = false;
+
+    private static ?RequiredValidator $defaultRequiredValidator = null;
+    private static ?NullableValidator $defaultNullableValidator = null;
+    private static ?ForbiddenValidator $defaultForbiddenValidator = null;
 
     public function __construct()
     {
-        $this->requiredValidator = new RequiredValidator();
-        $this->nullableValidator = new NullableValidator();
-        $this->forbiddenValidator = new ForbiddenValidator();
+        $this->requiredValidator = self::$defaultRequiredValidator ??= new RequiredValidator();
+        $this->nullableValidator = self::$defaultNullableValidator ??= new NullableValidator();
+        $this->forbiddenValidator = self::$defaultForbiddenValidator ??= new ForbiddenValidator();
+    }
+
+    private function mutableRequiredValidator(): RequiredValidator
+    {
+        if (!$this->ownsRequiredValidator) {
+            $this->requiredValidator = clone $this->requiredValidator;
+            $this->ownsRequiredValidator = true;
+        }
+
+        return $this->requiredValidator;
+    }
+
+    private function mutableNullableValidator(): NullableValidator
+    {
+        if (!$this->ownsNullableValidator) {
+            $this->nullableValidator = clone $this->nullableValidator;
+            $this->ownsNullableValidator = true;
+        }
+
+        return $this->nullableValidator;
+    }
+
+    private function mutableForbiddenValidator(): ForbiddenValidator
+    {
+        if (!$this->ownsForbiddenValidator) {
+            $this->forbiddenValidator = clone $this->forbiddenValidator;
+            $this->ownsForbiddenValidator = true;
+        }
+
+        return $this->forbiddenValidator;
     }
 
     public static function create(...$arguments): static
@@ -68,12 +105,12 @@ abstract class Field
     public function nullable(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
-            $this->getNullableValidator()->setNullable(true);
-            $this->getNullableValidator()->predicatedOn($state);
+            $this->mutableNullableValidator()->setNullable(true);
+            $this->mutableNullableValidator()->predicatedOn($state);
             return $this;
         }
 
-        $this->getNullableValidator()->setNullable($state);
+        $this->mutableNullableValidator()->setNullable($state);
 
         return $this;
     }
@@ -102,7 +139,7 @@ abstract class Field
             $defaultValue->predicatedOn($predicate);
         }
 
-        $this->requiredValidator->withDefault($defaultValue);
+        $this->mutableRequiredValidator()->withDefault($defaultValue);
 
         return $this;
     }
@@ -132,7 +169,7 @@ abstract class Field
             $defaultValue->predicatedOn($predicate);
         }
 
-        $this->nullableValidator->withDefault($defaultValue);
+        $this->mutableNullableValidator()->withDefault($defaultValue);
 
         return $this;
     }
@@ -213,15 +250,15 @@ abstract class Field
     public function required(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
-            $this->requiredValidator->setRequired(true);
-            $this->requiredValidator->predicatedOn($state);
-            $this->nullableValidator->setNullable(true);
+            $this->mutableRequiredValidator()->setRequired(true);
+            $this->mutableRequiredValidator()->predicatedOn($state);
+            $this->mutableNullableValidator()->setNullable(true);
             return $this;
         }
 
-        $this->requiredValidator->setRequired($state);
+        $this->mutableRequiredValidator()->setRequired($state);
         if ($state === false) {
-            $this->nullableValidator->setNullable(true);
+            $this->mutableNullableValidator()->setNullable(true);
         }
 
         return $this;
@@ -230,12 +267,12 @@ abstract class Field
     public function forbidden(bool|Predicate $state = true): static
     {
         if ($state instanceof Predicate) {
-            $this->forbiddenValidator->setForbidden(true);
-            $this->forbiddenValidator->predicatedOn($state);
+            $this->mutableForbiddenValidator()->setForbidden(true);
+            $this->mutableForbiddenValidator()->predicatedOn($state);
             return $this;
         }
 
-        $this->forbiddenValidator->setForbidden($state);
+        $this->mutableForbiddenValidator()->setForbidden($state);
 
         return $this;
     }
