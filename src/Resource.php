@@ -201,17 +201,21 @@ abstract class Resource implements Arrayable, Jsonable
         bool $format,
         ?array $filter = null,
         ?array $rename = null,
-        bool $requireFilled = false)
+        bool $requireFilled = false,
+        bool $plain = false)
     {
         if (is_array($this->raw)) {
             return $this->raw;
         }
 
         return $this->fields($filter, $rename, $requireFilled)
-            ->map(function ($field) use ($format) {
+            ->map(function ($field) use ($format, $plain) {
 
                 if ($field instanceof ResourceField) {
                     $resource = $field->get();
+                    if ($plain) {
+                        return $resource?->toPlain();
+                    }
                     return $format ? $resource?->toResponseArray() : $resource?->toArray();
                 }
 
@@ -223,9 +227,12 @@ abstract class Resource implements Arrayable, Jsonable
 
                     $value = $field->get();
                     if ($value !== null) {
-                        return array_map(function (Resource $resource) use ($format) {
-                            return $format ? $resource->toResponseArray() : $resource->toArray();
-                        }, $field->get());
+                        return array_map(function (?Resource $resource) use ($format, $plain) {
+                            if ($plain) {
+                                return $resource?->toPlain();
+                            }
+                            return $format ? $resource?->toResponseArray() : $resource?->toArray();
+                        }, $value);
                     }
 
                     return null;
@@ -252,7 +259,26 @@ abstract class Resource implements Arrayable, Jsonable
 
     public function toJson($options = 0): bool|string
     {
-        return json_encode($this->toResponseArray(), $options);
+        return json_encode($this->toPlain(), $options);
+    }
+
+    public function toPlain(?array $filter = null, ?array $rename = null, bool $requireFilled = false): stdClass|array
+    {
+        $values = $this->applyResponseFilters(
+            $this->values(
+                format: true,
+                filter: $filter,
+                rename: $rename,
+                requireFilled: $requireFilled,
+                plain: true,
+            )
+        );
+
+        if (is_array($this->raw)) {
+            return $values;
+        }
+
+        return (object)$values;
     }
 
     public function copy(): static
@@ -262,13 +288,18 @@ abstract class Resource implements Arrayable, Jsonable
 
     public function toResponseArray(?array $filter = null, ?array $rename = null, bool $requireFilled = false): array
     {
-        $array = $this->values(
-            format: true,
-            filter: $filter,
-            rename: $rename,
-            requireFilled: $requireFilled,
+        return $this->applyResponseFilters(
+            $this->values(
+                format: true,
+                filter: $filter,
+                rename: $rename,
+                requireFilled: $requireFilled,
+            )
         );
+    }
 
+    private function applyResponseFilters(array $array): array
+    {
         $removeEmptyArrays = $this->removeEmptyArrays ?? RestingSettings::instance()->removeEmptyArrays;
         $removeNulls = $this->removeNulls ?? RestingSettings::instance()->removeNulls;
 
