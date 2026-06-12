@@ -3,6 +3,7 @@
 namespace Seier\Resting\Support\Laravel;
 
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\RestingSettings;
 use Illuminate\Contracts\Support\Responsable;
 
 class PaginatedResponse implements Responsable
@@ -23,11 +24,16 @@ class PaginatedResponse implements Responsable
 
     public function toResponse($request): JsonResponse
     {
-        return new JsonResponse([
-            'data' => $this->data,
-            'page' => $this->page,
-            'limit' => $this->limit,
-            'total' => $this->total,
-        ]);
+        return new JsonResponse(
+            [
+                'data' => $this->data,
+                'page' => $this->page,
+                'limit' => $this->limit,
+                'total' => $this->total,
+            ],
+            200,
+            [],
+            RestingSettings::instance()->jsonOptions,
+        );
     }
 }

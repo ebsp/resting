@@ -7,16 +7,25 @@ use stdClass;
 use ReflectionClass;
 use Seier\Resting\Query;
 use ReflectionNamedType;
+use ReflectionParameter;
 use ReflectionUnionType;
 use Seier\Resting\Params;
 use Seier\Resting\Resource;
+use Seier\Resting\RestingSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Seier\Resting\Parsing\Parser;
+use Seier\Resting\Parsing\IntParser;
+use Seier\Resting\Parsing\BoolParser;
+use Seier\Resting\Parsing\NumberParser;
 use Seier\Resting\ClosureResourceFactory;
+use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\InvalidJsonException;
+use Seier\Resting\Validation\Errors\ValidationError;
 use Seier\Resting\Marshaller\ResourceMarshallerResult;
 use Seier\Resting\Exceptions\RestingDefinitionException;
+use Seier\Resting\Validation\Errors\RequiredValidationError;
 
 class RestingMiddleware
 {
@@ -75,11 +84,19 @@ class RestingMiddleware
             // when the parameter type is a builtin,
             // we assume the user wants to access input values like query and path parameters
             if (!$parameterType || $parameterType->isBuiltin()) {
-                $parameterValue = array_key_exists($parameterName, $originalParameters)
+                $isPathParameter = array_key_exists($parameterName, $originalParameters);
+                $rawValue = $isPathParameter
                     ? $originalParameters[$parameterName]
                     : $this->request->query($parameterName);
 
-                $this->request->route()->setParameter($parameter->getName(), $parameterValue);
+                $parameterValue = $this->resolveScalarParameter(
+                    $parameter,
+                    $parameterType,
+                    $rawValue,
+                    $isPathParameter,
+                );
+
+                $this->request->route()->setParameter($parameterName, $parameterValue);
                 continue;
             }
 
@@ -103,6 +120,67 @@ class RestingMiddleware
             );
 
             $this->request->route()->setParameter($parameterName, $value);
+        }
+    }
+
+    protected function resolveScalarParameter(
+        ReflectionParameter $parameter,
+        ?ReflectionNamedType $type,
+        mixed $rawValue,
+        bool $isPathParameter,
+    ): mixed {
+        if ($rawValue === null) {
+            if ($parameter->allowsNull()) {
+                return null;
+            }
+
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
+            }
+
+            $this->pushScalarError($isPathParameter, $parameter->getName(), new RequiredValidationError());
+
+            return null;
+        }
+
+        $parser = $type ? $this->scalarParserFor($type->getName()) : null;
+
+        if ($parser === null) {
+            return $rawValue;
+        }
+
+        $stringValue = is_array($rawValue) ? json_encode($rawValue) : (string)$rawValue;
+        $context = new DefaultParseContext($stringValue, isStringBased: true);
+
+        if ($parseErrors = $parser->canParse($context)) {
+            foreach ($parseErrors as $parseError) {
+                $this->pushScalarError($isPathParameter, $parameter->getName(), $parseError);
+            }
+
+            return $rawValue;
+        }
+
+        return $parser->parse($context);
+    }
+
+    private function scalarParserFor(string $typeName): ?Parser
+    {
+        return match ($typeName) {
+            'int' => new IntParser(),
+            'float' => new NumberParser(),
+            'bool' => new BoolParser(),
+            default => null,
+        };
+    }
+
+    private function pushScalarError(bool $isPathParameter, string $parameterName, ValidationError $error): void
+    {
+        $error->prependPath($parameterName);
+
+        if ($isPathParameter) {
+            $this->paramErrors[] = $error;
+        } else {
+            $this->queryErrors[] = $error;
         }
     }
 
@@ -210,7 +288,7 @@ class RestingMiddleware
         $errors = compact('body', 'query', 'param');
         $content = compact('message', 'errors');
 
-        return response()->json($content, 422);
+        return response()->json($content, 422, [], RestingSettings::instance()->jsonOptions);
     }
 
     private function createErrorList(array $errors): array

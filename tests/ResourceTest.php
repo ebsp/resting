@@ -13,6 +13,7 @@ use Seier\Resting\Tests\Meta\EventResource;
 use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Fields\ResourceArrayField;
+use Seier\Resting\Tests\Meta\ArrayResourceFieldsResource;
 use Seier\Resting\ResourceValidation\ResourceValidator;
 use Seier\Resting\Validation\Errors\NotIntValidationError;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
@@ -799,7 +800,7 @@ class ResourceTest extends TestCase
         $resource->only($resource->name);
 
         $this->assertEquals(
-            json_encode(['name' => $name]),
+            json_encode(['name' => $name], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson(),
         );
     }
@@ -811,7 +812,7 @@ class ResourceTest extends TestCase
         $resource->age->set($age = $this->faker->randomNumber(2));
 
         $resource->setRaw($raw = [1, 2, 3]);
-        $this->assertEquals(json_encode($raw), $resource->toJson());
+        $this->assertEquals(json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $resource->toJson());
     }
 
     public function testToJsonRemovesNullsWhenSet()
@@ -823,7 +824,7 @@ class ResourceTest extends TestCase
         $resource->removeNulls(true);
 
         $this->assertEquals(
-            json_encode(['name' => $name]),
+            json_encode(['name' => $name], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -838,7 +839,7 @@ class ResourceTest extends TestCase
         $resource->removeNulls(false);
 
         $this->assertEquals(
-            json_encode(['name' => $name, 'age' => null]),
+            json_encode(['name' => $name, 'age' => null], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
         );
     }
@@ -851,7 +852,7 @@ class ResourceTest extends TestCase
         $resource->removeEmptyArrays(true);
 
         $this->assertEquals(
-            json_encode([]),
+            json_encode(new \stdClass),
             $resource->toJson()
         );
     }
@@ -864,8 +865,189 @@ class ResourceTest extends TestCase
         $resource->removeEmptyArrays(false);
 
         $this->assertEquals(
-            json_encode(['students' => []]),
+            json_encode(['students' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             $resource->toJson()
+        );
+    }
+
+    public function testToPlainReturnsStdClassWithFieldValues()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($name = $this->faker->name);
+        $resource->age->set($age = $this->faker->randomNumber(2));
+
+        $plain = $resource->toPlain();
+
+        $this->assertInstanceOf(\stdClass::class, $plain);
+        $this->assertSame($name, $plain->name);
+        $this->assertSame($age, $plain->age);
+    }
+
+    public function testToPlainEncodesEmptyResourceAsObjectNotArray()
+    {
+        $resource = (new PersonResource)->only();
+
+        $this->assertInstanceOf(\stdClass::class, $resource->toPlain());
+        $this->assertSame('{}', json_encode($resource->toPlain()));
+        $this->assertSame('{}', $resource->toJson());
+    }
+
+    public function testToPlainSerializesNestedEmptyResourceAsObject()
+    {
+        $pet = new PetResource();
+        $pet->name->set($name = $this->faker->name);
+        $pet->owner->set((new PersonResource)->only());
+
+        $this->assertSame(
+            json_encode(['name' => $name, 'owner' => new \stdClass], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $pet->toJson()
+        );
+    }
+
+    public function testToPlainPassesRawValuesThroughVerbatim()
+    {
+        $resource = (new PersonResource)->setRaw($raw = [1, 2, 3]);
+
+        $this->assertSame($raw, $resource->toPlain());
+        $this->assertSame(json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $resource->toJson());
+    }
+
+    public function testToPlainSerializesNestedPopulatedResourceAsObject()
+    {
+        $pet = new PetResource();
+        $pet->name->set($petName = $this->faker->name);
+        $owner = new PersonResource();
+        $owner->name->set($ownerName = $this->faker->name);
+        $owner->age->set($ownerAge = $this->faker->randomNumber(2));
+        $pet->owner->set($owner);
+
+        $plain = $pet->toPlain();
+
+        $this->assertInstanceOf(\stdClass::class, $plain);
+        $this->assertSame($petName, $plain->name);
+        $this->assertInstanceOf(\stdClass::class, $plain->owner);
+        $this->assertSame($ownerName, $plain->owner->name);
+        $this->assertSame($ownerAge, $plain->owner->age);
+    }
+
+    public function testToPlainSerializesResourceArrayFieldAsListOfObjects()
+    {
+        $class = new ClassResource();
+        $class->grade->set($grade = $this->faker->randomNumber(2));
+        $first = new PersonResource();
+        $first->name->set($firstName = $this->faker->name);
+        $first->age->set($firstAge = $this->faker->randomNumber(2));
+        $second = new PersonResource();
+        $second->name->set($secondName = $this->faker->name);
+        $second->age->set($secondAge = $this->faker->randomNumber(2));
+        $class->students->set([$first, $second]);
+
+        $this->assertSame(
+            json_encode([
+                'grade' => $grade,
+                'students' => [
+                    ['name' => $firstName, 'age' => $firstAge],
+                    ['name' => $secondName, 'age' => $secondAge],
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $class->toJson()
+        );
+    }
+
+    public function testToPlainSerializesEmptyResourceArrayFieldAsList()
+    {
+        $class = new ClassResource();
+        $class->grade->set($grade = $this->faker->randomNumber(2));
+        $class->students->set([]);
+
+        $plain = $class->toPlain();
+
+        $this->assertInstanceOf(\stdClass::class, $plain);
+        $this->assertSame([], $plain->students);
+        $this->assertSame(
+            json_encode(['grade' => $grade, 'students' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $class->toJson()
+        );
+    }
+
+    public function testToPlainPreservesNullElementsInResourceArrayField()
+    {
+        $resource = new ArrayResourceFieldsResource();
+        $resource->persons->set([]);
+        $resource->nullable_persons->set([null]);
+
+        $this->assertSame(
+            json_encode(['persons' => [], 'nullable_persons' => [null]], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $resource->toJson()
+        );
+    }
+
+    public function testToPlainKeepsNestedEmptyObjectWhenRemovingEmptyArrays()
+    {
+        $pet = new PetResource();
+        $pet->name->set($name = $this->faker->name);
+        $pet->owner->set((new PersonResource)->only());
+        $pet->removeNulls(true);
+        $pet->removeEmptyArrays(true);
+
+        $this->assertSame(
+            json_encode(['name' => $name, 'owner' => new \stdClass], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $pet->toJson()
+        );
+    }
+
+    public function testToPlainRespectsFieldFilter()
+    {
+        $resource = new PersonResource();
+        $resource->name->set($name = $this->faker->name);
+        $resource->age->set($this->faker->randomNumber(2));
+
+        $plain = $resource->toPlain(filter: [$resource->name]);
+
+        $this->assertInstanceOf(\stdClass::class, $plain);
+        $this->assertSame($name, $plain->name);
+        $this->assertFalse(property_exists($plain, 'age'));
+    }
+
+    public function testToJsonDefaultsToPrettyPrintAndUnescapedUnicode()
+    {
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $json = $resource->toJson();
+
+        $this->assertStringContainsString("\n", $json);
+        $this->assertStringContainsString('æøå', $json);
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $json
+        );
+    }
+
+    public function testToJsonUsesConfiguredJsonOptions()
+    {
+        RestingSettings::instance()->setJsonOptions(0);
+
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5]),
+            $resource->toJson()
+        );
+    }
+
+    public function testToJsonOptionsCanBeOverriddenInCall()
+    {
+        $resource = new PersonResource();
+        $resource->name->set('æøå');
+        $resource->age->set(5);
+
+        $this->assertSame(
+            json_encode(['name' => 'æøå', 'age' => 5]),
+            $resource->toJson(0)
         );
     }
 

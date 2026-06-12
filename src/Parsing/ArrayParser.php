@@ -22,7 +22,7 @@ class ArrayParser implements Parser
             return [];
         }
 
-        $sections = $context->isStringBased()
+        $sections = $context->isStringBased() && is_string($raw)
             ? explode($this->separator, $raw)
             : $raw;
 
@@ -46,7 +46,7 @@ class ArrayParser implements Parser
             return [];
         }
 
-        $sections = $context->isStringBased()
+        $sections = $context->isStringBased() && is_string($raw)
             ? explode($this->separator, $raw)
             : $raw;
 
@@ -54,7 +54,7 @@ class ArrayParser implements Parser
             return $sections;
         }
 
-        return array_map(function (string $section) use ($context) {
+        return array_map(function ($section) use ($context) {
             return $this->elementParser->parse($context->inherit($section));
         }, $sections);
     }

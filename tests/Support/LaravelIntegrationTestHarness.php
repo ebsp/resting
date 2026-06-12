@@ -89,11 +89,7 @@ class LaravelIntegrationTestHarness
 
     private function createFakeServerEnvironments(string $requestPath, array $queryParameters): array
     {
-        $queryPath = "";
-        foreach ($queryParameters as $queryKey => $queryValue) {
-            $queryPath .= $queryPath === '' ? '?' : '&';
-            $queryPath .= "$queryKey=$queryValue";
-        }
+        $queryPath = $queryParameters ? '?' . http_build_query($queryParameters) : '';
 
         return [
             "DOCUMENT_ROOT" => "/api/public",

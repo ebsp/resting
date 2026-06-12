@@ -11,6 +11,7 @@ class RestingSettings
     public bool $useImmutableCarbon = false;
     public bool $removeEmptyArrays = false;
     public bool $removeNulls = false;
+    public int $jsonOptions = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
 
     private array $carbonFormats = [
         'date' => 'Y-m-d',
@@ -45,6 +46,13 @@ class RestingSettings
     public function setCarbonFormat(CarbonGranularity $granularity, string $format): static
     {
         $this->carbonFormats[$granularity->value] = $format;
+
+        return $this;
+    }
+
+    public function setJsonOptions(int $options): static
+    {
+        $this->jsonOptions = $options;
 
         return $this;
     }
