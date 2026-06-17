@@ -3,12 +3,9 @@
 namespace Seier\Resting\Tests;
 
 use Carbon\Carbon;
-use Seier\Resting\Resource;
 use Seier\Resting\RestingSettings;
 use Seier\Resting\DynamicResource;
-use Seier\Resting\Fields\IntField;
 use Seier\Resting\Tests\Meta\Person;
-use Seier\Resting\Fields\StringField;
 use Seier\Resting\Fields\ResourceField;
 use Seier\Resting\Tests\Meta\PetResource;
 use Seier\Resting\Tests\Meta\ClassResource;
@@ -88,6 +85,75 @@ class ResourceTest extends TestCase
 
         $this->assertCount(1, $errors = $exception->getErrors());
         $this->assertHasError($errors, NullableValidationError::class, 'age');
+    }
+
+    public function testSetPredicatedRequiredValidationWhenTrue()
+    {
+        $person = new PersonResource();
+        $person->name->nullable();
+        $person->age->required(whenNotNull($person->name));
+
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => $this->faker->name]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, RequiredValidationError::class, 'age');
+    }
+
+    public function testSetPredicatedRequiredValidationWhenFalse()
+    {
+        $person = new PersonResource();
+        $person->name->nullable();
+        $person->age->required(whenNotNull($person->name));
+
+        $person->set(['name' => null]);
+
+        $this->assertNull($person->name->get());
+        $this->assertNull($person->age->get());
+    }
+
+    public function testPredicatedRequiredDoesNotImplyNullable()
+    {
+        $person = new PersonResource();
+        $person->name->nullable();
+        $person->age->required(whenNotNull($person->name));
+
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => null]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'age');
+    }
+
+    public function testNotRequiredDoesNotImplyNullable()
+    {
+        $person = new PersonResource();
+        $person->name->notRequired();
+
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => 5]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'name');
+    }
+
+    public function testRequiredFieldAcceptsValueButRejectsNull()
+    {
+        $person = new PersonResource();
+        $person->set(['name' => $name = $this->faker->name, 'age' => $age = 5]);
+        $this->assertEquals($name, $person->name->get());
+        $this->assertEquals($age, $person->age->get());
+
+        $person = new PersonResource();
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => 5]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'name');
     }
 
     public function testSetValidationRespectsOnly()

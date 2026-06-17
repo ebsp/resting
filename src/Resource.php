@@ -372,15 +372,12 @@ abstract class Resource implements Arrayable, Jsonable
 
     public function getFieldNameFromFieldObject(Field $field): ?string
     {
-        static $fieldNameByObjectHash = null;
-
-        if ($fieldNameByObjectHash === null) {
-            $fieldNameByObjectHash = [];
-            foreach ($this->fields() as $fieldName => $fieldObject) {
-                $fieldNameByObjectHash[spl_object_hash($fieldObject)] = $fieldName;
+        foreach ($this->fields() as $fieldName => $fieldObject) {
+            if ($fieldObject === $field) {
+                return $fieldName;
             }
         }
 
-        return $fieldNameByObjectHash[spl_object_hash($field)] ?? null;
+        return null;
     }
 }
