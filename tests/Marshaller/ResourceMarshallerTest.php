@@ -667,6 +667,40 @@ class ResourceMarshallerTest extends TestCase
         $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
     }
 
+    public function testForbiddenWinsOverRequiredWhenValueProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->required()->forbidden();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, [
+            'name' => $this->faker->name,
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
+    }
+
+    public function testForbiddenWinsOverRequiredWhenValueNotProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->required()->forbidden();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertFalse($resource->name->isFilled());
+    }
+
     public function testForbiddenValidationOnNestedFields()
     {
         $factory = $this->resourceFactory(function () {

@@ -141,6 +141,10 @@ class ResourceMarshaller
 
             if (!$isProvided) {
 
+                if ($forbiddenValidator->isForbidden($resourceContext)) {
+                    continue;
+                }
+
                 if ($requiredValidator->hasPredicates() && $requiredValidator->passes($resourceContext)) {
                     $path = $this->getCurrentPath($fieldName);
                     $this->pushPathError($path, new RequiredValidationError());
