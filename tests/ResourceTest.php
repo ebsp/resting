@@ -62,6 +62,31 @@ class ResourceTest extends TestCase
         $this->assertHasError($errors, RequiredValidationError::class, path: 'age');
     }
 
+    public function testSetPredicatedNullableValidationWhenTrue()
+    {
+        $person = new PersonResource();
+        $person->name->nullable();
+        $person->age->nullable(whenNotNull($person->name));
+
+        $person->set(['name' => $this->faker->name, 'age' => null]);
+
+        $this->assertNull($person->age->get());
+    }
+
+    public function testSetPredicatedNullableValidationWhenFalse()
+    {
+        $person = new PersonResource();
+        $person->name->nullable();
+        $person->age->nullable(whenNotNull($person->name));
+
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => null]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'age');
+    }
+
     public function testSetPredicatedRequiredValidationWhenTrue()
     {
         $person = new PersonResource();
@@ -88,22 +113,11 @@ class ResourceTest extends TestCase
         $this->assertNull($person->age->get());
     }
 
-    public function testSetPredicatedNullableValidationWhenTrue()
+    public function testPredicatedRequiredDoesNotImplyNullable()
     {
         $person = new PersonResource();
         $person->name->nullable();
-        $person->age->nullable(whenNotNull($person->name));
-
-        $person->set(['name' => $this->faker->name, 'age' => null]);
-
-        $this->assertNull($person->age->get());
-    }
-
-    public function testSetPredicatedNullableValidationWhenFalse()
-    {
-        $person = new PersonResource();
-        $person->name->nullable();
-        $person->age->nullable(whenNotNull($person->name));
+        $person->age->required(whenNotNull($person->name));
 
         $exception = $this->assertThrowsValidationException(function () use ($person) {
             $person->set(['name' => null, 'age' => null]);
@@ -111,6 +125,35 @@ class ResourceTest extends TestCase
 
         $this->assertCount(1, $errors = $exception->getErrors());
         $this->assertHasError($errors, NullableValidationError::class, 'age');
+    }
+
+    public function testNotRequiredDoesNotImplyNullable()
+    {
+        $person = new PersonResource();
+        $person->name->notRequired();
+
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => 5]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'name');
+    }
+
+    public function testRequiredFieldAcceptsValueButRejectsNull()
+    {
+        $person = new PersonResource();
+        $person->set(['name' => $name = $this->faker->name, 'age' => $age = 5]);
+        $this->assertEquals($name, $person->name->get());
+        $this->assertEquals($age, $person->age->get());
+
+        $person = new PersonResource();
+        $exception = $this->assertThrowsValidationException(function () use ($person) {
+            $person->set(['name' => null, 'age' => 5]);
+        });
+
+        $this->assertCount(1, $errors = $exception->getErrors());
+        $this->assertHasError($errors, NullableValidationError::class, 'name');
     }
 
     public function testSetValidationRespectsOnly()
@@ -584,7 +627,7 @@ class ResourceTest extends TestCase
         $event->time->set($time = now());
 
         $resource = new DynamicResource();
-        $resource->withField('event', (new ResourceField(fn() => new EventResource))->set($event));
+        $resource->withField('event', (new ResourceField(fn () => new EventResource))->set($event));
 
         $response = $resource->toResponseArray();
         $expected = ['event' => [
@@ -602,7 +645,7 @@ class ResourceTest extends TestCase
         $event->time->set($time = now());
 
         $resource = new DynamicResource();
-        $resource->withField('events', (new ResourceArrayField(fn() => new EventResource))->set([$event]));
+        $resource->withField('events', (new ResourceArrayField(fn () => new EventResource))->set([$event]));
 
         $response = $resource->toResponseArray();
         $expected = ['events' => [[

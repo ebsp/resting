@@ -667,6 +667,58 @@ class ResourceMarshallerTest extends TestCase
         $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
     }
 
+    public function testForbiddenWinsOverRequiredWhenValueProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->required()->forbidden();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, [
+            'name' => $this->faker->name,
+        ]);
+
+        $this->assertCount(1, $errors = $result->getErrors());
+        $this->assertHasError($errors, ForbiddenValidationError::class, 'name');
+    }
+
+    public function testForbiddenWinsOverRequiredWhenValueNotProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->required()->forbidden();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertFalse($resource->name->isFilled());
+    }
+
+    public function testForbiddenFieldStillReceivesDefaultWhenNotProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->notRequired();
+            $person->age->forbidden()->withDefault(5);
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertEquals(5, $resource->age->get());
+        $this->assertFalse($resource->age->isFilled());
+    }
+
     public function testForbiddenValidationOnNestedFields()
     {
         $factory = $this->resourceFactory(function () {
@@ -980,7 +1032,7 @@ class ResourceMarshallerTest extends TestCase
         $factory = $this->resourceFactory(function () {
             $person = new PersonResource();
             $person->name->notRequired();
-            $person->age->notRequired()->omittedDefault(5);
+            $person->age->notRequired()->omittedDefault(5)->nullable();
             return $person;
         });
 
@@ -1081,6 +1133,50 @@ class ResourceMarshallerTest extends TestCase
         assert($resource instanceof PetResource);
         $this->assertNull($resource->getOwner()->name->get());
         $this->assertNull($resource->getOwner()->age->get());
+    }
+
+    public function testMarshalResourceFieldDoesNotAllowNullsWhenRequiredFalseButNullableFalse()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->notRequired();
+            $person->age->notRequired();
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertFalse($resource->name->isFilled());
+
+        $result = $this->runMarshalResource($factory, ['name' => null]);
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), NullableValidationError::class, 'name');
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertNull($resource->name->get());
+        $this->assertTrue($resource->name->isFilled());
+    }
+
+    public function testMarshalRequiredFieldAcceptsValueButRejectsNullWhenNotNullable()
+    {
+        $factory = $this->resourceFactory(PersonResource::class);
+
+        $result = $this->runMarshalResource($factory, ['name' => 'a', 'age' => 5]);
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertEquals('a', $resource->name->get());
+
+        $result = $this->runMarshalResource($factory, ['name' => null, 'age' => 5]);
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), NullableValidationError::class, 'name');
+
+        $result = $this->runMarshalResource($factory, ['age' => 5]);
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), RequiredValidationError::class, 'name');
     }
 
     public function testCanParseIntegersWhenAllowsParsing()
