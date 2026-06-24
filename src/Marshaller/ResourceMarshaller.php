@@ -141,20 +141,21 @@ class ResourceMarshaller
 
             if (!$isProvided) {
 
-                if ($forbiddenValidator->isForbidden($resourceContext)) {
-                    continue;
-                }
+                // A forbidden field that was (correctly) not provided must not raise a required
+                // error, but it should still receive any configured default value.
+                if (!$forbiddenValidator->isForbidden($resourceContext)) {
 
-                if ($requiredValidator->hasPredicates() && $requiredValidator->passes($resourceContext)) {
-                    $path = $this->getCurrentPath($fieldName);
-                    $this->pushPathError($path, new RequiredValidationError());
-                    continue;
-                }
+                    if ($requiredValidator->hasPredicates() && $requiredValidator->passes($resourceContext)) {
+                        $path = $this->getCurrentPath($fieldName);
+                        $this->pushPathError($path, new RequiredValidationError());
+                        continue;
+                    }
 
-                if (!$requiredValidator->hasPredicates() && $requiredValidator->isRequired()) {
-                    $path = $this->getCurrentPath($fieldName);
-                    $this->pushPathError($path, new RequiredValidationError());
-                    continue;
+                    if (!$requiredValidator->hasPredicates() && $requiredValidator->isRequired()) {
+                        $path = $this->getCurrentPath($fieldName);
+                        $this->pushPathError($path, new RequiredValidationError());
+                        continue;
+                    }
                 }
 
                 $defaultValue = null;

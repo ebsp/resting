@@ -701,6 +701,24 @@ class ResourceMarshallerTest extends TestCase
         $this->assertFalse($resource->name->isFilled());
     }
 
+    public function testForbiddenFieldStillReceivesDefaultWhenNotProvided()
+    {
+        $factory = $this->resourceFactory(function () {
+            $person = new PersonResource();
+            $person->name->notRequired();
+            $person->age->forbidden()->withDefault(5);
+            return $person;
+        });
+
+        $result = $this->runMarshalResource($factory, new stdClass);
+
+        $this->assertFalse($result->hasErrors());
+        $resource = $result->getValue();
+        assert($resource instanceof PersonResource);
+        $this->assertEquals(5, $resource->age->get());
+        $this->assertFalse($resource->age->isFilled());
+    }
+
     public function testForbiddenValidationOnNestedFields()
     {
         $factory = $this->resourceFactory(function () {
