@@ -62,6 +62,24 @@ class ResourceFieldTest extends TestCase
         });
     }
 
+    public function testSetWhenGivenArrayDoesNotMergeOntoPreviousValue()
+    {
+        $this->instance = new ResourceField(function () {
+            $resource = new PersonResource();
+            $resource->name->nullable()->notRequired();
+            $resource->age->nullable()->notRequired();
+            return $resource;
+        });
+
+        $this->instance->set(['name' => 'x', 'age' => 1]);
+        $this->instance->set(['name' => 'z']);
+
+        $this->assertType($this->instance->get(), function (PersonResource $resource) {
+            $this->assertEquals('z', $resource->name->get());
+            $this->assertNull($resource->age->get());
+        });
+    }
+
     public function testSetValidationWhenGivenArray()
     {
         $assertion = function (ValidationException $exception) {

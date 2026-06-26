@@ -96,7 +96,7 @@ class ResourceField extends Field
         }
 
         if (is_array($value)) {
-            $this->value = ($this->value ?? ($this->resourceFactory)())->setFieldsFromCollection(collect($value));
+            $this->value = ($this->resourceFactory)()->setFieldsFromCollection(collect($value));
             $this->isFilled = true;
             return $this;
         }
