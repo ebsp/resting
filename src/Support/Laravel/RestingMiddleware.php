@@ -23,6 +23,7 @@ use Seier\Resting\Parsing\DefaultParseContext;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Exceptions\InvalidJsonException;
 use Seier\Resting\Validation\Errors\ValidationError;
+use Seier\Resting\Validation\Errors\RequestValidationErrors;
 use Seier\Resting\Marshaller\ResourceMarshallerResult;
 use Seier\Resting\Exceptions\RestingDefinitionException;
 use Seier\Resting\Validation\Errors\RequiredValidationError;
@@ -50,6 +51,7 @@ class RestingMiddleware
 
         // when the marshalling caused validation errors, respond with 422
         if ($this->hasValidationErrors()) {
+            $this->notifyValidationErrors();
             return $this->respondWithValidationErrors();
         }
 
@@ -268,6 +270,20 @@ class RestingMiddleware
         foreach ($resourceMarshallerResult->getErrors() as $pair) {
             $destination[] = $pair;
         }
+    }
+
+    private function notifyValidationErrors(): void
+    {
+        $listener = RestingSettings::instance()->getValidationErrorListener();
+        if ($listener === null) {
+            return;
+        }
+
+        $listener($this->request, new RequestValidationErrors(
+            body: $this->bodyErrors,
+            query: $this->queryErrors,
+            param: $this->paramErrors,
+        ));
     }
 
     private function hasValidationErrors(): bool

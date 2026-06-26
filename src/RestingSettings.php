@@ -2,6 +2,7 @@
 
 namespace Seier\Resting;
 
+use Closure;
 use Seier\Resting\Fields\CarbonGranularity;
 
 class RestingSettings
@@ -12,6 +13,8 @@ class RestingSettings
     public bool $removeEmptyArrays = false;
     public bool $removeNulls = false;
     public int $jsonOptions = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
+
+    private ?Closure $validationErrorListener = null;
 
     private array $carbonFormats = [
         'date' => 'Y-m-d',
@@ -55,5 +58,17 @@ class RestingSettings
         $this->jsonOptions = $options;
 
         return $this;
+    }
+
+    public function onValidationErrors(?Closure $listener): static
+    {
+        $this->validationErrorListener = $listener;
+
+        return $this;
+    }
+
+    public function getValidationErrorListener(): ?Closure
+    {
+        return $this->validationErrorListener;
     }
 }

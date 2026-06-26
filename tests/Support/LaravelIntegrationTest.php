@@ -19,6 +19,8 @@ use Seier\Resting\Tests\Meta\CarbonPeriodQuery;
 use Seier\Resting\Support\Laravel\RestingResponse;
 use Seier\Resting\Support\Laravel\RestingMiddleware;
 use Seier\Resting\Tests\Meta\NotRequiredPersonResource;
+use Seier\Resting\Validation\Errors\ValidationError;
+use Seier\Resting\Validation\Errors\RequestValidationErrors;
 
 class LaravelIntegrationTest extends TestCase
 {
@@ -862,5 +864,52 @@ class LaravelIntegrationTest extends TestCase
         $response = (new PaginatedResponse([], 1, 15, 0))->toResponse(new Request());
 
         $this->assertSame(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE, $response->getEncodingOptions());
+    }
+
+    public function testValidationErrorListenerIsNotifiedOnValidationFailure()
+    {
+        $capturedRequest = null;
+        $capturedErrors = null;
+        RestingSettings::instance()->onValidationErrors(
+            function ($request, RequestValidationErrors $errors) use (&$capturedRequest, &$capturedErrors) {
+                $capturedRequest = $request;
+                $capturedErrors = $errors;
+            }
+        );
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonResource $r) => new RestingResponse(data: []),
+        );
+
+        $harnessRun = $harness->request(content: json_encode(['name' => null, 'age' => null]));
+
+        $this->assertFalse($harnessRun->wasActionCalled());
+        $this->assertInstanceOf(Request::class, $capturedRequest);
+        $this->assertSame($harnessRun->getRequest(), $capturedRequest);
+
+        $this->assertInstanceOf(RequestValidationErrors::class, $capturedErrors);
+        $this->assertTrue($capturedErrors->isNotEmpty());
+        $this->assertNotEmpty($capturedErrors->getBody());
+        $this->assertContainsOnlyInstancesOf(ValidationError::class, $capturedErrors->getBody());
+        $this->assertContainsOnlyInstancesOf(ValidationError::class, $capturedErrors->all());
+    }
+
+    public function testValidationErrorListenerIsNotNotifiedWhenRequestSucceeds()
+    {
+        $called = false;
+        RestingSettings::instance()->onValidationErrors(function () use (&$called) {
+            $called = true;
+        });
+
+        $harness = new LaravelIntegrationTestHarness(
+            methods: ['POST'],
+            action: fn (PersonResource $r) => new RestingResponse(data: []),
+        );
+
+        $harnessRun = $harness->request(content: json_encode(['name' => 'x', 'age' => 1]));
+
+        $this->assertTrue($harnessRun->wasActionCalled());
+        $this->assertFalse($called);
     }
 }

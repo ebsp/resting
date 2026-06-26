@@ -70,6 +70,25 @@ public function boot(): void
 
 You can also override these on a per-resource basis with `Resource::removeNulls(?bool)` and `Resource::removeEmptyArrays(?bool)` — see [Resources › Removing nulls and empty arrays](./resources#removing-nulls-and-empty-arrays).
 
+### Listening for validation errors
+
+`RestingMiddleware` can notify you whenever it rejects a request because of validation errors, just before the `422` response is sent. Register a listener with `onValidationErrors()`:
+
+```php
+use Illuminate\Http\Request;
+use Seier\Resting\RestingSettings;
+use Seier\Resting\Validation\Errors\RequestValidationErrors;
+
+RestingSettings::instance()->onValidationErrors(function (Request $request, RequestValidationErrors $errors) {
+    Log::warning('Resting validation failed', [
+        'path' => $request->path(),
+        'errors' => $errors->all(),
+    ]);
+});
+```
+
+The listener receives the request and a `RequestValidationErrors` instance exposing `getBody()`, `getQuery()`, `getParam()`, and `all()`, plus `toException()` to build a `ValidationException` from the collected errors. It fires only when the request actually fails validation, and runs before the response is built — making it a convenient hook for logging or reporting. Pass `null` to clear a previously registered listener.
+
 `RestingSettings::reset()` is provided for tests; the package's own test suite calls it in `setUp()` to ensure isolation.
 
 ## What's next

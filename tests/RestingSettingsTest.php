@@ -73,4 +73,34 @@ class RestingSettingsTest extends TestCase
 
         $this->assertEquals('Y-m-d', RestingSettings::instance()->carbonFormat(CarbonGranularity::Date));
     }
+
+    public function testValidationErrorListenerDefaultsToNull()
+    {
+        $this->assertNull(RestingSettings::instance()->getValidationErrorListener());
+    }
+
+    public function testCanRegisterValidationErrorListener()
+    {
+        $listener = fn () => null;
+        RestingSettings::instance()->onValidationErrors($listener);
+
+        $this->assertSame($listener, RestingSettings::instance()->getValidationErrorListener());
+    }
+
+    public function testCanClearValidationErrorListener()
+    {
+        RestingSettings::instance()->onValidationErrors(fn () => null);
+        RestingSettings::instance()->onValidationErrors(null);
+
+        $this->assertNull(RestingSettings::instance()->getValidationErrorListener());
+    }
+
+    public function testResetClearsValidationErrorListener()
+    {
+        RestingSettings::instance()->onValidationErrors(fn () => null);
+
+        RestingSettings::reset();
+
+        $this->assertNull(RestingSettings::instance()->getValidationErrorListener());
+    }
 }
