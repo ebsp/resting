@@ -8,6 +8,8 @@ use Seier\Resting\Tests\Meta\AssertsErrors;
 use Seier\Resting\Exceptions\ValidationException;
 use Seier\Resting\Tests\Meta\MockSecondaryValidator;
 use Seier\Resting\Tests\Meta\MockSecondaryValidationError;
+use Seier\Resting\Validation\Secondary\String\StringMaxLengthValidationError;
+use Seier\Resting\Validation\Secondary\String\StringMinLengthValidationError;
 
 class StringFieldTest extends TestCase
 {
@@ -37,6 +39,7 @@ class StringFieldTest extends TestCase
 
     public function testGetNotEmptyReturnsValueWhenNotEmpty()
     {
+        $this->instance->trim(false);
         $this->instance->set(' ');
 
         $this->assertEquals(' ', $this->instance->getNotEmpty());
@@ -130,13 +133,76 @@ class StringFieldTest extends TestCase
         $this->assertSame('A', $this->instance->get());
     }
 
-    public function testTrimTransformer()
+    public function testTrimsByDefault()
     {
+        $this->instance->set(" \t a \n ");
+
+        $this->assertSame('a', $this->instance->get());
+        $this->assertTrue($this->instance->isTrimmed());
+    }
+
+    public function testTrimCanBeDisabled()
+    {
+        $this->instance->trim(false);
+
+        $this->instance->set($expected = ' a ');
+
+        $this->assertSame($expected, $this->instance->get());
+        $this->assertFalse($this->instance->isTrimmed());
+    }
+
+    public function testTrimCanBeReEnabled()
+    {
+        $this->instance->trim(false);
         $this->instance->trim();
 
         $this->instance->set(' a ');
 
         $this->assertSame('a', $this->instance->get());
+    }
+
+    public function testMinLengthValidatesTrimmedValue()
+    {
+        $this->instance->minLength(2);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set(' a ');
+        });
+
+        $this->assertHasError($exception, StringMinLengthValidationError::class);
+    }
+
+    public function testMinLengthValidatesUntrimmedValueWhenTrimIsDisabled()
+    {
+        $this->instance->trim(false);
+        $this->instance->minLength(2);
+
+        $this->assertDoesNotThrowValidationException(function () {
+            $this->instance->set(' a ');
+        });
+    }
+
+    public function testMaxLengthValidatesTrimmedValue()
+    {
+        $this->instance->maxLength(1);
+
+        $this->assertDoesNotThrowValidationException(function () {
+            $this->instance->set(' a ');
+        });
+
+        $this->assertSame('a', $this->instance->get());
+    }
+
+    public function testMaxLengthValidatesUntrimmedValueWhenTrimIsDisabled()
+    {
+        $this->instance->trim(false);
+        $this->instance->maxLength(1);
+
+        $exception = $this->assertThrowsValidationException(function () {
+            $this->instance->set(' a ');
+        });
+
+        $this->assertHasError($exception, StringMaxLengthValidationError::class);
     }
 
     public function testLowerTransformer()

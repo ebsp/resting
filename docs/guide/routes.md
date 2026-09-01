@@ -134,7 +134,7 @@ class UserSearchQuery extends Query
 
     public function __construct()
     {
-        $this->name = (new StringField())->trim()->notRequired();
+        $this->name = (new StringField())->notRequired();
         $this->age = (new IntField())->min(0)->notRequired();
         $this->page = (new IntField())->min(1)->withDefault(1);
         $this->perPage = (new IntField())->between(1, 100)->withDefault(25);

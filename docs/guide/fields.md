@@ -72,18 +72,39 @@ Toggle whether a field participates in hydration, output, and OpenAPI generation
 ### `StringField`
 
 ```php
-$this->name = (new StringField())->trim()->maxLength(120);
+$this->name = (new StringField())->maxLength(120);
 ```
 
 Parses and stores a string. Supports the [string transformers](#stringfield-transformers) and the [string validation methods](./validation#string-fields).
 
+#### `trim(bool $state = true)`
+
+String values are **trimmed by default**. The trimming happens before validation, so both `get()` and every
+validator — `minLength()`, `maxLength()`, `matches()`, and the rest — see the trimmed string:
+
+```php
+$this->name = (new StringField())->minLength(2);
+
+$this->name->set('  a  ');  // ValidationException: the trimmed value is only 1 character long
+```
+
+Pass `false` to keep the value exactly as it was provided:
+
+```php
+$this->code = (new StringField())->trim(false);
+
+$this->code->set(' a ');
+$this->code->get(); // ' a '
+```
+
+Combined with `emptyStringAsNull()`, a whitespace-only value becomes `null`, because trimming runs first.
+
 #### `StringField` transformers {#stringfield-transformers}
 
-Transformers run on `set()` before validation, mutating the incoming string:
+Transformers run on `set()` before trimming and validation, mutating the incoming string:
 
 | Method | Effect |
 | --- | --- |
-| `trim()` | PHP `trim()` |
 | `upper()` | `mb_strtoupper()` |
 | `lower()` | `mb_strtolower()` |
 | `stripWhitespace()` | Removes all whitespace via `preg_replace('/\s+/', '')` |
@@ -202,6 +223,14 @@ $this->codes = (new ArrayField())->ofStrings(
     config: fn ($validator, $parser) => $validator->withValidator(
         new \Seier\Resting\Validation\Secondary\String\StringRegexValidator('/^[A-Z]{3}$/')
     ),
+);
+```
+
+String elements are trimmed like any other string. Disable it through the config callback:
+
+```php
+$this->codes = (new ArrayField())->ofStrings(
+    config: fn ($validator, $parser) => $parser->trim(false),
 );
 ```
 
@@ -333,7 +362,7 @@ class ArticleResource extends Resource
 
     public function __construct()
     {
-        $this->title = (new StringField())->trim()->minLength(1)->maxLength(200);
+        $this->title = (new StringField())->minLength(1)->maxLength(200);
 
         $this->slug = (new StringField())
             ->lower()

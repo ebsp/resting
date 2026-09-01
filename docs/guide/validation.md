@@ -47,6 +47,9 @@ $this->slug = (new StringField())
     ->matches('/^[a-z0-9-]+$/');
 ```
 
+`StringField` trims values before validating them, so these methods all see the trimmed string. Disable that
+with [`trim(false)`](./fields#trim-bool-state-true).
+
 ### Numeric fields
 
 `IntField` and `NumberField` use `NumericValidation`:
