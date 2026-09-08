@@ -25,7 +25,7 @@ class UserResource extends Resource
 
     public function __construct()
     {
-        $this->name = (new StringField())->trim()->maxLength(120);
+        $this->name = (new StringField())->maxLength(120);
         $this->age = (new IntField())->min(0);
     }
 }

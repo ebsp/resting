@@ -37,13 +37,6 @@ class StringField extends Field
         return $this;
     }
 
-    public function trim(): static
-    {
-        $this->transformers[] = trim(...);
-
-        return $this;
-    }
-
     public function upper(): static
     {
         $this->transformers[] = mb_strtoupper(...);
@@ -120,6 +113,26 @@ class StringField extends Field
         $this->parser->emptyStringAsNull($state);
 
         return $this;
+    }
+
+    /**
+     * Instructs the field whether or not to trim the value before it is validated and stored. Values are
+     * trimmed by default, meaning that both the value returned from {@link StringField::get()} and the
+     * value seen by validators is trimmed. Call trim(false) to disable trimming.
+     *
+     * @param bool $state Whether or not the value should be trimmed.
+     * @return $this
+     */
+    public function trim(bool $state = true): static
+    {
+        $this->parser->trim($state);
+
+        return $this;
+    }
+
+    public function isTrimmed(): bool
+    {
+        return $this->parser->isTrimmed();
     }
 
     public function type(): array

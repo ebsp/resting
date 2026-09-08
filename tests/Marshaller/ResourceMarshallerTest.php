@@ -21,6 +21,7 @@ use Seier\Resting\Tests\Meta\PersonResource;
 use Seier\Resting\Tests\Meta\UnionResourceA;
 use Seier\Resting\Tests\Meta\UnionResourceB;
 use Seier\Resting\Tests\Meta\ActivityResource;
+use Seier\Resting\Tests\Meta\ArrayFieldsResource;
 use Seier\Resting\Tests\Meta\UnionResourceBase;
 use Seier\Resting\Marshaller\ResourceMarshaller;
 use Seier\Resting\Tests\Meta\UnionParentResource;
@@ -33,6 +34,7 @@ use Seier\Resting\Validation\Errors\NotStringValidationError;
 use Seier\Resting\Validation\Errors\ForbiddenValidationError;
 use Seier\Resting\Validation\Errors\NotObjectValidationError;
 use Seier\Resting\Validation\Secondary\Comparable\MinValidationError;
+use Seier\Resting\Validation\Secondary\String\StringMinLengthValidationError;
 use Seier\Resting\Validation\Errors\UnknownUnionDiscriminatorValidationError;
 use Seier\Resting\ResourceValidation\ResourceAttributeComparisonValidationError;
 use Seier\Resting\Tests\ResourceValidation\ResourceAttributeComparisonTestResource;
@@ -1272,6 +1274,81 @@ class ResourceMarshallerTest extends TestCase
             $this->assertTrue($resource->raw_true->isFilled());
             $this->assertTrue($resource->raw_true->get());
 
+        });
+    }
+
+    public function testMarshalResourceTrimsStringFields()
+    {
+        $factory = $this->resourceFactory(PersonResource::class);
+        $result = $this->runMarshalResource($factory, [
+            'name' => '  John Doe  ',
+            'age' => 20,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (PersonResource $person) {
+            $this->assertSame('John Doe', $person->name->get());
+        });
+    }
+
+    public function testMarshalResourceDoesNotTrimStringFieldsWhenTrimIsDisabled()
+    {
+        $factory = $this->resourceFactory(function () {
+            $resource = new PersonResource();
+            $resource->name->trim(false);
+            return $resource;
+        });
+
+        $result = $this->runMarshalResource($factory, [
+            'name' => '  John Doe  ',
+            'age' => 20,
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (PersonResource $person) {
+            $this->assertSame('  John Doe  ', $person->name->get());
+        });
+    }
+
+    public function testMarshalResourceValidatesTrimmedStringFields()
+    {
+        $factory = $this->resourceFactory(function () {
+            $resource = new PersonResource();
+            $resource->name->minLength(2);
+            return $resource;
+        });
+
+        $result = $this->runMarshalResource($factory, [
+            'name' => ' a ',
+            'age' => 20,
+        ]);
+
+        $this->assertTrue($result->hasErrors());
+        $this->assertHasError($result->getErrors(), StringMinLengthValidationError::class, 'name');
+    }
+
+    public function testMarshalResourceTrimsArrayStringElements()
+    {
+        $factory = $this->resourceFactory(function () {
+            $resource = new ArrayFieldsResource();
+            $resource->with_strings->notRequired();
+            $resource->with_integers->notRequired();
+            $resource->with_enums->notRequired();
+            $resource->with_booleans->notRequired();
+            $resource->with_nullable_strings->notRequired();
+            $resource->with_nullable_integers->notRequired();
+            $resource->with_nullable_enums->notRequired();
+            $resource->with_nullable_booleans->notRequired();
+            return $resource;
+        });
+
+        $result = $this->runMarshalResource($factory, [
+            'with_strings' => ['  a  ', "\tb\n"],
+        ]);
+
+        $this->assertFalse($result->hasErrors());
+        $this->assertType($result->getValue(), function (ArrayFieldsResource $resource) {
+            $this->assertSame(['a', 'b'], $resource->with_strings->get());
         });
     }
 
