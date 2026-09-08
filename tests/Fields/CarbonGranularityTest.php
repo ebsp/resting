@@ -15,6 +15,7 @@ class CarbonGranularityTest extends TestCase
         $this->assertEquals('hour', CarbonGranularity::Hour->value);
         $this->assertEquals('minute', CarbonGranularity::Minute->value);
         $this->assertEquals('second', CarbonGranularity::Second->value);
+        $this->assertEquals('millisecond', CarbonGranularity::Millisecond->value);
     }
 
     public function testTruncateDate()
@@ -54,6 +55,16 @@ class CarbonGranularityTest extends TestCase
         $this->assertEquals(
             Carbon::create(2025, 1, 2, 3, 4, 5),
             CarbonGranularity::Second->truncate($value),
+        );
+    }
+
+    public function testTruncateMillisecondKeepsMillisecondsAndDiscardsMicroseconds()
+    {
+        $value = Carbon::create(2025, 1, 2, 3, 4, 5)->addMicroseconds(123456);
+
+        $this->assertEquals(
+            Carbon::create(2025, 1, 2, 3, 4, 5)->addMilliseconds(123),
+            CarbonGranularity::Millisecond->truncate($value),
         );
     }
 

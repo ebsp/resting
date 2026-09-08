@@ -10,6 +10,7 @@ enum CarbonGranularity: string
     case Hour = 'hour';
     case Minute = 'minute';
     case Second = 'second';
+    case Millisecond = 'millisecond';
 
     public function truncate(CarbonInterface $value): CarbonInterface
     {
@@ -18,6 +19,7 @@ enum CarbonGranularity: string
             self::Hour => $value->startOfHour(),
             self::Minute => $value->startOfMinute(),
             self::Second => $value->startOfSecond(),
+            self::Millisecond => $value->startOfMillisecond(),
         };
     }
 }

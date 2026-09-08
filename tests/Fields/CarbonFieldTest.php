@@ -266,6 +266,39 @@ class CarbonFieldTest extends TestCase
         $this->assertEquals(Carbon::create(2025, 1, 2, 3, 4, 0), $this->instance->get());
     }
 
+    public function testGranularityMillisecondPreservesMillisecondsAndDiscardsMicroseconds()
+    {
+        $this->instance->granularity(CarbonGranularity::Millisecond);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5)->addMicroseconds(123456));
+
+        $this->assertEquals(
+            Carbon::create(2025, 1, 2, 3, 4, 5)->addMilliseconds(123),
+            $this->instance->get(),
+        );
+    }
+
+    public function testGranularityMillisecondPreservesMillisecondsOfParsedString()
+    {
+        $this->instance->granularity(CarbonGranularity::Millisecond);
+        $this->instance->set('2025-01-02T03:04:05.347+00:00');
+
+        $this->assertEquals(347, $this->instance->get()->milli);
+    }
+
+    public function testGranularityMillisecondPreservesSubSecondDifferences()
+    {
+        $initiatedAt = (new CarbonField())->granularity(CarbonGranularity::Millisecond);
+        $receivedAt = (new CarbonField())->granularity(CarbonGranularity::Millisecond);
+
+        $initiatedAt->set('2025-01-02T03:04:05.100+00:00');
+        $receivedAt->set('2025-01-02T03:04:05.447+00:00');
+
+        $this->assertEquals(
+            347,
+            $receivedAt->get()->getTimestampMs() - $initiatedAt->get()->getTimestampMs(),
+        );
+    }
+
     public function testGranularityTruncatesParsedString()
     {
         $this->instance->granularity(CarbonGranularity::Minute);
@@ -306,6 +339,14 @@ class CarbonFieldTest extends TestCase
         $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5));
 
         $this->assertEquals('03:04', $this->instance->formatted());
+    }
+
+    public function testFormattedUsesGranularityFormatForMillisecond()
+    {
+        $this->instance->granularity(CarbonGranularity::Millisecond);
+        $this->instance->set(Carbon::create(2025, 1, 2, 3, 4, 5)->addMilliseconds(347));
+
+        $this->assertEquals('2025-01-02 03:04:05.347', $this->instance->formatted());
     }
 
     public function testWithFormatOverridesGranularityFormat()

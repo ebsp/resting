@@ -21,6 +21,7 @@ class RestingSettings
         'hour' => 'Y-m-d H',
         'minute' => 'Y-m-d H:i',
         'second' => 'Y-m-d H:i:s',
+        'millisecond' => 'Y-m-d H:i:s.v',
     ];
 
     private function __construct()

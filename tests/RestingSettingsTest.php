@@ -47,6 +47,15 @@ class RestingSettingsTest extends TestCase
         $this->assertEquals('Y-m-d H', $settings->carbonFormat(CarbonGranularity::Hour));
         $this->assertEquals('Y-m-d H:i', $settings->carbonFormat(CarbonGranularity::Minute));
         $this->assertEquals('Y-m-d H:i:s', $settings->carbonFormat(CarbonGranularity::Second));
+        $this->assertEquals('Y-m-d H:i:s.v', $settings->carbonFormat(CarbonGranularity::Millisecond));
+    }
+
+    public function testSetCarbonFormatForSecondDoesNotAffectMillisecond()
+    {
+        $settings = RestingSettings::instance();
+        $settings->setCarbonFormat(CarbonGranularity::Second, 'Y-m-d\TH:i:s');
+
+        $this->assertEquals('Y-m-d H:i:s.v', $settings->carbonFormat(CarbonGranularity::Millisecond));
     }
 
     public function testCanOverrideCarbonFormat()
